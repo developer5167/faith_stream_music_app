@@ -1,0 +1,311 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../blocs/library/library_bloc.dart';
+import '../../blocs/library/library_state.dart';
+import '../../blocs/library/library_event.dart';
+import '../../utils/constants.dart';
+import '../widgets/loading_indicator.dart';
+import 'playlist_detail_screen.dart';
+
+class PlaylistsScreen extends StatelessWidget {
+  const PlaylistsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return BlocBuilder<LibraryBloc, LibraryState>(
+      builder: (context, state) {
+        if (state is LibraryPlaylistsLoading) {
+          return const Center(child: LoadingIndicator());
+        }
+
+        if (state is LibraryLoaded) {
+          return RefreshIndicator(
+            onRefresh: () async {
+              context.read<LibraryBloc>().add(LibraryLoadPlaylists());
+              await Future.delayed(const Duration(seconds: 1));
+            },
+            child: CustomScrollView(
+              slivers: [
+                // Create new playlist button
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSizes.paddingMd),
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showCreatePlaylistDialog(context),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Create New Playlist'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBrown,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Playlists grid
+                if (state.playlists.isEmpty)
+                  SliverFillRemaining(child: _buildEmptyState(context))
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.all(AppSizes.paddingMd),
+                    sliver: SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: AppSizes.paddingSm,
+                            mainAxisSpacing: AppSizes.paddingSm,
+                            childAspectRatio: 0.85,
+                          ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final playlist = state.playlists[index];
+                        return _PlaylistCard(
+                          playlist: playlist,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    PlaylistDetailScreen(playlist: playlist),
+                              ),
+                            );
+                          },
+                        );
+                      }, childCount: state.playlists.length),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSizes.paddingLg),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.playlist_play,
+              size: 100,
+              color: theme.colorScheme.onSurface.withOpacity(0.3),
+            ),
+            const SizedBox(height: AppSizes.paddingMd),
+            Text(
+              'No Playlists Yet',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: AppSizes.paddingSm),
+            Text(
+              'Create your first playlist to organize\nyour favorite songs.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCreatePlaylistDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final descriptionController = TextEditingController();
+    bool isPublic = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Create Playlist'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Playlist Name',
+                    hintText: 'Enter playlist name',
+                    border: OutlineInputBorder(),
+                  ),
+                  autofocus: true,
+                ),
+                const SizedBox(height: AppSizes.paddingSm),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Description (Optional)',
+                    hintText: 'Enter description',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: AppSizes.paddingSm),
+                SwitchListTile(
+                  title: const Text('Public Playlist'),
+                  subtitle: const Text('Others can see this playlist'),
+                  value: isPublic,
+                  onChanged: (value) {
+                    setState(() {
+                      isPublic = value;
+                    });
+                  },
+                  activeColor: AppColors.primaryBrown,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final name = nameController.text.trim();
+                if (name.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please enter a playlist name'),
+                    ),
+                  );
+                  return;
+                }
+
+                context.read<LibraryBloc>().add(
+                  LibraryCreatePlaylist(
+                    name: name,
+                    description: descriptionController.text.trim().isEmpty
+                        ? null
+                        : descriptionController.text.trim(),
+                    isPublic: isPublic,
+                  ),
+                );
+
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBrown,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Create'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PlaylistCard extends StatelessWidget {
+  final dynamic playlist;
+  final VoidCallback onTap;
+
+  const _PlaylistCard({required this.playlist, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Playlist cover
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primaryBrown.withOpacity(0.7),
+                      AppColors.primaryGold.withOpacity(0.7),
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.queue_music,
+                    size: 64,
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                ),
+              ),
+            ),
+
+            // Playlist info
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    playlist.name,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    playlist.displaySongCount,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                  ),
+                  if (playlist.isPublic)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.public,
+                            size: 12,
+                            color: theme.colorScheme.onSurface.withOpacity(0.5),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Public',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.5,
+                              ),
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
