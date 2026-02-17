@@ -8,92 +8,121 @@ import '../widgets/loading_indicator.dart';
 import 'playlist_detail_screen.dart';
 import 'create_playlist_screen.dart';
 
+import '../widgets/gradient_background.dart';
+import '../../config/app_theme.dart';
+
 class PlaylistsScreen extends StatelessWidget {
   const PlaylistsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return BlocBuilder<LibraryBloc, LibraryState>(
-      builder: (context, state) {
-        if (state is LibraryPlaylistsLoading) {
-          return const Center(child: LoadingIndicator());
-        }
+    return GradientBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(
+            'Playlists',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ),
+        body: BlocBuilder<LibraryBloc, LibraryState>(
+          builder: (context, state) {
+            if (state is LibraryPlaylistsLoading) {
+              return const Center(child: LoadingIndicator());
+            }
 
-        if (state is LibraryLoaded) {
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<LibraryBloc>().add(LibraryLoadPlaylists());
-              await Future.delayed(const Duration(seconds: 1));
-            },
-            child: CustomScrollView(
-              slivers: [
-                // Create new playlist button
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSizes.paddingMd),
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CreatePlaylistScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Create New Playlist'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBrown,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Playlists grid
-                if (state.playlists.isEmpty)
-                  SliverFillRemaining(child: _buildEmptyState(context))
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.all(AppSizes.paddingMd),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: AppSizes.paddingSm,
-                            mainAxisSpacing: AppSizes.paddingSm,
-                            childAspectRatio: 0.85,
-                          ),
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final playlist = state.playlists[index];
-                        return _PlaylistCard(
-                          playlist: playlist,
-                          onTap: () {
+            if (state is LibraryLoaded) {
+              return RefreshIndicator(
+                onRefresh: () async {
+                  context.read<LibraryBloc>().add(LibraryLoadPlaylists());
+                  await Future.delayed(const Duration(seconds: 1));
+                },
+                child: CustomScrollView(
+                  slivers: [
+                    // Create new playlist button
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSizes.paddingMd),
+                        child: ElevatedButton.icon(
+                          onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    PlaylistDetailScreen(playlist: playlist),
+                                    const CreatePlaylistScreen(),
                               ),
                             );
                           },
-                        );
-                      }, childCount: state.playlists.length),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Create New Playlist'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isDark
+                                ? AppTheme.darkPrimary
+                                : AppTheme.lightPrimary,
+                            foregroundColor: isDark
+                                ? Colors.black
+                                : Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-              ],
-            ),
-          );
-        }
 
-        return const SizedBox.shrink();
-      },
+                    // Playlists grid
+                    if (state.playlists.isEmpty)
+                      SliverFillRemaining(child: _buildEmptyState(context))
+                    else
+                      SliverPadding(
+                        padding: const EdgeInsets.all(AppSizes.paddingMd),
+                        sliver: SliverGrid(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: AppSizes.paddingSm,
+                                mainAxisSpacing: AppSizes.paddingSm,
+                                childAspectRatio: 0.85,
+                              ),
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final playlist = state.playlists[index];
+                            return _PlaylistCard(
+                              playlist: playlist,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PlaylistDetailScreen(
+                                      playlist: playlist,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          }, childCount: state.playlists.length),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            }
+
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
     );
   }
 
@@ -142,6 +171,7 @@ class _PlaylistCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -160,8 +190,10 @@ class _PlaylistCard extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.primaryBrown.withOpacity(0.7),
-                      AppColors.primaryGold.withOpacity(0.7),
+                      (isDark ? AppTheme.darkPrimary : AppTheme.lightPrimary)
+                          .withOpacity(0.7),
+                      (isDark ? AppTheme.darkPrimary : AppTheme.lightPrimary)
+                          .withOpacity(0.4),
                     ],
                   ),
                 ),

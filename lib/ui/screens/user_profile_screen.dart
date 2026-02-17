@@ -92,8 +92,8 @@ class UserProfileScreen extends StatelessWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            AppColors.primaryBrown,
-                            AppColors.primaryGold,
+                            theme.colorScheme.primary,
+                            theme.colorScheme.secondary,
                           ],
                         ),
                       ),
@@ -108,10 +108,10 @@ class UserProfileScreen extends StatelessWidget {
                         child: user.profilePicUrl == null
                             ? Text(
                                 user.name[0].toUpperCase(),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 48,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryBrown,
+                                  color: theme.colorScheme.primary,
                                 ),
                               )
                             : null,
@@ -222,6 +222,9 @@ class UserProfileScreen extends StatelessWidget {
                           backgroundColor: Colors.red,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
@@ -251,7 +254,7 @@ class UserProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(AppSizes.paddingMd),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.primaryBrown),
+            Icon(icon, color: theme.colorScheme.primary),
             const SizedBox(width: AppSizes.paddingMd),
             Expanded(
               child: Column(
@@ -275,9 +278,10 @@ class UserProfileScreen extends StatelessWidget {
   }
 
   Widget _buildArtistSection(BuildContext context, user) {
+    final theme = Theme.of(context); // Added this line to define 'theme'
     if (user.isArtist) {
       return Card(
-        color: AppColors.primaryBrown,
+        color: theme.colorScheme.primary,
         child: InkWell(
           onTap: () {
             Navigator.push(
@@ -321,29 +325,31 @@ class UserProfileScreen extends StatelessWidget {
       );
     } else if (user.isArtistPending) {
       return Card(
-        color: Colors.orange.shade100,
+        color: theme.colorScheme.errorContainer.withOpacity(0.3),
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.paddingMd),
           child: Row(
             children: [
-              const Icon(Icons.pending, color: Colors.orange, size: 32),
+              Icon(Icons.pending, color: theme.colorScheme.error, size: 32),
               const SizedBox(width: AppSizes.paddingMd),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Artist Request Pending',
                       style: TextStyle(
-                        color: Colors.orange,
+                        color: theme.colorScheme.error,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'Your artist request is under review',
-                      style: TextStyle(color: Colors.black54),
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
                     ),
                   ],
                 ),
@@ -354,7 +360,7 @@ class UserProfileScreen extends StatelessWidget {
       );
     } else {
       return Card(
-        color: AppColors.primaryGold.withOpacity(0.1),
+        color: theme.colorScheme.primary.withOpacity(0.1),
         child: InkWell(
           onTap: () {
             Navigator.push(
@@ -368,7 +374,7 @@ class UserProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.all(AppSizes.paddingMd),
             child: Row(
               children: [
-                Icon(Icons.star, color: AppColors.primaryGold, size: 32),
+                Icon(Icons.star, color: theme.colorScheme.secondary, size: 32),
                 const SizedBox(width: AppSizes.paddingMd),
                 Expanded(
                   child: Column(
@@ -377,23 +383,22 @@ class UserProfileScreen extends StatelessWidget {
                       Text(
                         'Become an Artist',
                         style: TextStyle(
-                          color: AppColors.primaryBrown,
+                          color: theme.colorScheme.primary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Share your music with the world',
-                        style: TextStyle(color: Colors.black54),
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  color: AppColors.primaryBrown,
-                ),
+                Icon(Icons.arrow_forward_ios, color: theme.colorScheme.primary),
               ],
             ),
           ),
@@ -408,8 +413,9 @@ class UserProfileScreen extends StatelessWidget {
     required String title,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
     return ListTile(
-      leading: Icon(icon, color: AppColors.primaryBrown),
+      leading: Icon(icon, color: theme.colorScheme.primary),
       title: Text(title),
       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
       onTap: onTap,

@@ -7,6 +7,7 @@ import '../../services/api_client.dart';
 import '../../services/storage_service.dart';
 import '../../utils/constants.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../config/app_theme.dart';
 
 class CreateAlbumScreen extends StatefulWidget {
   const CreateAlbumScreen({super.key});
@@ -180,7 +181,8 @@ class _CreateAlbumScreenState extends State<CreateAlbumScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Album'),
-        backgroundColor: AppColors.primaryBrown,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: Form(
         key: _formKey,
@@ -195,11 +197,14 @@ class _CreateAlbumScreenState extends State<CreateAlbumScreen> {
                   width: 200,
                   height: 200,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: theme.colorScheme.onSurface.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(
                       AppSizes.borderRadiusMd,
                     ),
-                    border: Border.all(color: AppColors.primaryBrown, width: 2),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withOpacity(0.3),
+                      width: 2,
+                    ),
                   ),
                   child: _selectedCoverImage != null
                       ? ClipRRect(
@@ -217,13 +222,13 @@ class _CreateAlbumScreenState extends State<CreateAlbumScreen> {
                             Icon(
                               Icons.add_photo_alternate,
                               size: 60,
-                              color: AppColors.primaryBrown,
+                              color: theme.colorScheme.primary,
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'Add Cover',
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: AppColors.primaryBrown,
+                                color: theme.colorScheme.primary,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -331,19 +336,21 @@ class _CreateAlbumScreenState extends State<CreateAlbumScreen> {
             Container(
               padding: const EdgeInsets.all(AppSizes.paddingMd),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: theme.colorScheme.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),
-                border: Border.all(color: Colors.blue[200]!),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withOpacity(0.2),
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue[700]),
+                  Icon(Icons.info_outline, color: theme.colorScheme.primary),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Cover photo will be uploaded after album is created',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.blue[900],
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                   ),
@@ -356,7 +363,12 @@ class _CreateAlbumScreenState extends State<CreateAlbumScreen> {
             ElevatedButton(
               onPressed: _isSubmitting ? null : _submitAlbum,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryBrown,
+                backgroundColor: theme.brightness == Brightness.dark
+                    ? AppTheme.darkPrimary
+                    : AppTheme.lightPrimary,
+                foregroundColor: theme.brightness == Brightness.dark
+                    ? Colors.black
+                    : Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),

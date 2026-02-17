@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/home/home_bloc.dart';
 import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_event.dart';
 import '../../blocs/library/library_bloc.dart';
-import '../../blocs/library/library_event.dart';
 import '../../blocs/library/library_state.dart';
 import '../../models/song.dart';
 import '../../models/album.dart';
 import '../../models/artist.dart';
 import '../../utils/constants.dart';
+import '../../config/app_theme.dart';
 import '../widgets/song_card.dart';
 import '../widgets/album_card.dart';
 import '../widgets/artist_card.dart';
-import 'song_detail_screen.dart';
+import '../widgets/gradient_background.dart';
 import 'album_detail_screen.dart';
 import 'artist_profile_screen.dart';
 
@@ -97,56 +98,90 @@ class _SearchScreenState extends State<SearchScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: TextField(
-          controller: _searchController,
-          autofocus: true,
-          style: theme.textTheme.bodyLarge,
-          decoration: InputDecoration(
-            hintText: 'Search songs, albums, artists...',
-            border: InputBorder.none,
-            suffixIcon: _isSearching
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _searchController.clear();
-                    },
-                  )
-                : null,
+    return GradientBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          toolbarHeight: 80,
+          title: Container(
+            height: 50,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.onSurface.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.onSurface.withOpacity(0.05),
+              ),
+            ),
+            child: TextField(
+              controller: _searchController,
+              autofocus: true,
+              style: TextStyle(color: theme.colorScheme.onSurface),
+              decoration: InputDecoration(
+                hintText: 'Search songs, albums, artists...',
+                hintStyle: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.38),
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                suffixIcon: _isSearching
+                    ? IconButton(
+                        icon: Icon(
+                          Icons.clear_rounded,
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                        },
+                      )
+                    : null,
+              ),
+            ),
           ),
         ),
-      ),
-      body: _isSearching
-          ? Column(
-              children: [
-                // Tab bar
-                TabBar(
-                  controller: _tabController,
-                  labelColor: AppColors.primaryBrown,
-                  indicatorColor: AppColors.primaryBrown,
-                  tabs: [
-                    Tab(text: 'Songs (${_filteredSongs.length})'),
-                    Tab(text: 'Albums (${_filteredAlbums.length})'),
-                    Tab(text: 'Artists (${_filteredArtists.length})'),
-                  ],
-                ),
-                // Tab views
-                Expanded(
-                  child: TabBarView(
+        body: _isSearching
+            ? Column(
+                children: [
+                  TabBar(
                     controller: _tabController,
-                    children: [
-                      _buildSongsList(),
-                      _buildAlbumsList(),
-                      _buildArtistsList(),
+                    labelColor: isDark
+                        ? AppTheme.darkPrimary
+                        : AppTheme.lightPrimary,
+                    unselectedLabelColor: theme.colorScheme.onSurface
+                        .withOpacity(0.38),
+                    indicatorColor: isDark
+                        ? AppTheme.darkPrimary
+                        : AppTheme.lightPrimary,
+                    indicatorSize: TabBarIndicatorSize.label,
+                    dividerColor: Colors.transparent,
+                    tabs: [
+                      Tab(text: 'Songs (${_filteredSongs.length})'),
+                      Tab(text: 'Albums (${_filteredAlbums.length})'),
+                      Tab(text: 'Artists (${_filteredArtists.length})'),
                     ],
                   ),
-                ),
-              ],
-            )
-          : _buildInitialState(),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildSongsList(context),
+                        _buildAlbumsList(context),
+                        _buildArtistsList(context),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+            : _buildInitialState(),
+      ),
     );
   }
 
@@ -154,77 +189,93 @@ class _SearchScreenState extends State<SearchScreen>
     final theme = Theme.of(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSizes.paddingMd),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.paddingMd,
+        vertical: 24,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '🔥 Trending Searches',
-            style: theme.textTheme.titleMedium?.copyWith(
+            'Explore Categories',
+            style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: AppSizes.paddingSm),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          const SizedBox(height: 20),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 1.6,
             children: [
-              _buildTrendingChip('Gospel'),
-              _buildTrendingChip('Worship'),
-              _buildTrendingChip('Praise'),
-              _buildTrendingChip('Christian'),
-              _buildTrendingChip('Contemporary'),
+              _buildCategoryCard(
+                'Worship',
+                Colors.indigo,
+                Icons.volunteer_activism,
+              ),
+              _buildCategoryCard('Praise', Colors.orange, Icons.auto_awesome),
+              _buildCategoryCard(
+                'Traditional',
+                Colors.teal,
+                Icons.account_balance,
+              ),
+              _buildCategoryCard('Contemporary', Colors.pink, Icons.music_note),
             ],
           ),
-          const SizedBox(height: AppSizes.paddingLg),
+          const SizedBox(height: 40),
           Text(
-            '💡 Search Tips',
+            'Trending Searches',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: AppSizes.paddingSm),
-          _buildSearchTip('Search by song title, artist name, or genre'),
-          _buildSearchTip('Use the tabs to filter results'),
-          _buildSearchTip('Tap on any result to view details'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTrendingChip(String label) {
-    return ActionChip(
-      label: Text(label),
-      backgroundColor: AppColors.primaryBrown.withOpacity(0.1),
-      labelStyle: const TextStyle(
-        color: AppColors.primaryBrown,
-        fontWeight: FontWeight.w500,
-      ),
-      onPressed: () {
-        _searchController.text = label;
-      },
-    );
-  }
-
-  Widget _buildSearchTip(String tip) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.paddingSm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.check_circle,
-            size: 16,
-            color: AppColors.primaryGold,
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _buildTrendingChip(context, 'Gospel'),
+              _buildTrendingChip(context, 'Hymns'),
+              _buildTrendingChip(context, 'Choir'),
+              _buildTrendingChip(context, 'Morning Worship'),
+              _buildTrendingChip(context, 'Inspiration'),
+            ],
           ),
-          const SizedBox(width: 8),
-          Expanded(
+        ],
+      ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
+    );
+  }
+
+  Widget _buildCategoryCard(String label, Color color, IconData icon) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [color.withOpacity(0.8), color],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -15,
+            bottom: -15,
+            child: Icon(icon, size: 80, color: Colors.white12),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Text(
-              tip,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
             ),
           ),
@@ -233,16 +284,32 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 
-  Widget _buildSongsList() {
+  Widget _buildTrendingChip(BuildContext context, String label) {
+    final theme = Theme.of(context);
+    return ActionChip(
+      label: Text(label),
+      backgroundColor: theme.colorScheme.onSurface.withOpacity(0.05),
+      side: BorderSide(color: theme.colorScheme.onSurface.withOpacity(0.05)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      labelStyle: TextStyle(
+        color: theme.colorScheme.onSurface.withOpacity(0.7),
+        fontSize: 13,
+      ),
+      onPressed: () {
+        _searchController.text = label;
+      },
+    );
+  }
+
+  Widget _buildSongsList(BuildContext context) {
     if (_filteredSongs.isEmpty) {
-      return _buildEmptyState('No songs found');
+      return _buildEmptyState(context, 'No songs found');
     }
 
     return ListView.separated(
       padding: const EdgeInsets.all(AppSizes.paddingMd),
       itemCount: _filteredSongs.length,
-      separatorBuilder: (context, index) =>
-          const SizedBox(height: AppSizes.paddingSm),
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final song = _filteredSongs[index];
         return BlocBuilder<LibraryBloc, LibraryState>(
@@ -253,23 +320,11 @@ class _SearchScreenState extends State<SearchScreen>
 
             return SongCard(
               song: song,
-              showFavoriteButton: true,
               isFavorite: isFavorite,
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SongDetailScreen(song: song),
-                  ),
-                );
-              },
-              onPlayTap: () {
                 context.read<PlayerBloc>().add(
                   PlayerPlaySong(song, queue: _filteredSongs),
                 );
-              },
-              onFavoriteTap: () {
-                context.read<LibraryBloc>().add(LibraryToggleFavorite(song));
               },
             );
           },
@@ -278,18 +333,18 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 
-  Widget _buildAlbumsList() {
+  Widget _buildAlbumsList(BuildContext context) {
     if (_filteredAlbums.isEmpty) {
-      return _buildEmptyState('No albums found');
+      return _buildEmptyState(context, 'No albums found');
     }
 
     return GridView.builder(
       padding: const EdgeInsets.all(AppSizes.paddingMd),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: AppSizes.paddingSm,
-        mainAxisSpacing: AppSizes.paddingSm,
-        childAspectRatio: 0.7,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.75,
       ),
       itemCount: _filteredAlbums.length,
       itemBuilder: (context, index) {
@@ -309,16 +364,15 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 
-  Widget _buildArtistsList() {
+  Widget _buildArtistsList(BuildContext context) {
     if (_filteredArtists.isEmpty) {
-      return _buildEmptyState('No artists found');
+      return _buildEmptyState(context, 'No artists found');
     }
 
     return ListView.separated(
       padding: const EdgeInsets.all(AppSizes.paddingMd),
       itemCount: _filteredArtists.length,
-      separatorBuilder: (context, index) =>
-          const SizedBox(height: AppSizes.paddingSm),
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final artist = _filteredArtists[index];
         return ArtistCard(
@@ -336,23 +390,22 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 
-  Widget _buildEmptyState(String message) {
+  Widget _buildEmptyState(BuildContext context, String message) {
     final theme = Theme.of(context);
-
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.search_off,
+            Icons.search_rounded,
             size: 64,
-            color: theme.colorScheme.onSurface.withOpacity(0.3),
+            color: theme.colorScheme.onSurface.withOpacity(0.12),
           ),
-          const SizedBox(height: AppSizes.paddingMd),
+          const SizedBox(height: 16),
           Text(
             message,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withOpacity(0.38),
             ),
           ),
         ],

@@ -50,7 +50,10 @@ class ArtistDashboardScreen extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [AppColors.primaryBrown, AppColors.primaryGold],
+                    colors: [
+                      theme.colorScheme.primary,
+                      theme.colorScheme.secondary,
+                    ],
                   ),
                 ),
                 child: Center(
@@ -76,7 +79,7 @@ class ArtistDashboardScreen extends StatelessWidget {
                         icon: Icons.music_note,
                         title: 'Total Songs',
                         value: artistStatus?['total_songs']?.toString() ?? '0',
-                        color: Colors.blue,
+                        color: theme.colorScheme.primary,
                       ),
                     ),
                     const SizedBox(width: AppSizes.paddingMd),
@@ -87,7 +90,8 @@ class ArtistDashboardScreen extends StatelessWidget {
                         title: 'Total Streams',
                         value:
                             artistStatus?['total_streams']?.toString() ?? '0',
-                        color: Colors.green,
+                        color: Colors
+                            .green, // Keep green for success/streams but maybe use theme.colorScheme.secondary
                       ),
                     ),
                   ],
@@ -101,7 +105,7 @@ class ArtistDashboardScreen extends StatelessWidget {
                         icon: Icons.album,
                         title: 'Albums',
                         value: artistStatus?['total_albums']?.toString() ?? '0',
-                        color: Colors.orange,
+                        color: theme.colorScheme.secondary,
                       ),
                     ),
                     const SizedBox(width: AppSizes.paddingMd),
@@ -112,7 +116,8 @@ class ArtistDashboardScreen extends StatelessWidget {
                         title: 'Earnings',
                         value:
                             '₹${artistStatus?['total_earnings']?.toString() ?? '0'}',
-                        color: Colors.purple,
+                        color: Colors
+                            .purple, // Keep purple as a distinct stat color
                       ),
                     ),
                   ],
@@ -133,7 +138,7 @@ class ArtistDashboardScreen extends StatelessWidget {
                   icon: Icons.upload_file,
                   title: 'Upload New Song',
                   subtitle: 'Share your latest music',
-                  color: AppColors.primaryBrown,
+                  color: theme.colorScheme.primary,
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(

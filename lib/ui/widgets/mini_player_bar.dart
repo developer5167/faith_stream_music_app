@@ -5,12 +5,16 @@ import '../../blocs/player/player_event.dart';
 import '../../blocs/player/player_state.dart';
 import '../../utils/constants.dart';
 import '../screens/now_playing_screen.dart';
+import '../../config/app_theme.dart';
 
 class MiniPlayerBar extends StatelessWidget {
   const MiniPlayerBar({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return BlocBuilder<PlayerBloc, PlayerState>(
       builder: (context, state) {
         // Show mini-player if playing, paused, or loading a song
@@ -55,7 +59,7 @@ class MiniPlayerBar extends StatelessWidget {
             child: Container(
               height: 70,
               decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
+                color: theme.colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -72,9 +76,11 @@ class MiniPlayerBar extends StatelessWidget {
                         ? 0.0
                         : progress, // Show no progress during loading
                     minHeight: 2,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.primaryBrown,
+                    backgroundColor: theme.colorScheme.onSurface.withOpacity(
+                      0.1,
+                    ),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      isDark ? AppTheme.darkPrimary : AppTheme.lightPrimary,
                     ),
                   ),
                   // Player controls
@@ -98,11 +104,11 @@ class MiniPlayerBar extends StatelessWidget {
                                       return Container(
                                         width: 48,
                                         height: 48,
-                                        color: AppColors.primaryBrown
+                                        color: theme.colorScheme.primary
                                             .withOpacity(0.2),
-                                        child: const Icon(
+                                        child: Icon(
                                           Icons.music_note,
-                                          color: AppColors.primaryBrown,
+                                          color: theme.colorScheme.primary,
                                           size: 24,
                                         ),
                                       );
@@ -111,12 +117,11 @@ class MiniPlayerBar extends StatelessWidget {
                                 : Container(
                                     width: 48,
                                     height: 48,
-                                    color: AppColors.primaryBrown.withOpacity(
-                                      0.2,
-                                    ),
-                                    child: const Icon(
+                                    color: theme.colorScheme.primary
+                                        .withOpacity(0.2),
+                                    child: Icon(
                                       Icons.music_note,
-                                      color: AppColors.primaryBrown,
+                                      color: theme.colorScheme.primary,
                                       size: 24,
                                     ),
                                   ),
@@ -131,20 +136,18 @@ class MiniPlayerBar extends StatelessWidget {
                               children: [
                                 Text(
                                   song.title,
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
                                   song.displayArtist,
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.6),
-                                      ),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.6),
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -154,20 +157,22 @@ class MiniPlayerBar extends StatelessWidget {
 
                           // Controls
                           if (isLoading)
-                            const SizedBox(
+                            SizedBox(
                               width: 32,
                               height: 32,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.primaryBrown,
+                                  isDark
+                                      ? AppTheme.darkPrimary
+                                      : AppTheme.lightPrimary,
                                 ),
                               ),
                             )
                           else ...[
                             IconButton(
                               icon: const Icon(Icons.skip_previous),
-                              color: AppColors.primaryBrown,
+                              color: theme.colorScheme.onSurface,
                               onPressed: () {
                                 context.read<PlayerBloc>().add(
                                   const PlayerSkipPrevious(),
@@ -179,7 +184,7 @@ class MiniPlayerBar extends StatelessWidget {
                                 isPlaying ? Icons.pause : Icons.play_arrow,
                                 size: 32,
                               ),
-                              color: AppColors.primaryBrown,
+                              color: theme.colorScheme.onSurface,
                               onPressed: () {
                                 if (isPlaying) {
                                   context.read<PlayerBloc>().add(
@@ -194,7 +199,7 @@ class MiniPlayerBar extends StatelessWidget {
                             ),
                             IconButton(
                               icon: const Icon(Icons.skip_next),
-                              color: AppColors.primaryBrown,
+                              color: theme.colorScheme.onSurface,
                               onPressed: () {
                                 context.read<PlayerBloc>().add(
                                   const PlayerSkipNext(),

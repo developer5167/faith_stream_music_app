@@ -11,10 +11,7 @@ import '../../utils/constants.dart';
 class PlaylistSelectionSheet extends StatefulWidget {
   final Song song;
 
-  const PlaylistSelectionSheet({
-    super.key,
-    required this.song,
-  });
+  const PlaylistSelectionSheet({super.key, required this.song});
 
   @override
   State<PlaylistSelectionSheet> createState() => _PlaylistSelectionSheetState();
@@ -36,9 +33,7 @@ class _PlaylistSelectionSheetState extends State<PlaylistSelectionSheet> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(20),
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SafeArea(
         child: Column(
@@ -50,7 +45,7 @@ class _PlaylistSelectionSheetState extends State<PlaylistSelectionSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -67,8 +62,8 @@ class _PlaylistSelectionSheetState extends State<PlaylistSelectionSheet> {
                   Text(
                     'Add to Playlist',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -87,12 +82,14 @@ class _PlaylistSelectionSheetState extends State<PlaylistSelectionSheet> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryBrown.withOpacity(0.2),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.add,
-                    color: AppColors.primaryBrown,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
                 title: const Text('Create New Playlist'),
@@ -135,10 +132,16 @@ class _PlaylistSelectionSheetState extends State<PlaylistSelectionSheet> {
                         ),
                         const SizedBox(width: AppSizes.paddingSm),
                         ElevatedButton(
-                          onPressed: _isCreating ? null : _createPlaylistAndAddSong,
+                          onPressed: _isCreating
+                              ? null
+                              : _createPlaylistAndAddSong,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryBrown,
-                            foregroundColor: Colors.white,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onPrimary,
                           ),
                           child: _isCreating
                               ? const SizedBox(
@@ -183,20 +186,28 @@ class _PlaylistSelectionSheetState extends State<PlaylistSelectionSheet> {
                             Icon(
                               Icons.playlist_play,
                               size: 48,
-                              color: Colors.grey[400],
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.3),
                             ),
                             const SizedBox(height: AppSizes.paddingSm),
                             Text(
                               'No playlists yet',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.grey[600],
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.6),
                                   ),
                             ),
                             const SizedBox(height: AppSizes.paddingSm),
                             Text(
                               'Create your first playlist above',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey[500],
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.5),
                                   ),
                             ),
                           ],
@@ -236,19 +247,15 @@ class _PlaylistSelectionSheetState extends State<PlaylistSelectionSheet> {
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: AppColors.primaryBrown.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.playlist_play,
-          color: AppColors.primaryBrown,
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
-      title: Text(
-        playlist.name,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      title: Text(playlist.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: playlist.description != null && playlist.description!.isNotEmpty
           ? Text(
               playlist.description!,
@@ -278,9 +285,7 @@ class _PlaylistSelectionSheetState extends State<PlaylistSelectionSheet> {
     });
 
     // Create the playlist
-    context.read<LibraryBloc>().add(
-          LibraryCreatePlaylist(name: playlistName),
-        );
+    context.read<LibraryBloc>().add(LibraryCreatePlaylist(name: playlistName));
 
     // Wait a bit for the playlist to be created
     await Future.delayed(const Duration(milliseconds: 500));
@@ -296,11 +301,11 @@ class _PlaylistSelectionSheetState extends State<PlaylistSelectionSheet> {
 
       // Add the song to the new playlist
       context.read<LibraryBloc>().add(
-            LibraryAddSongToPlaylist(
-              playlistId: newPlaylist.id,
-              songId: widget.song.id,
-            ),
-          );
+        LibraryAddSongToPlaylist(
+          playlistId: newPlaylist.id,
+          songId: widget.song.id,
+        ),
+      );
 
       if (mounted) {
         Navigator.pop(context);
@@ -322,11 +327,8 @@ class _PlaylistSelectionSheetState extends State<PlaylistSelectionSheet> {
 
   void _addSongToPlaylist(Playlist playlist) {
     context.read<LibraryBloc>().add(
-          LibraryAddSongToPlaylist(
-            playlistId: playlist.id,
-            songId: widget.song.id,
-          ),
-        );
+      LibraryAddSongToPlaylist(playlistId: playlist.id, songId: widget.song.id),
+    );
 
     Navigator.pop(context);
 

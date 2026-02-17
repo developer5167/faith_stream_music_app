@@ -4,6 +4,7 @@ import '../../blocs/library/library_bloc.dart';
 import '../../blocs/library/library_event.dart';
 import '../../blocs/library/library_state.dart';
 import '../../utils/constants.dart';
+import '../../config/app_theme.dart';
 
 class CreatePlaylistScreen extends StatefulWidget {
   const CreatePlaylistScreen({super.key});
@@ -78,17 +79,17 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                   width: 160,
                   height: 160,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryBrown.withOpacity(0.1),
+                    color: theme.colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: AppColors.primaryBrown.withOpacity(0.3),
+                      color: theme.colorScheme.primary.withOpacity(0.3),
                       width: 2,
                     ),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.add_a_photo_outlined,
                     size: 48,
-                    color: AppColors.primaryBrown,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
               ),
@@ -111,8 +112,8 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.primaryBrown,
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.primary,
                       width: 2,
                     ),
                   ),
@@ -150,7 +151,9 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                   subtitle: const Text('Visible to everyone on FaithStream'),
                   value: _isPublic,
                   onChanged: (val) => setState(() => _isPublic = val),
-                  activeColor: AppColors.primaryBrown,
+                  activeColor: theme.brightness == Brightness.dark
+                      ? AppTheme.darkPrimary
+                      : AppTheme.lightPrimary,
                 ),
               ),
               const SizedBox(height: AppSizes.paddingXl),
@@ -161,8 +164,12 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleCreate,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBrown,
-                    foregroundColor: Colors.white,
+                    backgroundColor: theme.brightness == Brightness.dark
+                        ? AppTheme.darkPrimary
+                        : AppTheme.lightPrimary,
+                    foregroundColor: theme.brightness == Brightness.dark
+                        ? Colors.black
+                        : Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(28),
                     ),

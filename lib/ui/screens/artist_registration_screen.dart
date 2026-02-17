@@ -9,6 +9,7 @@ import '../../utils/image_upload_helper.dart';
 import '../../utils/video_recording_helper.dart';
 import '../../services/upload_service.dart';
 import '../../repositories/user_repository.dart';
+import '../../config/app_theme.dart';
 
 class ArtistRegistrationScreen extends StatefulWidget {
   const ArtistRegistrationScreen({super.key});
@@ -110,14 +111,14 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
               children: [
                 // Header
                 Card(
-                  color: AppColors.primaryGold.withOpacity(0.1),
+                  color: theme.colorScheme.secondary.withOpacity(0.1),
                   child: Padding(
                     padding: const EdgeInsets.all(AppSizes.paddingMd),
                     child: Row(
                       children: [
                         Icon(
                           Icons.star,
-                          color: AppColors.primaryGold,
+                          color: theme.colorScheme.secondary,
                           size: 40,
                         ),
                         const SizedBox(width: AppSizes.paddingMd),
@@ -343,19 +344,19 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
                   Container(
                     padding: const EdgeInsets.all(AppSizes.paddingMd),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      border: Border.all(color: Colors.green.shade200),
+                      color: Colors.green.withOpacity(0.1),
+                      border: Border.all(color: Colors.green.withOpacity(0.3)),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle, color: Colors.green.shade700),
+                        const Icon(Icons.check_circle, color: Colors.green),
                         const SizedBox(width: AppSizes.paddingMd),
-                        Expanded(
+                        const Expanded(
                           child: Text(
                             'Selfie video uploaded successfully!',
                             style: TextStyle(
-                              color: Colors.green.shade700,
+                              color: Colors.green,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -427,12 +428,15 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
 
                 // Info Card
                 Card(
-                  color: Colors.blue.shade50,
+                  color: theme.colorScheme.primaryContainer.withOpacity(0.3),
                   child: Padding(
                     padding: const EdgeInsets.all(AppSizes.paddingMd),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline, color: Colors.blue),
+                        Icon(
+                          Icons.info_outline,
+                          color: theme.colorScheme.primary,
+                        ),
                         const SizedBox(width: AppSizes.paddingMd),
                         Expanded(
                           child: Text(
@@ -457,10 +461,12 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
 
                 // Note card for supporting links
                 Card(
-                  color: Colors.amber.shade50,
+                  color: theme.colorScheme.secondaryContainer.withOpacity(0.3),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: Colors.amber.shade200),
+                    side: BorderSide(
+                      color: theme.colorScheme.secondary.withOpacity(0.2),
+                    ),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(AppSizes.paddingMd),
@@ -469,7 +475,7 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
                       children: [
                         Icon(
                           Icons.lightbulb_outline,
-                          color: Colors.amber.shade700,
+                          color: theme.colorScheme.secondary,
                           size: 22,
                         ),
                         const SizedBox(width: AppSizes.paddingSm),
@@ -480,7 +486,7 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
                             'helps us verify your identity as a real artist and speeds up '
                             'the approval process significantly.',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.amber.shade900,
+                              color: theme.colorScheme.onSecondaryContainer,
                               height: 1.4,
                             ),
                           ),
@@ -549,13 +555,23 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
                   child: ElevatedButton(
                     onPressed: _submitRequest,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBrown,
-                      foregroundColor: Colors.white,
+                      backgroundColor: theme.brightness == Brightness.dark
+                          ? AppTheme.darkPrimary
+                          : AppTheme.lightPrimary,
+                      foregroundColor: theme.brightness == Brightness.dark
+                          ? Colors.black
+                          : Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text(
                       'Submit Application',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -575,6 +591,7 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
     required String description,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
     return Card(
       child: InkWell(
         onTap: onTap,
@@ -582,7 +599,7 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
           padding: const EdgeInsets.all(AppSizes.paddingMd),
           child: Row(
             children: [
-              Icon(icon, color: AppColors.primaryBrown),
+              Icon(icon, color: theme.colorScheme.primary),
               const SizedBox(width: AppSizes.paddingMd),
               Expanded(
                 child: Column(

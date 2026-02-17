@@ -11,6 +11,8 @@ import '../widgets/song_card.dart';
 import '../widgets/mini_player_bar.dart';
 import 'song_detail_screen.dart';
 
+import '../../config/app_theme.dart';
+
 class PlaylistDetailScreen extends StatelessWidget {
   final Playlist playlist;
 
@@ -37,6 +39,7 @@ class PlaylistDetailScreen extends StatelessWidget {
 
   Widget _buildContent(BuildContext context, Playlist currentPlaylist) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -52,6 +55,7 @@ class PlaylistDetailScreen extends StatelessWidget {
                 currentPlaylist.name,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
+                  color: Colors.white,
                   shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
                 ),
               ),
@@ -64,7 +68,16 @@ class PlaylistDetailScreen extends StatelessWidget {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [AppColors.primaryBrown, AppColors.primaryGold],
+                        colors: [
+                          (isDark
+                                  ? AppTheme.darkPrimary
+                                  : AppTheme.lightPrimary)
+                              .withOpacity(0.8),
+                          (isDark
+                                  ? AppTheme.darkPrimary
+                                  : AppTheme.lightPrimary)
+                              .withOpacity(0.5),
+                        ],
                       ),
                     ),
                   ),
@@ -84,7 +97,8 @@ class PlaylistDetailScreen extends StatelessWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.7),
+                          theme.scaffoldBackgroundColor.withOpacity(0.8),
+                          theme.scaffoldBackgroundColor,
                         ],
                       ),
                     ),
@@ -211,8 +225,10 @@ class PlaylistDetailScreen extends StatelessWidget {
                           style: TextStyle(fontSize: 16),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBrown,
-                          foregroundColor: Colors.white,
+                          backgroundColor: isDark
+                              ? AppTheme.darkPrimary
+                              : AppTheme.lightPrimary,
+                          foregroundColor: isDark ? Colors.black : Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 48,
                             vertical: 16,
@@ -313,6 +329,7 @@ class PlaylistDetailScreen extends StatelessWidget {
   }
 
   void _showEditPlaylistDialog(BuildContext context, Playlist currentPlaylist) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final nameController = TextEditingController(text: currentPlaylist.name);
     final descriptionController = TextEditingController(
       text: currentPlaylist.description ?? '',
@@ -353,7 +370,9 @@ class PlaylistDetailScreen extends StatelessWidget {
                       isPublic = value;
                     });
                   },
-                  activeColor: AppColors.primaryBrown,
+                  activeColor: isDark
+                      ? AppTheme.darkPrimary
+                      : AppTheme.lightPrimary,
                 ),
               ],
             ),
@@ -390,8 +409,10 @@ class PlaylistDetailScreen extends StatelessWidget {
                 Navigator.pop(context); // Return to playlists screen
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryBrown,
-                foregroundColor: Colors.white,
+                backgroundColor: isDark
+                    ? AppTheme.darkPrimary
+                    : AppTheme.lightPrimary,
+                foregroundColor: isDark ? Colors.black : Colors.white,
               ),
               child: const Text('Save'),
             ),

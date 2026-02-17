@@ -104,8 +104,8 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage Songs'),
-        backgroundColor: AppColors.primaryBrown,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -119,14 +119,14 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
                   Text(
                     'No songs found',
                     style: theme.textTheme.titleLarge?.copyWith(
-                      color: Colors.grey[600],
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                   const SizedBox(height: AppSizes.paddingSm),
                   Text(
                     'Upload your first song to get started',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[500],
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
                     ),
                   ),
                 ],
@@ -157,7 +157,12 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
                               : null,
                         ),
                         child: song['cover_image_url'] == null
-                            ? const Icon(Icons.music_note, color: Colors.grey)
+                            ? Icon(
+                                Icons.music_note,
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.3,
+                                ),
+                              )
                             : null,
                       ),
                       title: Text(
@@ -247,6 +252,7 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
         minChildSize: 0.5,
         expand: false,
         builder: (context, scrollController) {
+          final theme = Theme.of(context);
           return Container(
             padding: const EdgeInsets.all(AppSizes.paddingMd),
             child: Column(
@@ -256,7 +262,7 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: AppSizes.paddingMd),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: theme.colorScheme.onSurface.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -336,14 +342,18 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
                         Container(
                           padding: const EdgeInsets.all(AppSizes.paddingMd),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: theme.colorScheme.surfaceVariant.withOpacity(
+                              0.3,
+                            ),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             song['lyrics'],
                             style: TextStyle(
                               height: 1.5,
-                              color: Colors.grey[800],
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.8,
+                              ),
                             ),
                           ),
                         ),

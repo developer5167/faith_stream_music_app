@@ -24,12 +24,16 @@ class ArtistCard extends StatelessWidget {
               // Artist Avatar
               CircleAvatar(
                 radius: 40,
-                backgroundColor: AppColors.primaryBrown.withOpacity(0.1),
+                backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
                 backgroundImage: artist.profilePicUrl != null
                     ? NetworkImage(artist.profilePicUrl!)
                     : null,
                 child: artist.profilePicUrl == null
-                    ? const Icon(Icons.person, size: 40)
+                    ? Icon(
+                        Icons.person,
+                        size: 40,
+                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      )
                     : null,
               ),
               const SizedBox(height: AppSizes.paddingSm),

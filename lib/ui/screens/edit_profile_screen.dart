@@ -7,6 +7,7 @@ import '../../blocs/profile/profile_state.dart';
 import '../../utils/constants.dart';
 import '../../utils/image_upload_helper.dart';
 import '../../services/upload_service.dart';
+import '../../config/app_theme.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final User user;
@@ -112,7 +113,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 60,
-                        backgroundColor: AppColors.primaryBrown.withOpacity(
+                        backgroundColor: theme.colorScheme.primary.withOpacity(
                           0.2,
                         ),
                         backgroundImage:
@@ -122,10 +123,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: _profilePicUrlController.text.isEmpty
                             ? Text(
                                 widget.user.name[0].toUpperCase(),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 48,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryBrown,
+                                  color: theme.colorScheme.primary,
                                 ),
                               )
                             : null,
@@ -134,7 +135,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         bottom: 0,
                         right: 0,
                         child: CircleAvatar(
-                          backgroundColor: AppColors.primaryBrown,
+                          backgroundColor: theme.colorScheme.primary,
                           child: IconButton(
                             icon: const Icon(Icons.camera_alt, size: 20),
                             color: Colors.white,
@@ -242,9 +243,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: ElevatedButton(
                     onPressed: _saveProfile,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBrown,
-                      foregroundColor: Colors.white,
+                      backgroundColor: theme.brightness == Brightness.dark
+                          ? AppTheme.darkPrimary
+                          : AppTheme.lightPrimary,
+                      foregroundColor: theme.brightness == Brightness.dark
+                          ? Colors.black
+                          : Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text(
                       'Save Changes',

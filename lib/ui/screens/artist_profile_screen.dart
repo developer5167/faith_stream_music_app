@@ -1,7 +1,6 @@
 import 'package:faith_stream_music_app/blocs/player/player_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 import '../../models/artist.dart';
 import '../../models/song.dart';
 import '../../models/album.dart';
@@ -10,7 +9,12 @@ import '../../services/artist_service.dart';
 import '../../services/api_client.dart';
 import '../../services/storage_service.dart';
 import '../../blocs/player/player_bloc.dart';
+import '../../blocs/player/player_state.dart';
+import '../../config/app_theme.dart';
 import '../widgets/mini_player_bar.dart';
+import '../widgets/gradient_background.dart';
+import '../widgets/song_card.dart';
+import '../widgets/premium_card.dart';
 import 'album_detail_screen.dart';
 
 class ArtistProfileScreen extends StatefulWidget {
@@ -45,37 +49,9 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
       _isLoadingAlbums = true;
     });
 
-    // Check favorite status
     _checkFavoriteStatus(artistService);
-
-    // Fetch songs
     _fetchSongs(artistService);
-
-    // Fetch albums
     _fetchAlbums(artistService);
-
-    // Refresh artist details to get latest counts if possible
-    // Note: The artist object passed in might be stale.
-    // We should ideally fetch the artist details again, but existing `getArtistDetails` returns `Artist?`.
-    // Let's try to update the artist object if we can.
-    try {
-      final updatedArtist = await artistService.getArtistDetails(
-        widget.artist.id,
-      );
-      if (updatedArtist != null && mounted) {
-        setState(() {
-          // We can't update widget.artist, but we can use local state variables for counts
-          // or just rely on the fact that we are displaying fetched content lists.
-          // For now, let's update the counts based on the fetched lists + updated artist data.
-          // Actually, `_fetchSongs` and `_fetchAlbums` populate lists.
-          // We can use `_popularSongs.length` and `_albums.length` for the counts if the API returns *all* of them.
-          // But pagination exists.
-          // Best to use the updated artist object's counts if available.
-        });
-      }
-    } catch (e) {
-      debugPrint('Error updating artist details: $e');
-    }
   }
 
   Future<void> _checkFavoriteStatus(ArtistService artistService) async {
@@ -162,440 +138,353 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
-    // Use local lists length if available/loaded, otherwise fallback to widget.artist counts
-    final songCount = _popularSongs.isNotEmpty
-        ? _popularSongs.length
-        : (widget.artist.totalSongs ?? 0);
-    final albumCount = _albums.isNotEmpty
-        ? _albums.length
-        : (widget.artist.totalAlbums ?? 0);
-
-    return Scaffold(
-      bottomNavigationBar: const MiniPlayerBar(),
-      body: CustomScrollView(
-        slivers: [
-          // App Bar with artist profile image
-          SliverAppBar(
-            expandedHeight: size.height * 0.4,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                widget.artist.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
+    return GradientBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        bottomNavigationBar: const MiniPlayerBar(),
+        body: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: size.height * 0.4,
+              pinned: true,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              flexibleSpace: FlexibleSpaceBar(
+                title: Text(
+                  widget.artist.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shadows: [Shadow(color: Colors.black54, blurRadius: 10)],
+                  ),
                 ),
-              ),
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Artist profile/cover image
-                  if (widget.artist.bannerImageUrl != null)
-                    Image.network(
-                      widget.artist.bannerImageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: AppColors.primaryBrown.withOpacity(0.2),
-                          child: const Icon(
-                            Icons.person,
-                            size: 120,
-                            color: AppColors.primaryBrown,
-                          ),
-                        );
-                      },
-                    )
-                  else
-                    Container(
-                      color: AppColors.primaryBrown.withOpacity(0.2),
-                      child: const Icon(
-                        Icons.person,
-                        size: 120,
-                        color: AppColors.primaryBrown,
-                      ),
-                    ),
-                  // Gradient overlay
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.7),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Artist details
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSizes.paddingMd),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Stats row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildStatCard(
-                        context,
-                        icon: Icons.music_note,
-                        label: 'Songs',
-                        value: '$songCount',
-                      ),
-                      _buildStatCard(
-                        context,
-                        icon: Icons.album,
-                        label: 'Albums',
-                        value: '$albumCount',
-                      ),
-                      _buildStatCard(
-                        context,
-                        icon: Icons.people, // Changed icon
-                        label: 'Followers',
-                        value: '${widget.artist.totalFollowers ?? 0}',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSizes.paddingLg),
-
-                  // Action buttons (Only Favorite now)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _toggleFavorite,
-                          icon: Icon(
-                            _isFavorite
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                          ),
-                          label: Text(
-                            _isFavorite ? 'Favorited' : 'Add to Favorites',
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryBrown,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Removed "Follow" and "More" button rows from previous implementation logic
-                      // To be safe, I'm replacing the entire section including "More actions"
-                    ],
-                  ),
-                  const SizedBox(height: AppSizes.paddingSm),
-
-                  // Share button only (removed More)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildIconButton(
-                        context,
-                        icon: Icons.share,
-                        label: 'Share',
-                        onTap: () {
-                          // TODO: Share artist profile
-                        },
-                      ),
-                    ],
-                  ),
-
-                  if (widget.artist.bio != null &&
-                      widget.artist.bio!.isNotEmpty) ...[
-                    const SizedBox(height: AppSizes.paddingLg),
-                    const Divider(),
-                    const SizedBox(height: AppSizes.paddingMd),
-                    Text(
-                      'About',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.paddingSm),
-                    Text(
-                      widget.artist.bio!,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.8),
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: AppSizes.paddingLg),
-                  const Divider(),
-                  const SizedBox(height: AppSizes.paddingMd),
-
-                  // Popular songs section
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Popular Songs',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          // TODO: Navigate to all songs
-                        },
-                        child: const Text('See All'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSizes.paddingSm),
-
-                  if (_isLoadingSongs)
-                    const Center(child: CircularProgressIndicator())
-                  else if (_popularSongs.isEmpty)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSizes.paddingLg),
-                        child: Center(
-                          child: Text(
-                            'No songs found',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _popularSongs.length > 5
-                          ? 5
-                          : _popularSongs.length,
-                      separatorBuilder: (context, index) =>
-                          const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final song = _popularSongs[index];
-                        return ListTile(
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: Image.network(
-                              song.coverImageUrl ??
-                                  widget.artist.profilePicUrl ??
-                                  '',
-                              width: 48,
-                              height: 48,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Container(
-                                    color: Colors.grey[200],
-                                    width: 48,
-                                    height: 48,
-                                    child: const Icon(Icons.music_note),
-                                  ),
-                            ),
-                          ),
-                          title: Text(song.title),
-                          subtitle: Text(song.albumTitle ?? 'Single'),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.play_circle_fill),
-                            color: AppColors.primaryBrown,
-                            onPressed: () {
-                              context.read<PlayerBloc>().add(
-                                PlayerPlaySong(song, queue: _popularSongs),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
-
-                  const SizedBox(height: AppSizes.paddingMd),
-
-                  // Albums section
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Albums',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          // TODO: Navigate to all albums
-                        },
-                        child: const Text('See All'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSizes.paddingSm),
-
-                  if (_isLoadingAlbums)
-                    const Center(child: CircularProgressIndicator())
-                  else if (_albums.isEmpty)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSizes.paddingLg),
-                        child: Center(
-                          child: Text(
-                            'No albums found',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    SizedBox(
-                      height: 180,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _albums.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(width: 12),
-                        itemBuilder: (context, index) {
-                          final albumData = _albums[index];
-                          final album = Album.fromJson(albumData);
-                          return InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      AlbumDetailScreen(album: album),
-                                ),
-                              );
-                            },
-                            child: SizedBox(
-                              width: 140,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      album.coverImageUrl ?? '',
-                                      width: 140,
-                                      height: 140,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                            return Container(
-                                              width: 140,
-                                              height: 140,
-                                              color: Colors.grey[300],
-                                              child: const Icon(
-                                                Icons.album,
-                                                size: 50,
-                                                color: Colors.grey,
-                                              ),
-                                            );
-                                          },
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    album.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    album.displayDate,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.bodySmall,
-                                  ),
-                                ],
-                              ),
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (widget.artist.bannerImageUrl != null)
+                      Image.network(
+                        widget.artist.bannerImageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.white10,
+                            child: const Icon(
+                              Icons.person,
+                              size: 100,
+                              color: Colors.white24,
                             ),
                           );
                         },
+                      )
+                    else
+                      Container(
+                        color: Colors.white10,
+                        child: const Icon(
+                          Icons.person,
+                          size: 100,
+                          color: Colors.white24,
+                        ),
+                      ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.6),
+                            theme.scaffoldBackgroundColor,
+                          ],
+                        ),
                       ),
                     ),
-
-                  const SizedBox(height: AppSizes.paddingXl),
-                ],
+                  ],
+                ),
               ),
+            ),
+
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.paddingMd,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Stats section
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildStatBadge(
+                            context,
+                            Icons.music_note_rounded,
+                            '${widget.artist.totalSongs ?? 0} Songs',
+                          ),
+                          const SizedBox(width: 8),
+                          _buildStatBadge(
+                            context,
+                            Icons.album_rounded,
+                            '${widget.artist.totalAlbums ?? 0} Albums',
+                          ),
+                          const SizedBox(width: 8),
+                          _buildStatBadge(
+                            context,
+                            Icons.people_rounded,
+                            '${widget.artist.totalFollowers ?? 0} Followers',
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Actions
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _toggleFavorite,
+                            icon: Icon(
+                              _isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              size: 20,
+                            ),
+                            label: Text(
+                              _isFavorite ? 'Favorited' : 'Follow Artist',
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _isFavorite
+                                  ? theme.colorScheme.onSurface.withOpacity(0.1)
+                                  : theme.colorScheme.primary,
+                              foregroundColor: _isFavorite
+                                  ? theme.colorScheme.onSurface
+                                  : theme.colorScheme.onPrimary,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.onSurface.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.share_outlined,
+                              color: theme.colorScheme.onSurface,
+                              size: 20,
+                            ),
+                            onPressed: () {},
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+
+                    if (widget.artist.bio != null &&
+                        widget.artist.bio!.isNotEmpty) ...[
+                      Text(
+                        'About',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.artist.bio!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+
+                    // Popular Songs
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Popular Songs',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {},
+                          child: Text(
+                            'See All',
+                            style: TextStyle(color: AppTheme.darkPrimary),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (_isLoadingSongs)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (_popularSongs.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Text(
+                            'No songs found',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.54,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      BlocBuilder<PlayerBloc, PlayerState>(
+                        builder: (context, state) {
+                          return ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _popularSongs.length > 5
+                                ? 5
+                                : _popularSongs.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 4),
+                            itemBuilder: (context, index) {
+                              final song = _popularSongs[index];
+                              return SongCard(
+                                song: song,
+                                isFavorite: false,
+                                onTap: () {
+                                  context.read<PlayerBloc>().add(
+                                    PlayerPlaySong(song, queue: _popularSongs),
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
+
+                    const SizedBox(height: 32),
+
+                    // Albums
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Albums',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {},
+                          child: Text(
+                            'See All',
+                            style: TextStyle(color: AppTheme.darkPrimary),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (_isLoadingAlbums)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (_albums.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Text(
+                            'No albums found',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.54,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        height: 220,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _albums.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(width: 16),
+                          itemBuilder: (context, index) {
+                            final album = Album.fromJson(_albums[index]);
+                            return PremiumCard(
+                              title: album.title,
+                              subtitle: album.displayDate,
+                              imageUrl: album.coverImageUrl,
+                              width: 150,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        AlbumDetailScreen(album: album),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatBadge(BuildContext context, IconData icon, String text) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.onSurface.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.1)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              fontSize: 12,
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    final theme = Theme.of(context);
-
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingMd,
-          vertical: AppSizes.paddingSm,
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: AppColors.primaryBrown, size: 32),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryBrown,
-              ),
-            ),
-            Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIconButton(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.paddingSm),
-        child: Column(
-          children: [
-            Icon(icon, color: AppColors.primaryBrown, size: 28),
-            const SizedBox(height: 4),
-            Text(label, style: theme.textTheme.bodySmall),
-          ],
-        ),
       ),
     );
   }

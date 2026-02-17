@@ -6,6 +6,8 @@ import '../../blocs/library/library_event.dart';
 import '../../utils/constants.dart';
 import '../widgets/loading_indicator.dart';
 import '../widgets/mini_player_bar.dart';
+import '../widgets/gradient_background.dart';
+import '../widgets/premium_card.dart';
 import 'album_detail_screen.dart';
 
 class FavoriteAlbumsScreen extends StatelessWidget {
@@ -15,153 +17,122 @@ class FavoriteAlbumsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Fav Albums')),
-      bottomNavigationBar: const MiniPlayerBar(),
-      body: BlocBuilder<LibraryBloc, LibraryState>(
-        builder: (context, state) {
-          if (state is LibraryAlbumsLoading) {
-            return const Center(child: LoadingIndicator());
-          }
-
-          if (state is LibraryLoaded) {
-            final albums = state.favoriteAlbums;
-
-            if (albums.isEmpty) {
-              return _buildEmptyState(context);
+    return GradientBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(
+            'Favorite Albums',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ),
+        bottomNavigationBar: const MiniPlayerBar(),
+        body: BlocBuilder<LibraryBloc, LibraryState>(
+          builder: (context, state) {
+            if (state is LibraryAlbumsLoading) {
+              return const Center(child: LoadingIndicator());
             }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<LibraryBloc>().add(LibraryLoadFavoriteAlbums());
-                await Future.delayed(const Duration(seconds: 1));
-              },
-              child: Column(
-                children: [
-                  // Header with Play All
-                  Padding(
-                    padding: const EdgeInsets.all(AppSizes.paddingMd),
-                    child: Row(
-                      children: [
-                        Text(
-                          '${albums.length} Albums',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+            if (state is LibraryLoaded) {
+              final albums = state.favoriteAlbums;
+
+              if (albums.isEmpty) {
+                return _buildEmptyState(context);
+              }
+
+              return RefreshIndicator(
+                onRefresh: () async {
+                  context.read<LibraryBloc>().add(LibraryLoadFavoriteAlbums());
+                  await Future.delayed(const Duration(seconds: 1));
+                },
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSizes.paddingMd),
+                        child: Text(
+                          '${albums.length} albums saved',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-
-                  // Albums list
-                  Expanded(
-                    child: ListView.separated(
+                    SliverPadding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSizes.paddingMd,
                       ),
-                      itemCount: albums.length,
-                      separatorBuilder: (context, index) =>
-                          const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final album = albums[index];
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                          ),
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: album.coverImageUrl != null
-                                ? Image.network(
-                                    album.coverImageUrl!,
-                                    width: 56,
-                                    height: 56,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Container(
-                                    width: 56,
-                                    height: 56,
-                                    color: theme.colorScheme.surfaceVariant,
-                                    child: const Icon(Icons.album),
-                                  ),
-                          ),
-                          title: Text(
-                            album.title,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.75,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
                             ),
-                          ),
-                          subtitle: Text(
-                            'Album • ${album.displayArtist}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.6,
-                              ),
-                            ),
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    AlbumDetailScreen(album: album),
-                              ),
-                            );
-                          },
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.favorite,
-                              color: AppColors.primaryBrown,
-                            ),
-                            onPressed: () {
-                              context.read<LibraryBloc>().add(
-                                LibraryRemoveAlbumFromFavorites(album.id),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    '${album.title} removed from favorites',
-                                  ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final album = albums[index];
+                          return PremiumCard(
+                            title: album.title,
+                            subtitle: album.displayArtist,
+                            imageUrl: album.coverImageUrl,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      AlbumDetailScreen(album: album),
                                 ),
                               );
                             },
-                          ),
-                        );
-                      },
+                          );
+                        }, childCount: albums.length),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }
+                    const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                  ],
+                ),
+              );
+            }
 
-          return const SizedBox.shrink();
-        },
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }
 
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
-
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.album_outlined,
-            size: 100,
-            color: theme.colorScheme.onSurface.withOpacity(0.3),
+            size: 80,
+            color: theme.colorScheme.onSurface.withOpacity(0.12),
           ),
-          const SizedBox(height: AppSizes.paddingMd),
-          const Text(
-            'No Favorite Albums',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: AppSizes.paddingSm),
+          const SizedBox(height: 24),
           Text(
-            'Albums you favorite will appear here.',
+            'Empty library',
             style: TextStyle(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Save albums to see them here.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withOpacity(0.38),
             ),
           ),
         ],

@@ -1,6 +1,5 @@
 import 'dart:io';
-import 'package:faith_stream_music_app/utils/constants.dart'
-    show AppSizes, AppColors;
+import 'package:faith_stream_music_app/utils/constants.dart' show AppSizes;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,6 +12,7 @@ import '../../services/upload_service.dart';
 import '../../ui/widgets/custom_text_field.dart';
 import '../../ui/widgets/custom_button.dart';
 import '../../ui/widgets/custom_dropdown.dart';
+import '../../config/app_theme.dart';
 
 class UploadSongScreen extends StatefulWidget {
   const UploadSongScreen({super.key});
@@ -344,8 +344,8 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Upload New Song'),
-        backgroundColor: AppColors.primaryBrown,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -370,9 +370,10 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
                               const SizedBox(height: AppSizes.paddingSm),
                               LinearProgressIndicator(
                                 value: _uploadProgress,
-                                backgroundColor: Colors.grey[300],
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                  AppColors.primaryBrown,
+                                backgroundColor: theme.colorScheme.onSurface
+                                    .withOpacity(0.1),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.colorScheme.primary,
                                 ),
                               ),
                               const SizedBox(height: AppSizes.paddingSm),
@@ -615,7 +616,12 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
                       child: CustomButton(
                         text: _isUploading ? 'Uploading...' : 'Upload Song',
                         onPressed: _isUploading ? () {} : _uploadSong,
-                        backgroundColor: AppColors.primaryBrown,
+                        backgroundColor: theme.brightness == Brightness.dark
+                            ? AppTheme.darkPrimary
+                            : AppTheme.lightPrimary,
+                        textColor: theme.brightness == Brightness.dark
+                            ? Colors.black
+                            : Colors.white,
                       ),
                     ),
 
@@ -625,9 +631,13 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
                     Container(
                       padding: const EdgeInsets.all(AppSizes.paddingMd),
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
+                        color: theme.colorScheme.primaryContainer.withOpacity(
+                          0.3,
+                        ),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.blue.shade200),
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withOpacity(0.2),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -636,14 +646,14 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
                             children: [
                               Icon(
                                 Icons.info_outline,
-                                color: Colors.blue.shade700,
+                                color: theme.colorScheme.primary,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 'Upload Process:',
                                 style: TextStyle(
-                                  color: Colors.blue.shade700,
+                                  color: theme.colorScheme.primary,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -652,7 +662,11 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
                           const SizedBox(height: 8),
                           Text(
                             '• Files will be uploaded to S3 only when you submit\n• Lyrics are mandatory for all songs\n• Your song will be reviewed before being published\n• You\'ll be notified once it\'s approved',
-                            style: TextStyle(color: Colors.blue.shade600),
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.7,
+                              ),
+                            ),
                           ),
                         ],
                       ),

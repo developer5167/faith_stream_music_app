@@ -12,10 +12,7 @@ import 'playlist_selection_sheet.dart';
 class SongActionSheet extends StatelessWidget {
   final Song song;
 
-  const SongActionSheet({
-    super.key,
-    required this.song,
-  });
+  const SongActionSheet({super.key, required this.song});
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +26,7 @@ class SongActionSheet extends StatelessWidget {
         return Container(
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(20),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: SafeArea(
             child: Column(
@@ -43,7 +38,9 @@ class SongActionSheet extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -66,10 +63,14 @@ class SongActionSheet extends StatelessWidget {
                                   return Container(
                                     width: 60,
                                     height: 60,
-                                    color: AppColors.primaryBrown.withOpacity(0.2),
-                                    child: const Icon(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary.withOpacity(0.2),
+                                    child: Icon(
                                       Icons.music_note,
-                                      color: AppColors.primaryBrown,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
                                     ),
                                   );
                                 },
@@ -77,10 +78,12 @@ class SongActionSheet extends StatelessWidget {
                             : Container(
                                 width: 60,
                                 height: 60,
-                                color: AppColors.primaryBrown.withOpacity(0.2),
-                                child: const Icon(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withOpacity(0.2),
+                                child: Icon(
                                   Icons.music_note,
-                                  color: AppColors.primaryBrown,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                               ),
                       ),
@@ -93,20 +96,19 @@ class SongActionSheet extends StatelessWidget {
                           children: [
                             Text(
                               song.title,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               song.displayArtist,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withOpacity(0.6),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withOpacity(0.6),
                                   ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -125,11 +127,15 @@ class SongActionSheet extends StatelessWidget {
                   context,
                   icon: isFavorite ? Icons.favorite : Icons.favorite_border,
                   iconColor: isFavorite ? Colors.red : null,
-                  title: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                  title: isFavorite
+                      ? 'Remove from Favorites'
+                      : 'Add to Favorites',
                   onTap: () {
-                    context.read<LibraryBloc>().add(LibraryToggleFavorite(song));
+                    context.read<LibraryBloc>().add(
+                      LibraryToggleFavorite(song),
+                    );
                     Navigator.pop(context);
-                    
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -187,7 +193,7 @@ class SongActionSheet extends StatelessWidget {
     return ListTile(
       leading: Icon(
         icon,
-        color: iconColor ?? AppColors.primaryBrown,
+        color: iconColor ?? Theme.of(context).colorScheme.primary,
       ),
       title: Text(title),
       onTap: onTap,
@@ -195,13 +201,11 @@ class SongActionSheet extends StatelessWidget {
   }
 
   void _shareSong(Song song) {
-    final String shareText = '🎵 ${song.title}\n'
+    final String shareText =
+        '🎵 ${song.title}\n'
         '🎤 ${song.displayArtist}\n'
         '\nListen on FaithStream!';
 
-    Share.share(
-      shareText,
-      subject: song.title,
-    );
+    Share.share(shareText, subject: song.title);
   }
 }
