@@ -19,6 +19,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   StreamSubscription? _positionSubscription;
   StreamSubscription? _durationSubscription;
   StreamSubscription? _playingSubscription;
+  StreamSubscription? _currentIndexSubscription;
 
   DateTime? _playStartTime;
   String? _currentSongId;
@@ -48,6 +49,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     on<PlayerRemoveFromQueue>(_onRemoveFromQueue);
     on<PlayerClearQueue>(_onClearQueue);
     on<PlayerSetVolume>(_onSetVolume);
+    on<PlayerIndexChanged>(_onIndexChanged);
 
     _setupListeners();
   }
@@ -65,6 +67,14 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
     _playingSubscription = _audioService.playingStream.listen((isPlaying) {
       add(PlayerUpdatePlayingState(isPlaying));
+    });
+
+    _currentIndexSubscription = _audioService.currentIndexStream.listen((
+      index,
+    ) {
+      if (index != null) {
+        add(PlayerIndexChanged(index));
+      }
     });
   }
 
@@ -115,19 +125,22 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       // Log previous song stream if exists
       if (_currentSongId != null && _playStartTime != null) {
         final duration = DateTime.now().difference(_playStartTime!).inSeconds;
-        if (duration > 5) {
-          // Only log if played for more than 5 seconds
-          await _streamRepository.logStream(
-            songId: _currentSongId!,
-            durationListened: duration,
-          );
-        }
+        await _streamRepository.logStream(
+          songId: _currentSongId!,
+          durationListened: duration,
+        );
       }
 
       await _audioService.playSong(songToPlay, queue: updatedQueue);
 
       _currentSongId = songToPlay.id;
       _playStartTime = DateTime.now();
+
+      // Log current song immediately for "Recently Played" history
+      await _streamRepository.logStream(
+        songId: _currentSongId!,
+        durationListened: 0,
+      );
 
       // Check if audio is already playing (might happen if it starts very quickly)
       // If so, transition to PlayerPlaying immediately
@@ -237,45 +250,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     Emitter<PlayerState> emit,
   ) async {
     try {
-      // Log previous song stream
-      if (_currentSongId != null && _playStartTime != null) {
-        final duration = DateTime.now().difference(_playStartTime!).inSeconds;
-        if (duration > 5) {
-          await _streamRepository.logStream(
-            songId: _currentSongId!,
-            durationListened: duration,
-          );
-        }
-      }
-
       await _audioService.skipToNext();
-      Song? currentSong = _audioService.currentSong;
-
-      if (currentSong != null) {
-        // Fetch artist details for the next song if not present
-        if (currentSong.artistUserId != null && currentSong.artist == null) {
-          final Artist? artist = await _artistService.getArtistDetails(
-            currentSong.artistUserId!,
-          );
-          if (artist != null) {
-            currentSong = currentSong.copyWith(artist: artist);
-          }
-        }
-        _currentSongId = currentSong.id;
-        _playStartTime = DateTime.now();
-
-        emit(
-          PlayerPlaying(
-            song: currentSong,
-            queue: _audioService.playlist,
-            currentIndex: _audioService.currentIndex,
-            position: Duration.zero,
-            duration: Duration.zero,
-            repeatMode: _audioService.repeatMode,
-            isShuffleEnabled: _audioService.isShuffleEnabled,
-          ),
-        );
-      }
+      // State update is handled by _onIndexChanged via currentIndexStream
     } catch (e) {
       emit(PlayerError('Failed to skip to next: $e'));
     }
@@ -287,34 +263,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   ) async {
     try {
       await _audioService.skipToPrevious();
-      Song? currentSong = _audioService.currentSong;
-
-      if (currentSong != null) {
-        // Fetch artist details for the previous song if not present
-        if (currentSong.artistUserId != null && currentSong.artist == null) {
-          final Artist? artist = await _artistService.getArtistDetails(
-            currentSong.artistUserId!,
-          );
-          if (artist != null) {
-            currentSong = currentSong.copyWith(artist: artist);
-          }
-        }
-
-        _currentSongId = currentSong.id;
-        _playStartTime = DateTime.now();
-
-        emit(
-          PlayerPlaying(
-            song: currentSong,
-            queue: _audioService.playlist,
-            currentIndex: _audioService.currentIndex,
-            position: Duration.zero,
-            duration: Duration.zero,
-            repeatMode: _audioService.repeatMode,
-            isShuffleEnabled: _audioService.isShuffleEnabled,
-          ),
-        );
-      }
+      // State update is handled by _onIndexChanged via currentIndexStream
     } catch (e) {
       emit(PlayerError('Failed to skip to previous: $e'));
     }
@@ -487,6 +436,89 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     emit(const PlayerStopped());
   }
 
+  Future<void> _onIndexChanged(
+    PlayerIndexChanged event,
+    Emitter<PlayerState> emit,
+  ) async {
+    Song? currentSong = _audioService.currentSong;
+    if (currentSong == null) return;
+
+    // Check if song actually changed to avoid redundant updates
+    // (except for initial load or if we want to ensure state consistency)
+    if (_currentSongId == currentSong.id && state is PlayerPlaying) {
+      // Logic to handle seek/restart within same song if needed,
+      // but generally we can skip full reload if ID matches.
+      // However, if we went Next -> Previous -> Next, we might be back at same song
+      // but we still want to update UI if it was transient.
+      // For now, let's allow update to ensure UI is in sync.
+      // But verify if we need to log stream.
+    }
+
+    // Log previous song stream if ID changes
+    if (_currentSongId != null &&
+        _currentSongId != currentSong.id &&
+        _playStartTime != null) {
+      final duration = DateTime.now().difference(_playStartTime!).inSeconds;
+      await _streamRepository.logStream(
+        songId: _currentSongId!,
+        durationListened: duration,
+      );
+      _playStartTime = DateTime.now(); // Reset start time for new song
+    } else if (_playStartTime == null) {
+      _playStartTime = DateTime.now();
+    }
+
+    _currentSongId = currentSong.id;
+
+    // Log current song immediately for "Recently Played" history
+    await _streamRepository.logStream(
+      songId: _currentSongId!,
+      durationListened: 0,
+    );
+
+    // Fetch artist details if not present
+    if (currentSong.artistUserId != null && currentSong.artist == null) {
+      final Artist? artist = await _artistService.getArtistDetails(
+        currentSong.artistUserId!,
+      );
+      if (artist != null) {
+        currentSong = currentSong.copyWith(artist: artist);
+      }
+    }
+
+    final isPlaying = _audioService.player.playing;
+
+    // We emit PlayerPlaying or PlayerPaused based on current state or service state
+    // If service says playing, we emit playing.
+
+    if (isPlaying) {
+      emit(
+        PlayerPlaying(
+          song: currentSong,
+          queue: _audioService.playlist,
+          currentIndex: event.index,
+          position: Duration.zero, // Reset position visuals for new song
+          duration: Duration.zero,
+          repeatMode: _audioService.repeatMode,
+          isShuffleEnabled: _audioService.isShuffleEnabled,
+        ),
+      );
+    } else {
+      // If paused, we still update the song view
+      emit(
+        PlayerPaused(
+          song: currentSong,
+          queue: _audioService.playlist,
+          currentIndex: event.index,
+          position: Duration.zero,
+          duration: Duration.zero,
+          repeatMode: _audioService.repeatMode,
+          isShuffleEnabled: _audioService.isShuffleEnabled,
+        ),
+      );
+    }
+  }
+
   Future<void> _onSetVolume(
     PlayerSetVolume event,
     Emitter<PlayerState> emit,
@@ -507,6 +539,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     _positionSubscription?.cancel();
     _durationSubscription?.cancel();
     _playingSubscription?.cancel();
+    _currentIndexSubscription?.cancel();
 
     // Log final stream before closing
     if (_currentSongId != null && _playStartTime != null) {

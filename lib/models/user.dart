@@ -26,18 +26,16 @@ class User extends Equatable {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    print("👤 User.fromJson - Input: $json");
-    print("👤 ID: ${json['id']} (${json['id'].runtimeType})");
-    print("👤 Name: ${json['name']} (${json['name'].runtimeType})");
-    print("👤 Email: ${json['email']} (${json['email'].runtimeType})");
+    String? profilePic = json['profile_pic_url'] as String?;
+    if (profilePic != null && profilePic.trim().isEmpty) profilePic = null;
 
     return User(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      email: json['email'] as String,
+      id: json['id'].toString(),
+      name: (json['name'] ?? '').toString(),
+      email: (json['email'] ?? '').toString(),
       phone: json['phone'] as String?,
       bio: json['bio'] as String?,
-      profilePicUrl: json['profile_pic_url'] as String?,
+      profilePicUrl: profilePic,
       artistStatus: json['artist_status'] as String?,
       isAdmin: json['is_admin'] as bool? ?? false,
       createdAt: json['created_at'] != null

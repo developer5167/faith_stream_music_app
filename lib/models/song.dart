@@ -35,23 +35,28 @@ class Song extends Equatable {
   });
 
   factory Song.fromJson(Map<String, dynamic> json) {
+    String? coverImage = (json['cover_image_url'] ?? json['image']) as String?;
+    if (coverImage != null && coverImage.trim().isEmpty) coverImage = null;
+
     return Song(
-      id: json['id'] as String,
-      title: json['title'] as String,
+      id: (json['id'] ?? '').toString(),
+      title: (json['title'] ?? 'Unknown Song').toString(),
       description: json['description'] as String?,
       genre: json['genre'] as String?,
       language: json['language'] as String?,
       audioUrl: json['audio_original_url'] as String?,
       // Some APIs return cover image as `cover_image_url`, others as `image`.
       // Prefer `cover_image_url` but gracefully fall back to `image`.
-      coverImageUrl: (json['cover_image_url'] ?? json['image']) as String?,
+      coverImageUrl: coverImage,
       albumTitle: json['album_title'] as String?,
       artistUserId: json['artist_user_id'] as String?, // Parse artist_user_id
       // Prefer explicit artist fields when present (e.g. home/popular/recently-played APIs),
       // while still working for album tracks where they may be absent.
       artistName: json['artist_name'] as String?,
       artistDisplayName: json['artist_display_name'] as String?,
-      artist: json['artist'] != null ? Artist.fromJson(json['artist']) : null, // Parse nested artist
+      artist: json['artist'] != null
+          ? Artist.fromJson(json['artist'])
+          : null, // Parse nested artist
       streamCount: json['stream_count']?.toString() ?? "0",
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
@@ -71,7 +76,8 @@ class Song extends Equatable {
       'album_title': albumTitle,
       'artist_user_id': artistUserId,
       'artist_name': artistName, // Keep for other APIs that might use it
-      'artist_display_name': artistDisplayName, // Keep for other APIs that might use it
+      'artist_display_name':
+          artistDisplayName, // Keep for other APIs that might use it
       'artist': artist?.toJson(),
       'stream_count': streamCount,
       'created_at': createdAt?.toIso8601String(),
@@ -80,7 +86,11 @@ class Song extends Equatable {
 
   // Helper for consistent artist display name
   String get displayArtist =>
-      artist?.name ?? artistDisplayName ?? artistName ?? artistUserId ?? 'Unknown Artist';
+      artist?.name ??
+      artistDisplayName ??
+      artistName ??
+      artistUserId ??
+      'Unknown Artist';
 
   @override
   List<Object?> get props => [

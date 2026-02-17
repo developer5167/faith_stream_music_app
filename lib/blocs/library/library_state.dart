@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../models/song.dart';
+import '../../models/artist.dart';
+import '../../models/album.dart';
 import '../../models/playlist.dart';
 
 abstract class LibraryState extends Equatable {
@@ -15,11 +17,15 @@ class LibraryLoading extends LibraryState {}
 
 class LibraryLoaded extends LibraryState {
   final List<Song> favorites;
+  final List<Artist> favoriteArtists;
+  final List<Album> favoriteAlbums;
   final List<Playlist> playlists;
   final Set<String> favoriteSongIds;
 
   const LibraryLoaded({
     this.favorites = const [],
+    this.favoriteArtists = const [],
+    this.favoriteAlbums = const [],
     this.playlists = const [],
     this.favoriteSongIds = const {},
   });
@@ -28,18 +34,28 @@ class LibraryLoaded extends LibraryState {
 
   LibraryLoaded copyWith({
     List<Song>? favorites,
+    List<Artist>? favoriteArtists,
+    List<Album>? favoriteAlbums,
     List<Playlist>? playlists,
     Set<String>? favoriteSongIds,
   }) {
     return LibraryLoaded(
       favorites: favorites ?? this.favorites,
+      favoriteArtists: favoriteArtists ?? this.favoriteArtists,
+      favoriteAlbums: favoriteAlbums ?? this.favoriteAlbums,
       playlists: playlists ?? this.playlists,
       favoriteSongIds: favoriteSongIds ?? this.favoriteSongIds,
     );
   }
 
   @override
-  List<Object?> get props => [favorites, playlists, favoriteSongIds];
+  List<Object?> get props => [
+    favorites,
+    favoriteArtists,
+    favoriteAlbums,
+    playlists,
+    favoriteSongIds,
+  ];
 }
 
 class LibraryError extends LibraryState {
@@ -55,6 +71,10 @@ class LibraryError extends LibraryState {
 class LibraryFavoritesLoading extends LibraryState {}
 
 class LibraryPlaylistsLoading extends LibraryState {}
+
+class LibraryArtistsLoading extends LibraryState {}
+
+class LibraryAlbumsLoading extends LibraryState {}
 
 class LibraryPlaylistLoading extends LibraryState {
   final String playlistId;

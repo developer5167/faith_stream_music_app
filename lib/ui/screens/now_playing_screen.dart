@@ -2,11 +2,16 @@ import 'package:faith_stream_music_app/models/artist.dart';
 import 'package:faith_stream_music_app/models/song.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_event.dart';
 import '../../blocs/player/player_state.dart';
+import '../../blocs/library/library_bloc.dart';
+import '../../blocs/library/library_event.dart';
+import '../../blocs/library/library_state.dart';
 import '../../services/audio_player_service.dart';
 import '../../utils/constants.dart';
+import '../widgets/playlist_selection_sheet.dart';
 
 class NowPlayingScreen extends StatelessWidget {
   const NowPlayingScreen({super.key});
@@ -107,12 +112,7 @@ class NowPlayingScreen extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.more_vert),
-                      onPressed: () {
-                        // TODO: Show more options
-                      },
-                    ),
+                    const SizedBox(width: 48), // Spacer to center title
                   ],
                 ),
               ),
@@ -370,47 +370,79 @@ class NowPlayingScreen extends StatelessWidget {
               const SizedBox(height: AppSizes.paddingLg),
 
               // Secondary controls
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.paddingXl,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.favorite_border),
-                      onPressed: isLoading
-                          ? null
-                          : () {
-                              // TODO: Add to favorites
-                            },
+              BlocBuilder<LibraryBloc, LibraryState>(
+                builder: (context, libraryState) {
+                  bool isFavorite = false;
+                  if (libraryState is LibraryLoaded) {
+                    isFavorite = libraryState.isFavorite(song.id);
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.paddingXl,
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.playlist_add),
-                      onPressed: isLoading
-                          ? null
-                          : () {
-                              // TODO: Add to playlist
-                            },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Favorite button
+                        IconButton(
+                          icon: Icon(
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: isFavorite ? Colors.red : null,
+                          ),
+                          onPressed: isLoading
+                              ? null
+                              : () {
+                                  context.read<LibraryBloc>().add(
+                                    LibraryToggleFavorite(song),
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        isFavorite
+                                            ? 'Removed from favorites'
+                                            : 'Added to favorites',
+                                      ),
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                        ),
+                        // Add to playlist button
+                        IconButton(
+                          icon: const Icon(Icons.playlist_add),
+                          onPressed: isLoading
+                              ? null
+                              : () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (context) => PlaylistSelectionSheet(
+                                      song: song,
+                                    ),
+                                  );
+                                },
+                        ),
+                        // Share button
+                        IconButton(
+                          icon: const Icon(Icons.share),
+                          onPressed: isLoading
+                              ? null
+                              : () {
+                                  final String shareText = '🎵 ${song.title}\n'
+                                      '🎤 ${song.displayArtist}\n'
+                                      '\nListen on FaithStream!';
+                                  Share.share(
+                                    shareText,
+                                    subject: song.title,
+                                  );
+                                },
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.queue_music),
-                      onPressed: isLoading
-                          ? null
-                          : () {
-                              // TODO: Show queue
-                            },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.share),
-                      onPressed: isLoading
-                          ? null
-                          : () {
-                              // TODO: Share song
-                            },
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
 
               const SizedBox(height: AppSizes.paddingLg),

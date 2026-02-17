@@ -8,6 +8,7 @@ import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_event.dart';
 import '../../utils/constants.dart';
 import '../widgets/song_card.dart';
+import '../widgets/mini_player_bar.dart';
 import 'song_detail_screen.dart';
 
 class PlaylistDetailScreen extends StatelessWidget {
@@ -39,6 +40,7 @@ class PlaylistDetailScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      bottomNavigationBar: const MiniPlayerBar(),
       body: CustomScrollView(
         slivers: [
           // App bar with gradient
@@ -231,7 +233,12 @@ class PlaylistDetailScreen extends StatelessWidget {
             SliverFillRemaining(child: _buildEmptyState(context))
           else
             SliverPadding(
-              padding: const EdgeInsets.all(AppSizes.paddingMd),
+              padding: const EdgeInsets.only(
+                left: AppSizes.paddingMd,
+                right: AppSizes.paddingMd,
+                top: AppSizes.paddingMd,
+                bottom: 100, // Space for mini player
+              ),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final song = currentPlaylist.songs[index];

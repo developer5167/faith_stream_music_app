@@ -6,6 +6,7 @@ import '../../blocs/library/library_event.dart';
 import '../../utils/constants.dart';
 import '../widgets/loading_indicator.dart';
 import 'playlist_detail_screen.dart';
+import 'create_playlist_screen.dart';
 
 class PlaylistsScreen extends StatelessWidget {
   const PlaylistsScreen({super.key});
@@ -33,7 +34,14 @@ class PlaylistsScreen extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(AppSizes.paddingMd),
                     child: ElevatedButton.icon(
-                      onPressed: () => _showCreatePlaylistDialog(context),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CreatePlaylistScreen(),
+                          ),
+                        );
+                      },
                       icon: const Icon(Icons.add),
                       label: const Text('Create New Playlist'),
                       style: ElevatedButton.styleFrom(
@@ -117,95 +125,6 @@ class PlaylistsScreen extends StatelessWidget {
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.6),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showCreatePlaylistDialog(BuildContext context) {
-    final nameController = TextEditingController();
-    final descriptionController = TextEditingController();
-    bool isPublic = false;
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Create Playlist'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Playlist Name',
-                    hintText: 'Enter playlist name',
-                    border: OutlineInputBorder(),
-                  ),
-                  autofocus: true,
-                ),
-                const SizedBox(height: AppSizes.paddingSm),
-                TextField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (Optional)',
-                    hintText: 'Enter description',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: AppSizes.paddingSm),
-                SwitchListTile(
-                  title: const Text('Public Playlist'),
-                  subtitle: const Text('Others can see this playlist'),
-                  value: isPublic,
-                  onChanged: (value) {
-                    setState(() {
-                      isPublic = value;
-                    });
-                  },
-                  activeColor: AppColors.primaryBrown,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final name = nameController.text.trim();
-                if (name.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter a playlist name'),
-                    ),
-                  );
-                  return;
-                }
-
-                context.read<LibraryBloc>().add(
-                  LibraryCreatePlaylist(
-                    name: name,
-                    description: descriptionController.text.trim().isEmpty
-                        ? null
-                        : descriptionController.text.trim(),
-                    isPublic: isPublic,
-                  ),
-                );
-
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryBrown,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Create'),
             ),
           ],
         ),

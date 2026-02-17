@@ -26,16 +26,36 @@ class Artist extends Equatable {
   });
 
   factory Artist.fromJson(Map<String, dynamic> json) {
+    int? parseInt(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
+    String? profilePic =
+        (json['profile_pic_url'] ?? json['profile_image_url'] ?? json['image'])
+            as String?;
+    String? bannerImage =
+        (json['banner_image_url'] ??
+                json['banner_url'] ??
+                json['cover_image_url'])
+            as String?;
+
+    if (profilePic != null && profilePic.trim().isEmpty) profilePic = null;
+    if (bannerImage != null && bannerImage.trim().isEmpty) bannerImage = null;
+
     return Artist(
-      id: json['id'] as String,
-      name: json['name'] as String,
+      id: (json['id'] ?? json['artist_user_id'] ?? '').toString(),
+      name: (json['name'] ?? json['artist_name'] ?? 'Unknown Artist')
+          .toString(),
       bio: json['bio'] as String?,
-      profilePicUrl: json['profile_image_url'] as String?,
-      bannerImageUrl: json['image'] as String?,
-      totalSongs: json['total_songs'] as int?,
-      totalAlbums: json['total_albums'] as int?,
-      totalStreams: json['total_streams'] as int?,
-      totalFollowers: json['total_followers'] as int?,
+      profilePicUrl: profilePic ?? bannerImage,
+      bannerImageUrl: bannerImage ?? profilePic,
+      totalSongs: parseInt(json['song_count'] ?? json['total_songs']),
+      totalAlbums: parseInt(json['album_count'] ?? json['total_albums']),
+      totalStreams: parseInt(json['total_streams']),
+      totalFollowers: parseInt(json['total_followers']),
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,
@@ -47,8 +67,11 @@ class Artist extends Equatable {
       'id': id,
       'name': name,
       'bio': bio,
+      'profile_pic_url': profilePicUrl,
       'profile_image_url': profilePicUrl,
-      'image': bannerImageUrl,
+      'image': profilePicUrl,
+      'banner_image_url': bannerImageUrl,
+      'banner_url': bannerImageUrl,
       'total_songs': totalSongs,
       'total_albums': totalAlbums,
       'total_streams': totalStreams,

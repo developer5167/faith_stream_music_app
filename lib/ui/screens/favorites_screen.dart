@@ -8,6 +8,7 @@ import '../../blocs/player/player_event.dart';
 import '../../utils/constants.dart';
 import '../widgets/loading_indicator.dart';
 import '../widgets/song_card.dart';
+import '../widgets/mini_player_bar.dart';
 import 'song_detail_screen.dart';
 
 class FavoritesScreen extends StatelessWidget {
@@ -17,117 +18,104 @@ class FavoritesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return BlocBuilder<LibraryBloc, LibraryState>(
-      builder: (context, state) {
-        if (state is LibraryFavoritesLoading) {
-          return const Center(child: LoadingIndicator());
-        }
-
-        if (state is LibraryLoaded) {
-          if (state.favorites.isEmpty) {
-            return _buildEmptyState(context);
+    return Scaffold(
+      appBar: AppBar(title: const Text('Fav Songs')),
+      bottomNavigationBar: const MiniPlayerBar(),
+      body: BlocBuilder<LibraryBloc, LibraryState>(
+        builder: (context, state) {
+          if (state is LibraryFavoritesLoading) {
+            return const Center(child: LoadingIndicator());
           }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<LibraryBloc>().add(LibraryLoadFavorites());
-              await Future.delayed(const Duration(seconds: 1));
-            },
-            child: Column(
-              children: [
-                // Header with stats
-                Container(
-                  padding: const EdgeInsets.all(AppSizes.paddingMd),
-                  color: AppColors.primaryBrown.withOpacity(0.1),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.favorite,
-                        color: AppColors.primaryBrown,
-                        size: 32,
-                      ),
-                      const SizedBox(width: AppSizes.paddingSm),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${state.favorites.length} Favorite Songs',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+          if (state is LibraryLoaded) {
+            if (state.favorites.isEmpty) {
+              return _buildEmptyState(context);
+            }
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<LibraryBloc>().add(LibraryLoadFavorites());
+                await Future.delayed(const Duration(seconds: 1));
+              },
+              child: Column(
+                children: [
+                  // Updated Header
+                  Padding(
+                    padding: const EdgeInsets.all(AppSizes.paddingMd),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${state.favorites.length} Songs',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (state.favorites.isNotEmpty)
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              context.read<PlayerBloc>().add(
+                                PlayerPlaySong(
+                                  state.favorites.first,
+                                  queue: state.favorites,
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.play_arrow),
+                            label: const Text('Play All'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryBrown,
+                              foregroundColor: Colors.white,
                             ),
                           ),
-                          Text(
-                            'Your liked collection',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.6,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      if (state.favorites.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.play_circle_filled),
-                          iconSize: 48,
-                          color: AppColors.primaryBrown,
-                          onPressed: () {
-                            context.read<PlayerBloc>().add(
-                              PlayerPlaySong(
-                                state.favorites.first,
-                                queue: state.favorites,
+                      ],
+                    ),
+                  ),
+
+                  // Song list
+                  Expanded(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(AppSizes.paddingMd),
+                      itemCount: state.favorites.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: AppSizes.paddingSm),
+                      itemBuilder: (context, index) {
+                        final song = state.favorites[index];
+                        return SongCard(
+                          song: song,
+                          showFavoriteButton: true,
+                          isFavorite: true,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    SongDetailScreen(song: song),
                               ),
                             );
                           },
-                        ),
-                    ],
+                          onPlayTap: () {
+                            context.read<PlayerBloc>().add(
+                              PlayerPlaySong(song, queue: state.favorites),
+                            );
+                          },
+                          onFavoriteTap: () {
+                            context.read<LibraryBloc>().add(
+                              LibraryToggleFavorite(song),
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
-                ),
+                ],
+              ),
+            );
+          }
 
-                // Song list
-                Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(AppSizes.paddingMd),
-                    itemCount: state.favorites.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: AppSizes.paddingSm),
-                    itemBuilder: (context, index) {
-                      final song = state.favorites[index];
-                      return SongCard(
-                        song: song,
-                        showFavoriteButton: true,
-                        isFavorite: true,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  SongDetailScreen(song: song),
-                            ),
-                          );
-                        },
-                        onPlayTap: () {
-                          context.read<PlayerBloc>().add(
-                            PlayerPlaySong(song, queue: state.favorites),
-                          );
-                        },
-                        onFavoriteTap: () {
-                          context.read<LibraryBloc>().add(
-                            LibraryToggleFavorite(song),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return const SizedBox.shrink();
-      },
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
 

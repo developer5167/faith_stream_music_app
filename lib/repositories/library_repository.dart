@@ -1,4 +1,6 @@
 import '../models/song.dart';
+import '../models/artist.dart';
+import '../models/album.dart';
 import '../models/playlist.dart';
 import '../services/api_client.dart';
 import '../utils/api_response.dart';
@@ -92,6 +94,102 @@ class LibraryRepository {
 
       return ApiResponse.error(
         message: response.data['message'] ?? 'Failed to check favorite status',
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      return ApiResponse.error(message: e.toString());
+    }
+  }
+
+  // ==================== ARTIST FAVORITES ====================
+
+  /// Get all favorite artists for the current user
+  Future<ApiResponse<List<Artist>>> getFavoriteArtists() async {
+    try {
+      final response = await _apiClient.get('/favorites/artists');
+
+      if (response.statusCode == 200) {
+        final artists = (response.data['artists'] as List<dynamic>)
+            .map((json) => Artist.fromJson(json))
+            .toList();
+
+        return ApiResponse.success(
+          data: artists,
+          message: 'Favorite artists loaded successfully',
+        );
+      }
+
+      return ApiResponse.error(
+        message: response.data['message'] ?? 'Failed to load favorite artists',
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      return ApiResponse.error(message: e.toString());
+    }
+  }
+
+  // ==================== ALBUM FAVORITES ====================
+
+  /// Get all favorite albums for the current user
+  Future<ApiResponse<List<Album>>> getFavoriteAlbums() async {
+    try {
+      final response = await _apiClient.get('/favorites/albums');
+
+      if (response.statusCode == 200) {
+        final albums = (response.data['albums'] as List<dynamic>)
+            .map((json) => Album.fromJson(json))
+            .toList();
+
+        return ApiResponse.success(
+          data: albums,
+          message: 'Favorite albums loaded successfully',
+        );
+      }
+
+      return ApiResponse.error(
+        message: response.data['message'] ?? 'Failed to load favorite albums',
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      return ApiResponse.error(message: e.toString());
+    }
+  }
+
+  /// Remove an artist from favorites
+  Future<ApiResponse<void>> removeArtistFromFavorites(String artistId) async {
+    try {
+      final response = await _apiClient.delete('/favorites/artist/$artistId');
+
+      if (response.statusCode == 200) {
+        return ApiResponse.success(
+          data: null,
+          message: 'Removed from favorites',
+        );
+      }
+
+      return ApiResponse.error(
+        message: response.data['message'] ?? 'Failed to remove from favorites',
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      return ApiResponse.error(message: e.toString());
+    }
+  }
+
+  /// Remove an album from favorites
+  Future<ApiResponse<void>> removeAlbumFromFavorites(String albumId) async {
+    try {
+      final response = await _apiClient.delete('/favorites/album/$albumId');
+
+      if (response.statusCode == 200) {
+        return ApiResponse.success(
+          data: null,
+          message: 'Removed from favorites',
+        );
+      }
+
+      return ApiResponse.error(
+        message: response.data['message'] ?? 'Failed to remove from favorites',
         statusCode: response.statusCode,
       );
     } catch (e) {

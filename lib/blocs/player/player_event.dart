@@ -112,3 +112,12 @@ class PlayerSetVolume extends PlayerEvent {
   @override
   List<Object?> get props => [volume];
 }
+
+class PlayerIndexChanged extends PlayerEvent {
+  final int index;
+
+  const PlayerIndexChanged(this.index);
+
+  @override
+  List<Object?> get props => [index];
+}

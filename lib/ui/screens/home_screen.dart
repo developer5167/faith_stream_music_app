@@ -1,3 +1,4 @@
+import 'package:faith_stream_music_app/blocs/player/player_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -60,340 +61,369 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          body: BlocBuilder<HomeBloc, HomeState>(
-            builder: (context, state) {
-              if (state is HomeLoading) {
-                return const LoadingIndicator(message: 'Loading your music...');
-              }
+          body: BlocListener<PlayerBloc, PlayerState>(
+            listenWhen: (previous, current) {
+              // Only refresh when a new song starts playing or loading
+              String? prevId;
+              String? currId;
 
-              if (state is HomeError) {
-                return ErrorDisplay(
-                  message: state.message,
-                  onRetry: () {
-                    context.read<HomeBloc>().add(const HomeLoadRequested());
-                  },
-                );
-              }
+              if (previous is PlayerPlaying) prevId = previous.song.id;
+              if (previous is PlayerPaused) prevId = previous.song.id;
+              if (previous is PlayerLoading) prevId = previous.song?.id;
 
-              if (state is HomeLoaded) {
-                final feed = state.feed;
+              if (current is PlayerPlaying) currId = current.song.id;
+              if (current is PlayerPaused) currId = current.song.id;
+              if (current is PlayerLoading) currId = current.song?.id;
 
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    context.read<HomeBloc>().add(const HomeRefreshRequested());
-                  },
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSizes.paddingMd,
-                    ),
-                    children: [
-                      // Welcome Header
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSizes.paddingMd,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Welcome back,',
-                              style: theme.textTheme.titleMedium,
-                            ),
-                            Text(
-                              user?.name ?? 'Music Lover',
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primaryBrown,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppSizes.paddingLg),
-
-                      // Recently Played (if available)
-                      if (feed.recentlyPlayed.isNotEmpty) ...[
-                        _buildSectionHeader(
-                          context,
-                          'Recently Played',
-                          onSeeAll: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AllSongsScreen(
-                                  title: 'Recently Played',
-                                  songs: feed.recentlyPlayed,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: AppSizes.paddingSm),
-                        SizedBox(
-                          height: 100,
-                          child: ListView.separated(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSizes.paddingMd,
-                            ),
-                            scrollDirection: Axis.horizontal,
-                            itemCount: feed.recentlyPlayed.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(width: AppSizes.paddingSm),
-                            itemBuilder: (context, index) {
-                              final song = feed.recentlyPlayed[index];
-                              return SizedBox(
-                                width: 300,
-                                child: BlocBuilder<LibraryBloc, LibraryState>(
-                                  builder: (context, libraryState) {
-                                    final isFavorite =
-                                        libraryState is LibraryLoaded &&
-                                        libraryState.isFavorite(song.id);
-
-                                    return SongCard(
-                                      song: song,
-                                      showFavoriteButton: true,
-                                      isFavorite: isFavorite,
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                SongDetailScreen(song: song),
-                                          ),
-                                        );
-                                      },
-                                      onPlayTap: () {
-                                        context.read<PlayerBloc>().add(
-                                          PlayerPlaySong(
-                                            song,
-                                            queue: feed.recentlyPlayed,
-                                          ),
-                                        );
-                                      },
-                                      onFavoriteTap: () {
-                                        context.read<LibraryBloc>().add(
-                                          LibraryToggleFavorite(song),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: AppSizes.paddingLg),
-                      ],
-
-                      // Popular Songs
-                      if (feed.songs.isNotEmpty) ...[
-                        _buildSectionHeader(
-                          context,
-                          'Popular Songs',
-                          onSeeAll: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AllSongsScreen(
-                                  title: 'Popular Songs',
-                                  songs: feed.songs,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: AppSizes.paddingSm),
-                        SizedBox(
-                          height: 100,
-                          child: ListView.separated(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSizes.paddingMd,
-                            ),
-                            scrollDirection: Axis.horizontal,
-                            itemCount: feed.songs.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(width: AppSizes.paddingSm),
-                            itemBuilder: (context, index) {
-                              final song = feed.songs[index];
-                              return SizedBox(
-                                width: 300,
-                                child: BlocBuilder<LibraryBloc, LibraryState>(
-                                  builder: (context, libraryState) {
-                                    final isFavorite =
-                                        libraryState is LibraryLoaded &&
-                                        libraryState.isFavorite(song.id);
-
-                                    return SongCard(
-                                      song: song,
-                                      showFavoriteButton: true,
-                                      isFavorite: isFavorite,
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                SongDetailScreen(song: song),
-                                          ),
-                                        );
-                                      },
-                                      onPlayTap: () {
-                                        context.read<PlayerBloc>().add(
-                                          PlayerPlaySong(
-                                            song,
-                                            queue: feed.songs,
-                                          ),
-                                        );
-                                      },
-                                      onFavoriteTap: () {
-                                        context.read<LibraryBloc>().add(
-                                          LibraryToggleFavorite(song),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: AppSizes.paddingLg),
-                      ],
-
-                      // New Releases (Albums)
-                      if (feed.albums.isNotEmpty) ...[
-                        _buildSectionHeader(
-                          context,
-                          'New Releases',
-                          onSeeAll: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AllAlbumsScreen(
-                                  title: 'New Releases',
-                                  albums: feed.albums,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: AppSizes.paddingSm),
-                        SizedBox(
-                          height: 200,
-                          child: ListView.separated(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSizes.paddingMd,
-                            ),
-                            scrollDirection: Axis.horizontal,
-                            itemCount: feed.albums.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(width: AppSizes.paddingSm),
-                            itemBuilder: (context, index) {
-                              final album = feed.albums[index];
-                              return SizedBox(
-                                width: 130,
-                                child: AlbumCard(
-                                  album: album,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            AlbumDetailScreen(album: album),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: AppSizes.paddingLg),
-                      ],
-
-                      // Featured Artists
-                      if (feed.artists.isNotEmpty) ...[
-                        _buildSectionHeader(
-                          context,
-                          'Featured Artists',
-                          onSeeAll: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AllArtistsScreen(
-                                  title: 'Featured Artists',
-                                  artists: feed.artists,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: AppSizes.paddingSm),
-                        SizedBox(
-                          height: 175,
-                          child: ListView.separated(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSizes.paddingMd,
-                            ),
-                            scrollDirection: Axis.horizontal,
-                            itemCount: feed.artists.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(width: AppSizes.paddingSm),
-                            itemBuilder: (context, index) {
-                              final artist = feed.artists[index];
-                              return SizedBox(
-                                width: 130,
-                                child: ArtistCard(
-                                  artist: artist,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ArtistProfileScreen(artist: artist),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: AppSizes.paddingLg),
-                      ],
-
-                      // Debug button (only in development)
-                      Padding(
-                        padding: const EdgeInsets.all(AppSizes.paddingMd),
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            final storage = context.read<StorageService>();
-                            final authBloc = context.read<AuthBloc>();
-
-                            // Clear all storage first
-                            await storage.clearAll();
-
-                            // Navigate to onboarding immediately
-                            if (context.mounted) {
-                              context.go('/onboarding');
-                              // Then trigger logout to reset auth state
-                              authBloc.add(const AuthLogoutRequested());
-                            }
-                          },
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Reset & See Onboarding'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryGold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              // Initial state
-              return const Center(child: Text('Welcome! Pull down to refresh'));
+              return currId != null && currId != prevId;
             },
+            listener: (context, state) {
+              // When song changes, refresh home feed to update "Recently Played"
+              context.read<HomeBloc>().add(const HomeRefreshRequested());
+            },
+            child: BlocBuilder<HomeBloc, HomeState>(
+              builder: (context, state) {
+                if (state is HomeLoading) {
+                  return const LoadingIndicator(
+                    message: 'Loading your music...',
+                  );
+                }
+
+                if (state is HomeError) {
+                  return ErrorDisplay(
+                    message: state.message,
+                    onRetry: () {
+                      context.read<HomeBloc>().add(const HomeLoadRequested());
+                    },
+                  );
+                }
+
+                if (state is HomeLoaded) {
+                  final feed = state.feed;
+
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      context.read<HomeBloc>().add(
+                        const HomeRefreshRequested(),
+                      );
+                    },
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSizes.paddingMd,
+                      ),
+                      children: [
+                        // Welcome Header
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSizes.paddingMd,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Welcome back,',
+                                style: theme.textTheme.titleMedium,
+                              ),
+                              Text(
+                                user?.name ?? 'Music Lover',
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primaryBrown,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.paddingLg),
+
+                        // Recently Played (if available)
+                        if (feed.recentlyPlayed.isNotEmpty) ...[
+                          _buildSectionHeader(
+                            context,
+                            'Recently Played',
+                            onSeeAll: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AllSongsScreen(
+                                    title: 'Recently Played',
+                                    songs: feed.recentlyPlayed,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 100,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.recentlyPlayed.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingSm),
+                              itemBuilder: (context, index) {
+                                final song = feed.recentlyPlayed[index];
+                                return SizedBox(
+                                  width: 300,
+                                  child: BlocBuilder<LibraryBloc, LibraryState>(
+                                    builder: (context, libraryState) {
+                                      final isFavorite =
+                                          libraryState is LibraryLoaded &&
+                                          libraryState.isFavorite(song.id);
+
+                                      return SongCard(
+                                        song: song,
+                                        showFavoriteButton: true,
+                                        isFavorite: isFavorite,
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  SongDetailScreen(song: song),
+                                            ),
+                                          );
+                                        },
+                                        onPlayTap: () {
+                                          context.read<PlayerBloc>().add(
+                                            PlayerPlaySong(
+                                              song,
+                                              queue: feed.recentlyPlayed,
+                                            ),
+                                          );
+                                        },
+                                        onFavoriteTap: () {
+                                          context.read<LibraryBloc>().add(
+                                            LibraryToggleFavorite(song),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.paddingLg),
+                        ],
+
+                        // Popular Songs
+                        if (feed.songs.isNotEmpty) ...[
+                          _buildSectionHeader(
+                            context,
+                            'Popular Songs',
+                            onSeeAll: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AllSongsScreen(
+                                    title: 'Popular Songs',
+                                    songs: feed.songs,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 100,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.songs.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingSm),
+                              itemBuilder: (context, index) {
+                                final song = feed.songs[index];
+                                return SizedBox(
+                                  width: 300,
+                                  child: BlocBuilder<LibraryBloc, LibraryState>(
+                                    builder: (context, libraryState) {
+                                      final isFavorite =
+                                          libraryState is LibraryLoaded &&
+                                          libraryState.isFavorite(song.id);
+
+                                      return SongCard(
+                                        song: song,
+                                        showFavoriteButton: true,
+                                        isFavorite: isFavorite,
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  SongDetailScreen(song: song),
+                                            ),
+                                          );
+                                        },
+                                        onPlayTap: () {
+                                          context.read<PlayerBloc>().add(
+                                            PlayerPlaySong(
+                                              song,
+                                              queue: feed.songs,
+                                            ),
+                                          );
+                                        },
+                                        onFavoriteTap: () {
+                                          context.read<LibraryBloc>().add(
+                                            LibraryToggleFavorite(song),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.paddingLg),
+                        ],
+
+                        // New Releases (Albums)
+                        if (feed.albums.isNotEmpty) ...[
+                          _buildSectionHeader(
+                            context,
+                            'New Releases',
+                            onSeeAll: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AllAlbumsScreen(
+                                    title: 'New Releases',
+                                    albums: feed.albums,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 200,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.albums.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingSm),
+                              itemBuilder: (context, index) {
+                                final album = feed.albums[index];
+                                return SizedBox(
+                                  width: 130,
+                                  child: AlbumCard(
+                                    album: album,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              AlbumDetailScreen(album: album),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.paddingLg),
+                        ],
+
+                        // Featured Artists
+                        if (feed.artists.isNotEmpty) ...[
+                          _buildSectionHeader(
+                            context,
+                            'Featured Artists',
+                            onSeeAll: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AllArtistsScreen(
+                                    title: 'Featured Artists',
+                                    artists: feed.artists,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 175,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.artists.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingSm),
+                              itemBuilder: (context, index) {
+                                final artist = feed.artists[index];
+                                return SizedBox(
+                                  width: 130,
+                                  child: ArtistCard(
+                                    artist: artist,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ArtistProfileScreen(
+                                                artist: artist,
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.paddingLg),
+                        ],
+
+                        // Debug button (only in development)
+                        Padding(
+                          padding: const EdgeInsets.all(AppSizes.paddingMd),
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final storage = context.read<StorageService>();
+                              final authBloc = context.read<AuthBloc>();
+
+                              // Clear all storage first
+                              await storage.clearAll();
+
+                              // Navigate to onboarding immediately
+                              if (context.mounted) {
+                                context.go('/onboarding');
+                                // Then trigger logout to reset auth state
+                                authBloc.add(const AuthLogoutRequested());
+                              }
+                            },
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Reset & See Onboarding'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryGold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Initial state
+                return const Center(
+                  child: Text('Welcome! Pull down to refresh'),
+                );
+              },
+            ),
           ),
         );
       },

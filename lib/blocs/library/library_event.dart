@@ -45,6 +45,28 @@ class LibraryToggleFavorite extends LibraryEvent {
   List<Object?> get props => [song];
 }
 
+class LibraryLoadFavoriteArtists extends LibraryEvent {}
+
+class LibraryLoadFavoriteAlbums extends LibraryEvent {}
+
+class LibraryRemoveArtistFromFavorites extends LibraryEvent {
+  final String artistId;
+
+  const LibraryRemoveArtistFromFavorites(this.artistId);
+
+  @override
+  List<Object?> get props => [artistId];
+}
+
+class LibraryRemoveAlbumFromFavorites extends LibraryEvent {
+  final String albumId;
+
+  const LibraryRemoveAlbumFromFavorites(this.albumId);
+
+  @override
+  List<Object?> get props => [albumId];
+}
+
 // ==================== PLAYLISTS ====================
 
 class LibraryLoadPlaylists extends LibraryEvent {}

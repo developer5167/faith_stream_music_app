@@ -10,9 +10,13 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     on<LibraryLoadAll>(_onLoadAll);
     on<LibraryRefresh>(_onRefresh);
     on<LibraryLoadFavorites>(_onLoadFavorites);
+    on<LibraryLoadFavoriteArtists>(_onLoadFavoriteArtists);
+    on<LibraryLoadFavoriteAlbums>(_onLoadFavoriteAlbums);
     on<LibraryAddToFavorites>(_onAddToFavorites);
     on<LibraryRemoveFromFavorites>(_onRemoveFromFavorites);
     on<LibraryToggleFavorite>(_onToggleFavorite);
+    on<LibraryRemoveArtistFromFavorites>(_onRemoveArtistFromFavorites);
+    on<LibraryRemoveAlbumFromFavorites>(_onRemoveAlbumFromFavorites);
     on<LibraryLoadPlaylists>(_onLoadPlaylists);
     on<LibraryLoadPlaylist>(_onLoadPlaylist);
     on<LibraryCreatePlaylist>(_onCreatePlaylist);
@@ -31,27 +35,42 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     try {
       final favoritesResponse = await _libraryRepository.getFavorites();
       final playlistsResponse = await _libraryRepository.getPlaylists();
+      final artistsResponse = await _libraryRepository.getFavoriteArtists();
+      final albumsResponse = await _libraryRepository.getFavoriteAlbums();
 
-      if (favoritesResponse.success && playlistsResponse.success) {
+      if (favoritesResponse.success &&
+          playlistsResponse.success &&
+          artistsResponse.success &&
+          albumsResponse.success) {
         final favorites = favoritesResponse.data ?? [];
         final playlists = playlistsResponse.data ?? [];
+        final artists = artistsResponse.data ?? [];
+        final albums = albumsResponse.data ?? [];
         final favoriteSongIds = favorites.map((song) => song.id).toSet();
 
         emit(
           LibraryLoaded(
             favorites: favorites,
+            favoriteArtists: artists,
+            favoriteAlbums: albums,
             playlists: playlists,
             favoriteSongIds: favoriteSongIds,
           ),
         );
       } else {
-        emit(
-          LibraryError(
-            favoritesResponse.message.isNotEmpty
-                ? favoritesResponse.message
-                : playlistsResponse.message,
-          ),
-        );
+        // Find first error
+        String errorMessage = 'Failed to load library';
+        if (!favoritesResponse.success) {
+          errorMessage = favoritesResponse.message;
+        } else if (!playlistsResponse.success) {
+          errorMessage = playlistsResponse.message;
+        } else if (!artistsResponse.success) {
+          errorMessage = artistsResponse.message;
+        } else if (!albumsResponse.success) {
+          errorMessage = albumsResponse.message;
+        }
+
+        emit(LibraryError(errorMessage));
       }
     } catch (e) {
       emit(LibraryError('Failed to load library: $e'));
@@ -72,15 +91,24 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     try {
       final favoritesResponse = await _libraryRepository.getFavorites();
       final playlistsResponse = await _libraryRepository.getPlaylists();
+      final artistsResponse = await _libraryRepository.getFavoriteArtists();
+      final albumsResponse = await _libraryRepository.getFavoriteAlbums();
 
-      if (favoritesResponse.success && playlistsResponse.success) {
+      if (favoritesResponse.success &&
+          playlistsResponse.success &&
+          artistsResponse.success &&
+          albumsResponse.success) {
         final favorites = favoritesResponse.data ?? [];
         final playlists = playlistsResponse.data ?? [];
+        final artists = artistsResponse.data ?? [];
+        final albums = albumsResponse.data ?? [];
         final favoriteSongIds = favorites.map((song) => song.id).toSet();
 
         emit(
           LibraryLoaded(
             favorites: favorites,
+            favoriteArtists: artists,
+            favoriteAlbums: albums,
             playlists: playlists,
             favoriteSongIds: favoriteSongIds,
           ),
@@ -105,22 +133,126 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
         final favoriteSongIds = favorites.map((song) => song.id).toSet();
 
         final currentState = state;
-        final playlists = currentState is LibraryLoaded
-            ? currentState.playlists
-            : <dynamic>[];
-
-        emit(
-          LibraryLoaded(
-            favorites: favorites,
-            playlists: playlists.cast(),
-            favoriteSongIds: favoriteSongIds,
-          ),
-        );
+        if (currentState is LibraryLoaded) {
+          emit(
+            currentState.copyWith(
+              favorites: favorites,
+              favoriteSongIds: favoriteSongIds,
+            ),
+          );
+        } else {
+          emit(
+            LibraryLoaded(
+              favorites: favorites,
+              favoriteSongIds: favoriteSongIds,
+            ),
+          );
+        }
       } else {
         emit(LibraryError(response.message));
       }
     } catch (e) {
       emit(LibraryError('Failed to load favorites: $e'));
+    }
+  }
+
+  Future<void> _onLoadFavoriteArtists(
+    LibraryLoadFavoriteArtists event,
+    Emitter<LibraryState> emit,
+  ) async {
+    emit(LibraryArtistsLoading());
+
+    try {
+      final response = await _libraryRepository.getFavoriteArtists();
+
+      if (response.success) {
+        final artists = response.data ?? [];
+
+        final currentState = state;
+        if (currentState is LibraryLoaded) {
+          emit(currentState.copyWith(favoriteArtists: artists));
+        } else {
+          emit(LibraryLoaded(favoriteArtists: artists));
+        }
+      } else {
+        emit(LibraryError(response.message));
+      }
+    } catch (e) {
+      emit(LibraryError('Failed to load favorite artists: $e'));
+    }
+  }
+
+  Future<void> _onLoadFavoriteAlbums(
+    LibraryLoadFavoriteAlbums event,
+    Emitter<LibraryState> emit,
+  ) async {
+    emit(LibraryAlbumsLoading());
+
+    try {
+      final response = await _libraryRepository.getFavoriteAlbums();
+
+      if (response.success) {
+        final albums = response.data ?? [];
+
+        final currentState = state;
+        if (currentState is LibraryLoaded) {
+          emit(currentState.copyWith(favoriteAlbums: albums));
+        } else {
+          emit(LibraryLoaded(favoriteAlbums: albums));
+        }
+      } else {
+        emit(LibraryError(response.message));
+      }
+    } catch (e) {
+      emit(LibraryError('Failed to load favorite albums: $e'));
+    }
+  }
+
+  Future<void> _onRemoveArtistFromFavorites(
+    LibraryRemoveArtistFromFavorites event,
+    Emitter<LibraryState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! LibraryLoaded) return;
+
+    try {
+      final response = await _libraryRepository.removeArtistFromFavorites(
+        event.artistId,
+      );
+
+      if (response.success) {
+        final updatedArtists = currentState.favoriteArtists
+            .where((a) => a.id != event.artistId)
+            .toList();
+
+        emit(currentState.copyWith(favoriteArtists: updatedArtists));
+      }
+    } catch (e) {
+      // Silent fail
+    }
+  }
+
+  Future<void> _onRemoveAlbumFromFavorites(
+    LibraryRemoveAlbumFromFavorites event,
+    Emitter<LibraryState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! LibraryLoaded) return;
+
+    try {
+      final response = await _libraryRepository.removeAlbumFromFavorites(
+        event.albumId,
+      );
+
+      if (response.success) {
+        final updatedAlbums = currentState.favoriteAlbums
+            .where((a) => a.id != event.albumId)
+            .toList();
+
+        emit(currentState.copyWith(favoriteAlbums: updatedAlbums));
+      }
+    } catch (e) {
+      // Silent fail
     }
   }
 
@@ -204,20 +336,11 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
         final playlists = response.data ?? [];
 
         final currentState = state;
-        final favorites = currentState is LibraryLoaded
-            ? currentState.favorites
-            : <dynamic>[];
-        final favoriteSongIds = currentState is LibraryLoaded
-            ? currentState.favoriteSongIds
-            : <String>{};
-
-        emit(
-          LibraryLoaded(
-            favorites: favorites.cast(),
-            playlists: playlists,
-            favoriteSongIds: favoriteSongIds,
-          ),
-        );
+        if (currentState is LibraryLoaded) {
+          emit(currentState.copyWith(playlists: playlists));
+        } else {
+          emit(LibraryLoaded(playlists: playlists));
+        }
       } else {
         emit(LibraryError(response.message));
       }

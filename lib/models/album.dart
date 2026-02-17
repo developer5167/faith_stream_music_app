@@ -24,13 +24,16 @@ class Album extends Equatable {
   });
 
   factory Album.fromJson(Map<String, dynamic> json) {
+    String? coverImage = (json['cover_image_url'] ?? json['image']) as String?;
+    if (coverImage != null && coverImage.trim().isEmpty) coverImage = null;
+
     return Album(
-      id: json['id'] as String,
-      title: json['title'] as String,
+      id: (json['id'] ?? '').toString(),
+      title: (json['title'] ?? 'Unknown Album').toString(),
       description: json['description'] as String?,
       language: json['language'] as String?,
       releaseType: json['release_type'] as String?,
-      coverImageUrl: json['image'] as String?,
+      coverImageUrl: coverImage,
       artistName: json['artist_name'] as String?,
       artistDisplayName: json['artist_display_name'] as String?,
       createdAt: json['created_at'] != null
@@ -55,6 +58,11 @@ class Album extends Equatable {
 
   String get displayArtist =>
       artistDisplayName ?? artistName ?? 'Unknown Artist';
+
+  String get displayDate {
+    if (createdAt == null) return 'Unknown Date';
+    return '${createdAt!.day}/${createdAt!.month}/${createdAt!.year}';
+  }
 
   @override
   List<Object?> get props => [

@@ -1,4 +1,6 @@
 import 'package:just_audio/just_audio.dart';
+import 'package:audio_session/audio_session.dart';
+import 'package:audio_service/audio_service.dart';
 import '../models/song.dart';
 
 enum RepeatMode { off, one, all }
@@ -14,9 +16,13 @@ class AudioPlayerService {
   // Getters
   AudioPlayer get player => _player;
   List<Song> get playlist => _playlist;
-  int get currentIndex => _currentIndex;
+  int get currentIndex => _player.currentIndex ?? 0;
   Song? get currentSong =>
-      _playlist.isNotEmpty ? _playlist[_currentIndex] : null;
+      (_playlist.isNotEmpty &&
+          _player.currentIndex != null &&
+          _player.currentIndex! < _playlist.length)
+      ? _playlist[_player.currentIndex!]
+      : null;
   RepeatMode get repeatMode => _repeatMode;
   bool get isShuffleEnabled => _isShuffleEnabled;
 
@@ -25,18 +31,20 @@ class AudioPlayerService {
   Stream<Duration?> get durationStream => _player.durationStream;
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
   Stream<bool> get playingStream => _player.playingStream;
+  Stream<int?> get currentIndexStream => _player.currentIndexStream;
 
   AudioPlayerService() {
     _init();
   }
 
-  void _init() {
-    // Handle playback completion
-    _player.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
-        _handleSongCompleted();
-      }
-    });
+  void _init() async {
+    // Configure audio session for background playback
+    try {
+      final session = await AudioSession.instance;
+      await session.configure(const AudioSessionConfiguration.music());
+    } catch (e) {
+      print('Error configuring audio session: $e');
+    }
   }
 
   Future<void> playSong(Song song, {List<Song>? queue}) async {
@@ -66,7 +74,29 @@ class AudioPlayerService {
     }
 
     try {
-      await _player.setUrl(song.audioUrl!);
+      // Create a playlist of audio sources for lock screen skip controls
+      final List<AudioSource> audioSources = _playlist.map((s) {
+        return AudioSource.uri(
+          Uri.parse(s.audioUrl ?? ''),
+          tag: MediaItem(
+            id: s.id,
+            title: s.title,
+            artist: s.displayArtist,
+            artUri: s.coverImageUrl != null
+                ? Uri.parse(s.coverImageUrl!)
+                : null,
+          ),
+        );
+      }).toList();
+
+      // Use ConcatenatingAudioSource for queue support
+      final playlist = ConcatenatingAudioSource(children: audioSources);
+
+      await _player.setAudioSource(
+        playlist,
+        initialIndex: _currentIndex,
+        initialPosition: Duration.zero,
+      );
       await _player.play();
     } catch (e) {
       print('Error loading song: $e');
@@ -91,55 +121,20 @@ class AudioPlayerService {
   }
 
   Future<void> skipToNext() async {
-    if (_playlist.isEmpty) return;
-
-    if (_isShuffleEnabled) {
-      _skipToNextShuffle();
-    } else {
-      _currentIndex = (_currentIndex + 1) % _playlist.length;
+    if (_player.hasNext) {
+      await _player.seekToNext();
     }
-
-    await _loadAndPlay(_playlist[_currentIndex]);
   }
 
   Future<void> skipToPrevious() async {
-    if (_playlist.isEmpty) return;
-
     // If song has been playing for more than 3 seconds, restart it
     if (_player.position.inSeconds > 3) {
-      await seek(Duration.zero);
+      await _player.seek(Duration.zero);
       return;
     }
 
-    if (_isShuffleEnabled) {
-      _skipToPreviousShuffle();
-    } else {
-      _currentIndex = (_currentIndex - 1 + _playlist.length) % _playlist.length;
-    }
-
-    await _loadAndPlay(_playlist[_currentIndex]);
-  }
-
-  void _handleSongCompleted() {
-    switch (_repeatMode) {
-      case RepeatMode.one:
-        // Replay current song
-        _player.seek(Duration.zero);
-        _player.play();
-        break;
-      case RepeatMode.all:
-        // Skip to next song
-        skipToNext();
-        break;
-      case RepeatMode.off:
-        // Check if there's a next song
-        if (_currentIndex < _playlist.length - 1) {
-          skipToNext();
-        } else {
-          // Playlist ended
-          _player.stop();
-        }
-        break;
+    if (_player.hasPrevious) {
+      await _player.seekToPrevious();
     }
   }
 
@@ -147,82 +142,60 @@ class AudioPlayerService {
     switch (_repeatMode) {
       case RepeatMode.off:
         _repeatMode = RepeatMode.all;
+        _player.setLoopMode(LoopMode.all);
         break;
       case RepeatMode.all:
         _repeatMode = RepeatMode.one;
+        _player.setLoopMode(LoopMode.one);
         break;
       case RepeatMode.one:
         _repeatMode = RepeatMode.off;
+        _player.setLoopMode(LoopMode.off);
         break;
     }
   }
 
   void toggleShuffle() {
     _isShuffleEnabled = !_isShuffleEnabled;
-    if (_isShuffleEnabled) {
-      _generateShuffleIndices();
-    }
-  }
-
-  void _generateShuffleIndices() {
-    _shuffleIndices = List.generate(_playlist.length, (index) => index);
-    _shuffleIndices.shuffle();
-
-    // Ensure current song stays as current
-    final currentSongIndex = _shuffleIndices.indexOf(_currentIndex);
-    if (currentSongIndex != 0) {
-      final temp = _shuffleIndices[0];
-      _shuffleIndices[0] = _shuffleIndices[currentSongIndex];
-      _shuffleIndices[currentSongIndex] = temp;
-    }
-  }
-
-  void _skipToNextShuffle() {
-    if (_shuffleIndices.isEmpty) {
-      _generateShuffleIndices();
-    }
-
-    final currentShufflePosition = _shuffleIndices.indexOf(_currentIndex);
-    final nextShufflePosition =
-        (currentShufflePosition + 1) % _shuffleIndices.length;
-    _currentIndex = _shuffleIndices[nextShufflePosition];
-  }
-
-  void _skipToPreviousShuffle() {
-    if (_shuffleIndices.isEmpty) {
-      _generateShuffleIndices();
-    }
-
-    final currentShufflePosition = _shuffleIndices.indexOf(_currentIndex);
-    final previousShufflePosition =
-        (currentShufflePosition - 1 + _shuffleIndices.length) %
-        _shuffleIndices.length;
-    _currentIndex = _shuffleIndices[previousShufflePosition];
+    _player.setShuffleModeEnabled(_isShuffleEnabled);
   }
 
   Future<void> addToQueue(Song song) async {
     _playlist.add(song);
-    if (_isShuffleEnabled) {
-      _generateShuffleIndices();
+
+    // Add to audio source if it's the correct type
+    if (_player.audioSource is ConcatenatingAudioSource) {
+      final source = AudioSource.uri(
+        Uri.parse(song.audioUrl ?? ''),
+        tag: MediaItem(
+          id: song.id,
+          title: song.title,
+          artist: song.displayArtist,
+          artUri: song.coverImageUrl != null
+              ? Uri.parse(song.coverImageUrl!)
+              : null,
+        ),
+      );
+
+      final playlist = _player.audioSource as ConcatenatingAudioSource;
+      await playlist.add(source);
     }
   }
 
   Future<void> removeFromQueue(int index) async {
     if (index < 0 || index >= _playlist.length) return;
 
-    if (index == _currentIndex) {
-      // Can't remove currently playing song
+    if (index == currentIndex) {
+      // Can't remove currently playing song via this method for simplicity
+      // In a real app, you'd handle this case more gracefully
       return;
     }
 
     _playlist.removeAt(index);
 
-    if (index < _currentIndex) {
-      _currentIndex--;
-    }
-
-    if (_isShuffleEnabled) {
-      _generateShuffleIndices();
+    if (_player.audioSource is ConcatenatingAudioSource) {
+      final playlist = _player.audioSource as ConcatenatingAudioSource;
+      await playlist.removeAt(index);
     }
   }
 

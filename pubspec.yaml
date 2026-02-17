@@ -31,6 +31,7 @@ dependencies:
   
   # Audio Player
   just_audio: ^0.9.38
+  just_audio_background: ^0.0.1-beta.11
   audio_service: ^0.18.13
   audio_session: ^0.1.19
   

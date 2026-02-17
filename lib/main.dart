@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'config/app_theme.dart';
 import 'config/app_router.dart';
 import 'services/api_client.dart';
@@ -36,6 +37,15 @@ void main() async {
 
   try {
     debugPrint('🔧 Initializing dependencies...');
+
+    // Initialize just_audio_background for lock screen controls
+    await JustAudioBackground.init(
+      androidNotificationChannelId: 'com.faithstream.audio',
+      androidNotificationChannelName: 'FaithStream Audio',
+      androidNotificationOngoing: true,
+    );
+    debugPrint('✅ Audio background service initialized');
+
     // Initialize dependencies
     const secureStorage = FlutterSecureStorage();
     final prefs = await SharedPreferences.getInstance();
@@ -142,7 +152,7 @@ class MyApp extends StatelessWidget {
             create: (context) => PlayerBloc(
               audioService: audioPlayerService,
               streamRepository: streamRepository,
-              storageService:  storageService,
+              storageService: storageService,
             ),
           ),
           BlocProvider(

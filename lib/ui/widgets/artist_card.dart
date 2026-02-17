@@ -25,10 +25,10 @@ class ArtistCard extends StatelessWidget {
               CircleAvatar(
                 radius: 40,
                 backgroundColor: AppColors.primaryBrown.withOpacity(0.1),
-                backgroundImage: artist.bannerImageUrl != null
-                    ? NetworkImage(artist.bannerImageUrl!)
+                backgroundImage: artist.profilePicUrl != null
+                    ? NetworkImage(artist.profilePicUrl!)
                     : null,
-                child: artist.bannerImageUrl == null
+                child: artist.profilePicUrl == null
                     ? const Icon(Icons.person, size: 40)
                     : null,
               ),
@@ -45,14 +45,17 @@ class ArtistCard extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
 
-              // Song Count
-              if ((int.tryParse(artist.totalSongs.toString()) ?? 0) > 0) ...[
+              // Counts
+              if ((artist.totalSongs ?? 0) > 0 ||
+                  (artist.totalAlbums ?? 0) > 0) ...[
                 const SizedBox(height: 4),
                 Text(
-                  '${artist.totalSongs} songs',
+                  '${artist.totalSongs ?? 0} songs • ${artist.totalAlbums ?? 0} albums',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ],

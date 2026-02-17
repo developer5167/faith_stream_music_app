@@ -53,12 +53,32 @@ class AlbumService {
   Future<List<dynamic>> getAlbumTracks(String albumId) async {
     final response = await apiClient.get('/albums/tracks/$albumId');
     final data = response.data;
-    
+
     if (data is Map && data.containsKey('songs')) {
       final songs = data['songs'];
       if (songs is List) return songs;
     }
 
     return [];
+  }
+
+  /// Check if album is favorite
+  Future<bool> checkIsFavorite(String albumId) async {
+    try {
+      final response = await apiClient.get('/favorites/album/$albumId/check');
+      return response.data['is_favorite'] ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Add album to favorites
+  Future<void> addToFavorites(String albumId) async {
+    await apiClient.post('/favorites/album/$albumId');
+  }
+
+  /// Remove album from favorites
+  Future<void> removeFromFavorites(String albumId) async {
+    await apiClient.delete('/favorites/album/$albumId');
   }
 }
