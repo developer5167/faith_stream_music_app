@@ -2,22 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Light Theme Colors
-  static const Color lightPrimary = Color(0xFF8B4513); // Christian brown
-  static const Color lightSecondary = Color(0xFFD4A76A); // Gold
-  static const Color lightBackground = Colors.white;
-  static const Color lightSurface = Colors.white;
-  static const Color lightError = Color(0xFFD32F2F);
-
   // Premium Dark Theme Colors
   static const Color darkPrimary = Color(0xFFD4A76A); // Gold
-  static const Color darkSecondary = Color(
-    0xFF1DB954,
-  ); // Spotify Green accent option, or keep Gold
+  static const Color darkSecondary = Color(0xFF1DB954); // Spotify Green
   static const Color darkBackground = Color(0xFF121212);
-  static const Color darkSurface = Color(
-    0xFF1E1E1E,
-  ); // Slightly lighter for cards
+  static const Color darkSurface = Color(0xFF1E1E1E);
   static const Color darkError = Color(0xFFCF6679);
 
   // Smooth Gradients
@@ -25,7 +14,7 @@ class AppTheme {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFF1A1A1A), // Dark Grey
+      Color.fromARGB(255, 243, 149, 8), // Dark Grey
       Color(0xFF000000), // Pure Black
     ],
   );
@@ -36,132 +25,12 @@ class AppTheme {
     colors: [Color(0xFF2A2A2A), Color(0xFF1A1A1A)],
   );
 
-  // Light Theme
-  static ThemeData lightTheme = ThemeData(
-    useMaterial3: true,
-    brightness: Brightness.light,
-    colorScheme: const ColorScheme.light(
-      primary: lightPrimary,
-      secondary: lightSecondary,
-      surface: lightSurface,
-      error: lightError,
-      onPrimary: Colors.white,
-      onSecondary: Colors.black,
-      onSurface: Colors.black,
-      onError: Colors.white,
-    ),
-    scaffoldBackgroundColor: lightBackground,
-    // ... (keep existing light theme settings if needed, but focus is dark)
-    // Typography
-    textTheme: GoogleFonts.interTextTheme(
-      const TextTheme(
-        displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-        displayMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-        displaySmall: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        headlineLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-        headlineMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-        headlineSmall: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        titleLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        titleMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-        titleSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-        bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
-        bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-        bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
-        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-        labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-        labelSmall: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
-      ),
-    ),
-
-    // AppBar Theme
-    appBarTheme: AppBarTheme(
-      elevation: 0,
-      centerTitle: false,
-      backgroundColor: lightBackground,
-      foregroundColor: Colors.black,
-      titleTextStyle: GoogleFonts.inter(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
-      ),
-    ),
-
-    // Card Theme
-    cardTheme: CardThemeData(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: lightSurface,
-    ),
-    // Input Decoration Theme
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: Colors.grey[100],
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: lightPrimary, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: lightError, width: 1),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    ),
-
-    // Elevated Button Theme
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: lightPrimary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
-      ),
-    ),
-
-    // Text Button Theme
-    textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        foregroundColor: lightPrimary,
-        textStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
-      ),
-    ),
-
-    // Icon Theme
-    iconTheme: const IconThemeData(color: lightPrimary, size: 24),
-
-    // Bottom Navigation Bar Theme
-    bottomNavigationBarTheme: BottomNavigationBarThemeData(
-      backgroundColor: lightSurface,
-      selectedItemColor: lightPrimary,
-      unselectedItemColor: Colors.grey[600],
-      elevation: 8,
-      type: BottomNavigationBarType.fixed,
-      selectedLabelStyle: GoogleFonts.inter(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-      ),
-      unselectedLabelStyle: GoogleFonts.inter(
-        fontSize: 12,
-        fontWeight: FontWeight.normal,
-      ),
-    ),
-
-    // Floating Action Button Theme
-    floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: lightPrimary,
-      foregroundColor: Colors.white,
-      elevation: 4,
-    ),
-  );
+  // Compatibility Aliases (Pointing to Dark Theme)
+  static const Color lightPrimary = darkPrimary;
+  static const Color lightSecondary = darkSecondary;
+  static const Color lightBackground = darkBackground;
+  static const Color lightSurface = darkSurface;
+  static const Color lightError = darkError;
 
   // Premium Dark Theme
   static ThemeData darkTheme = ThemeData(

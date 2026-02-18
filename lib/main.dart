@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'config/app_theme.dart';
 import 'config/app_router.dart';
 import 'services/api_client.dart';
@@ -31,7 +32,8 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light, // White icons for dark theme
+      statusBarBrightness: Brightness.dark, // For iOS
     ),
   );
 
@@ -171,13 +173,21 @@ class MyApp extends StatelessWidget {
             final authBloc = context.read<AuthBloc>();
             final router = AppRouter(authBloc, storageService).router;
 
-            return MaterialApp.router(
-              title: 'FaithStream',
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
-              themeMode: ThemeMode.system,
-              routerConfig: router,
+            return DynamicColorBuilder(
+              builder: (lightDynamic, darkDynamic) {
+                // Use darkDynamic to customize our dark theme if available
+                final theme = AppTheme.darkTheme.copyWith(
+                  colorScheme: darkDynamic ?? AppTheme.darkTheme.colorScheme,
+                );
+
+                return MaterialApp.router(
+                  title: 'FaithStream',
+                  debugShowCheckedModeBanner: false,
+                  theme: theme,
+                  themeMode: ThemeMode.dark,
+                  routerConfig: router,
+                );
+              },
             );
           },
         ),
