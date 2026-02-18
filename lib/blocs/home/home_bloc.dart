@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/home_feed.dart';
 import '../../repositories/home_repository.dart';
+import '../../repositories/stream_repository.dart';
 import 'home_event.dart';
 
 abstract class HomeState extends Equatable {
@@ -39,12 +41,21 @@ class HomeError extends HomeState {
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final HomeRepository _homeRepository;
+  final StreamRepository _streamRepository;
+  StreamSubscription? _streamSubscription;
 
-  HomeBloc({required HomeRepository homeRepository})
-    : _homeRepository = homeRepository,
-      super(const HomeInitial()) {
+  HomeBloc({
+    required HomeRepository homeRepository,
+    required StreamRepository streamRepository,
+  }) : _homeRepository = homeRepository,
+       _streamRepository = streamRepository,
+       super(const HomeInitial()) {
     on<HomeLoadRequested>(_onHomeLoadRequested);
     on<HomeRefreshRequested>(_onHomeRefreshRequested);
+
+    _streamSubscription = _streamRepository.onStreamLogged.listen((_) {
+      add(const HomeRefreshRequested());
+    });
   }
 
   Future<void> _onHomeLoadRequested(
@@ -81,5 +92,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     } catch (e) {
       emit(HomeError(e.toString()));
     }
+  }
+
+  @override
+  Future<void> close() {
+    _streamSubscription?.cancel();
+    return super.close();
   }
 }

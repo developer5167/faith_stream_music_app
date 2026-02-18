@@ -1,8 +1,12 @@
+import 'dart:async';
 import '../services/api_client.dart';
 import '../utils/api_response.dart';
 
 class StreamRepository {
   final ApiClient _apiClient;
+  final _streamLoggedController = StreamController<void>.broadcast();
+
+  Stream<void> get onStreamLogged => _streamLoggedController.stream;
 
   StreamRepository(this._apiClient);
 
@@ -17,6 +21,9 @@ class StreamRepository {
         '/stream/log',
         data: {'song_id': songId, 'duration_listened': durationListened},
       );
+
+      // Notify listeners that a stream was logged
+      _streamLoggedController.add(null);
 
       return ApiResponse.success(
         data: null,
@@ -44,5 +51,9 @@ class StreamRepository {
     } catch (e) {
       return ApiResponse.error(message: 'Failed to get stream URL: $e');
     }
+  }
+
+  void dispose() {
+    _streamLoggedController.close();
   }
 }

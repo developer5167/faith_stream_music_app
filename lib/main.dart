@@ -132,6 +132,7 @@ class MyApp extends StatelessWidget {
       providers: [
         RepositoryProvider<StorageService>.value(value: storageService),
         RepositoryProvider<HomeRepository>.value(value: homeRepository),
+        RepositoryProvider<StreamRepository>.value(value: streamRepository),
         RepositoryProvider<UserRepository>.value(value: userRepository),
         RepositoryProvider<AudioPlayerService>.value(value: audioPlayerService),
       ],
@@ -144,9 +145,10 @@ class MyApp extends StatelessWidget {
             ),
           ),
           BlocProvider(
-            create: (context) =>
-                HomeBloc(homeRepository: homeRepository)
-                  ..add(const HomeLoadRequested()),
+            create: (context) => HomeBloc(
+              homeRepository: homeRepository,
+              streamRepository: streamRepository,
+            )..add(const HomeLoadRequested()),
           ),
           BlocProvider(
             create: (context) => PlayerBloc(

@@ -121,7 +121,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                     Text(
                       'PLAYING FROM ALBUM',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -209,7 +211,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                       Text(
                         song.displayArtist,
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -228,7 +232,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                             : Icons.favorite_border_rounded,
                         color: isFavorite
                             ? AppTheme.darkPrimary
-                            : theme.colorScheme.onSurface.withOpacity(0.6),
+                            : theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
                         size: 28,
                       ),
                       onPressed: () {
@@ -273,14 +279,13 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                         ? _dragValue
                         : position.inSeconds.toDouble().clamp(
                             0.0,
-                            duration.inSeconds.toDouble() > 0
+                            (duration.inSeconds.toDouble() > 0
                                 ? duration.inSeconds.toDouble()
-                                : 0.1,
+                                : 1.0), // Use 1.0 as max if duration is 0 to avoid clamping issues
                           ),
-                    max: duration.inSeconds.toDouble().clamp(
-                      0.1,
-                      double.infinity,
-                    ),
+                    max: duration.inSeconds.toDouble() > 0
+                        ? duration.inSeconds.toDouble()
+                        : 1.0, // Use 1.0 as max if duration is 0
                     onChangeStart: (value) {
                       setState(() {
                         _isDragging = true;

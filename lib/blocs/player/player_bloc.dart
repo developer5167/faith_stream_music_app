@@ -498,7 +498,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
           queue: _audioService.playlist,
           currentIndex: event.index,
           position: Duration.zero, // Reset position visuals for new song
-          duration: Duration.zero,
+          duration: _audioService.player.duration ?? Duration.zero,
           repeatMode: _audioService.repeatMode,
           isShuffleEnabled: _audioService.isShuffleEnabled,
         ),
