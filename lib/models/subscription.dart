@@ -23,23 +23,27 @@ class Subscription extends Equatable {
 
   factory Subscription.fromJson(Map<String, dynamic> json) {
     return Subscription(
-      id: json['id'].toString(),
-      userId: json['user_id'].toString(),
-      planName: json['plan_name'] ?? 'Premium',
-      amount: (json['amount'] ?? 0.0).toDouble(),
-      status: json['status'] ?? 'inactive',
-      startDate: json['start_date'] != null
-          ? DateTime.parse(json['start_date'])
-          : null,
-      endDate: json['end_date'] != null
-          ? DateTime.parse(json['end_date'])
-          : null,
-      subscriptionId: json['subscription_id'],
+      id: json['id']?.toString() ?? '',
+      userId: json['user_id']?.toString() ?? '',
+      planName: json['plan'] ?? json['plan_name'] ?? 'Premium',
+      amount: double.tryParse((json['amount'] ?? 0).toString()) ?? 0.0,
+      status: json['status']?.toString().toUpperCase() ?? 'INACTIVE',
+      startDate: json['started_at'] != null
+          ? DateTime.tryParse(json['started_at'])
+          : (json['start_date'] != null
+                ? DateTime.tryParse(json['start_date'])
+                : null),
+      endDate: json['expires_at'] != null
+          ? DateTime.tryParse(json['expires_at'])
+          : (json['end_date'] != null
+                ? DateTime.tryParse(json['end_date'])
+                : null),
+      subscriptionId: json['razorpay_payment_id'] ?? json['subscription_id'],
     );
   }
 
   bool get isActive =>
-      status == 'active' &&
+      (status == 'ACTIVE' || status == 'active') &&
       (endDate == null || endDate!.isAfter(DateTime.now()));
 
   @override

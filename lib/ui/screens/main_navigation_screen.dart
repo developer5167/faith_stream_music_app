@@ -19,30 +19,41 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  // Cached value — only updated on definitive ProfileLoaded state.
+  // Stays stable during ProfileLoading so the tab bar doesn't flicker.
+  bool _showSubscriptionTab = true;
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ProfileBloc, ProfileState>(
-      builder: (context, state) {
-        // Determine if we should show subscription tab
-        bool showSubscriptionTab = true;
-        if (state is ProfileLoaded || state is ProfileOperationSuccess) {
-          final profileState = state is ProfileOperationSuccess
-              ? state.previousState
-              : state as ProfileLoaded;
+    return BlocConsumer<ProfileBloc, ProfileState>(
+      listenWhen: (_, state) =>
+          state is ProfileLoaded || state is ProfileOperationSuccess,
+      listener: (context, state) {
+        final profileState = state is ProfileOperationSuccess
+            ? state.previousState
+            : state as ProfileLoaded;
 
-          // Hide subscription tab if user has active subscription
-          if (profileState.subscription != null &&
-              profileState.subscription!.isActive) {
-            showSubscriptionTab = false;
+        final hasActiveSub = profileState.subscription?.isActive ?? false;
+        final shouldHide = hasActiveSub;
+
+        if (shouldHide != !_showSubscriptionTab) {
+          final newShow = !shouldHide;
+          if (newShow != _showSubscriptionTab) {
+            setState(() {
+              _showSubscriptionTab = newShow;
+              // Clamp index if the tab at current position disappears
+              final maxIndex = newShow ? 4 : 3;
+              if (_currentIndex > maxIndex) _currentIndex = maxIndex;
+            });
           }
         }
-
+      },
+      builder: (context, state) {
         final screens = [
           const HomeScreen(),
           const SearchScreen(),
           const LibraryScreen(),
-          if (showSubscriptionTab) const SubscriptionScreen(),
+          if (_showSubscriptionTab) const SubscriptionScreen(),
           const UserProfileScreen(),
         ];
 
@@ -56,7 +67,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             icon: Icon(Icons.library_music),
             label: 'Library',
           ),
-          if (showSubscriptionTab)
+          if (_showSubscriptionTab)
             const BottomNavigationBarItem(
               icon: Icon(Icons.workspace_premium),
               label: 'Premium',
@@ -67,25 +78,25 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ),
         ];
 
-        // Adjust current index if subscription tab is hidden
-        int adjustedIndex = _currentIndex;
-        if (!showSubscriptionTab && _currentIndex >= 3) {
-          adjustedIndex = _currentIndex;
-        }
+        // Safety clamp in case state is read before listener fires
+        final safeIndex = _currentIndex.clamp(0, screens.length - 1);
 
         return Scaffold(
-          body: screens[adjustedIndex],
+          backgroundColor: Colors.transparent,
+          body: screens[safeIndex],
           bottomNavigationBar: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const MiniPlayerBar(),
               BottomNavigationBar(
-                currentIndex: adjustedIndex,
+                currentIndex: safeIndex,
                 onTap: (index) {
                   setState(() {
                     _currentIndex = index;
                   });
                 },
+                backgroundColor: Colors.transparent,
+                elevation: 0,
                 selectedItemColor: AppColors.primaryBrown,
                 unselectedItemColor: Colors.grey,
                 type: BottomNavigationBarType.fixed,

@@ -78,7 +78,8 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Tickets'),
-        backgroundColor: AppColors.primaryBrown,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -140,14 +141,14 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: AppSizes.paddingSm),
             Text(
               'You haven\'t created any support tickets yet.\nNeed help? Contact our support team.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 14, color: Colors.white70),
             ),
             const SizedBox(height: AppSizes.paddingXl),
             ElevatedButton.icon(
@@ -183,8 +184,8 @@ class _TicketDetailsBottomSheet extends StatelessWidget {
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
             borderRadius: BorderRadius.vertical(
               top: Radius.circular(AppSizes.paddingLg),
             ),
@@ -218,7 +219,7 @@ class _TicketDetailsBottomSheet extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: AppSizes.paddingMd),
@@ -302,7 +303,7 @@ class _TicketDetailsBottomSheet extends StatelessWidget {
                         ticket.description,
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textSecondary,
+                          color: Colors.white70,
                           height: 1.5,
                         ),
                       ),
@@ -347,7 +348,7 @@ class _TicketDetailsBottomSheet extends StatelessWidget {
                                 ticket.adminResponse!,
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: AppColors.textSecondary,
+                                  color: Colors.white70,
                                   height: 1.5,
                                 ),
                               ),
@@ -434,12 +435,12 @@ class _InfoRow extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
+            color: Colors.white70,
           ),
         ),
         Text(
           value,
-          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+          style: const TextStyle(fontSize: 14, color: Colors.white70),
         ),
       ],
     );

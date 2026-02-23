@@ -91,7 +91,8 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contact Support'),
-        backgroundColor: AppColors.primaryBrown,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         foregroundColor: Colors.white,
       ),
       body: Stack(
@@ -122,7 +123,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                             'Our support team typically responds within 24-48 hours.',
                             style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.textSecondary,
+                              color: Colors.white70,
                             ),
                           ),
                         ),
@@ -138,7 +139,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: AppSizes.paddingSm),
@@ -154,9 +155,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                             Icon(
                               _getCategoryIcon(category),
                               size: 16,
-                              color: isSelected
-                                  ? Colors.white
-                                  : AppColors.primaryBrown,
+                              color: isSelected ? Colors.black : Colors.white70,
                             ),
                             const SizedBox(width: AppSizes.paddingXs),
                             Text(category.displayText),
@@ -169,11 +168,9 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                           }
                         },
                         selectedColor: AppColors.primaryBrown,
-                        backgroundColor: Colors.grey.shade100,
+                        backgroundColor: Colors.white.withValues(alpha: 0.1),
                         labelStyle: TextStyle(
-                          color: isSelected
-                              ? Colors.white
-                              : AppColors.textPrimary,
+                          color: isSelected ? Colors.black : Colors.white,
                           fontWeight: isSelected
                               ? FontWeight.w600
                               : FontWeight.normal,
@@ -190,7 +187,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: AppSizes.paddingSm),
@@ -217,7 +214,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: AppSizes.paddingSm),

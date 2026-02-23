@@ -192,7 +192,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.6),
+                            Colors.black.withOpacity(0.5),
                             theme.scaffoldBackgroundColor,
                           ],
                         ),

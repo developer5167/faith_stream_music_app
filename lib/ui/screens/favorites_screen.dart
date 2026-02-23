@@ -6,9 +6,9 @@ import '../../blocs/library/library_event.dart';
 import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_event.dart';
 import '../../utils/constants.dart';
+import '../widgets/mini_player_bar.dart';
 import '../widgets/loading_indicator.dart';
 import '../widgets/song_card.dart';
-import '../widgets/mini_player_bar.dart';
 import 'song_detail_screen.dart';
 
 class FavoritesScreen extends StatelessWidget {
@@ -19,7 +19,11 @@ class FavoritesScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Fav Songs')),
+      appBar: AppBar(
+        title: const Text('Fav Songs'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       bottomNavigationBar: const MiniPlayerBar(),
       body: BlocBuilder<LibraryBloc, LibraryState>(
         builder: (context, state) {

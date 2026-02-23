@@ -98,7 +98,8 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('File a Complaint'),
-        backgroundColor: AppColors.primaryBrown,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         foregroundColor: Colors.white,
       ),
       body: Stack(
@@ -129,7 +130,7 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
                             'Use this form to report content that violates our community guidelines or terms of service.',
                             style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.textSecondary,
+                              color: Colors.white70,
                             ),
                           ),
                         ),
@@ -145,7 +146,7 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: AppSizes.paddingSm),
@@ -172,7 +173,7 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: AppSizes.paddingSm),
@@ -186,8 +187,9 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
                         borderRadius: BorderRadius.circular(AppSizes.paddingMd),
                       ),
                       filled: true,
-                      fillColor: Colors.grey.shade50,
+                      fillColor: Colors.white.withValues(alpha: 0.1),
                     ),
+                    dropdownColor: const Color(0xFF1E1E1E),
                     items: _contentTypes.map((type) {
                       return DropdownMenuItem(value: type, child: Text(type));
                     }).toList(),
@@ -204,7 +206,7 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: AppSizes.paddingSm),

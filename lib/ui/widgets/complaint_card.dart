@@ -8,11 +8,7 @@ class ComplaintCard extends StatelessWidget {
   final Complaint complaint;
   final VoidCallback? onTap;
 
-  const ComplaintCard({
-    super.key,
-    required this.complaint,
-    this.onTap,
-  });
+  const ComplaintCard({super.key, required this.complaint, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +38,7 @@ class ComplaintCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: Colors.white,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -57,10 +53,7 @@ class ComplaintCard extends StatelessWidget {
               // Description
               Text(
                 complaint.description,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.white70),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -113,10 +106,7 @@ class ComplaintCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           complaint.adminNotes!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
+                          style: TextStyle(fontSize: 12, color: Colors.white70),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -143,11 +133,7 @@ class ComplaintCard extends StatelessWidget {
                   ),
                   if (complaint.status != ComplaintStatus.pending) ...[
                     const SizedBox(width: AppSizes.paddingMd),
-                    Icon(
-                      Icons.update,
-                      size: 14,
-                      color: AppColors.textTertiary,
-                    ),
+                    Icon(Icons.update, size: 14, color: AppColors.textTertiary),
                     const SizedBox(width: AppSizes.paddingXs),
                     Text(
                       'Updated ${timeago.format(complaint.updatedAt)}',

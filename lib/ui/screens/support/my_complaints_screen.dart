@@ -78,7 +78,8 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Complaints'),
-        backgroundColor: AppColors.primaryBrown,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -140,14 +141,14 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: AppSizes.paddingSm),
             Text(
               'You haven\'t filed any complaints.\nIf you encounter any issues, feel free to report them.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 14, color: Colors.white70),
             ),
             const SizedBox(height: AppSizes.paddingXl),
             ElevatedButton.icon(
@@ -183,8 +184,8 @@ class _ComplaintDetailsBottomSheet extends StatelessWidget {
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
             borderRadius: BorderRadius.vertical(
               top: Radius.circular(AppSizes.paddingLg),
             ),
@@ -218,7 +219,7 @@ class _ComplaintDetailsBottomSheet extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: AppSizes.paddingMd),
@@ -231,7 +232,7 @@ class _ComplaintDetailsBottomSheet extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textSecondary,
+                              color: Colors.white70,
                             ),
                           ),
                           Container(
@@ -275,7 +276,7 @@ class _ComplaintDetailsBottomSheet extends StatelessWidget {
                         complaint.description,
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textSecondary,
+                          color: Colors.white70,
                           height: 1.5,
                         ),
                       ),
@@ -288,15 +289,15 @@ class _ComplaintDetailsBottomSheet extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: Colors.white,
                           ),
                         ),
                         const SizedBox(height: AppSizes.paddingSm),
                         Text(
                           complaint.contentType!.toUpperCase(),
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 14,
-                            color: AppColors.textSecondary,
+                            color: Colors.white70,
                           ),
                         ),
                       ],
@@ -341,7 +342,7 @@ class _ComplaintDetailsBottomSheet extends StatelessWidget {
                                 complaint.adminNotes!,
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: AppColors.textSecondary,
+                                  color: Colors.white70,
                                   height: 1.5,
                                 ),
                               ),
@@ -415,12 +416,12 @@ class _InfoRow extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
+            color: Colors.white70,
           ),
         ),
         Text(
           value,
-          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+          style: const TextStyle(fontSize: 14, color: Colors.white70),
         ),
       ],
     );

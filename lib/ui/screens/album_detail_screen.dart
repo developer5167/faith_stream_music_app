@@ -15,7 +15,6 @@ import '../widgets/mini_player_bar.dart';
 import '../screens/now_playing_screen.dart';
 import '../../services/artist_service.dart';
 import 'artist_profile_screen.dart';
-import '../widgets/gradient_background.dart';
 import '../widgets/song_card.dart';
 
 class AlbumDetailScreen extends StatefulWidget {
@@ -167,268 +166,239 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
-    return GradientBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        bottomNavigationBar: const MiniPlayerBar(),
-        body: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              expandedHeight: size.height * 0.45,
-              pinned: true,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              flexibleSpace: FlexibleSpaceBar(
-                title: Text(
-                  widget.album.title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: const [
-                      Shadow(color: Colors.black54, blurRadius: 10),
-                    ],
-                  ),
-                ),
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (widget.album.coverImageUrl != null)
-                      Image.network(
-                        widget.album.coverImageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: theme.colorScheme.onSurface.withOpacity(
-                              0.05,
-                            ),
-                            child: Icon(
-                              Icons.album,
-                              size: 100,
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.1,
-                              ),
-                            ),
-                          );
-                        },
-                      )
-                    else
-                      Container(
-                        color: theme.colorScheme.onSurface.withOpacity(0.05),
-                        child: Icon(
-                          Icons.album,
-                          size: 100,
-                          color: theme.colorScheme.onSurface.withOpacity(0.1),
-                        ),
-                      ),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.6),
-                            theme.scaffoldBackgroundColor,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+    return Scaffold(
+      backgroundColor: Colors.black,
+      bottomNavigationBar: const MiniPlayerBar(),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: size.height * 0.45,
+            pinned: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(
+                widget.album.title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  shadows: [Shadow(color: Colors.black54, blurRadius: 10)],
                 ),
               ),
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.paddingMd,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Artist info
-                    InkWell(
-                      onTap: () {
-                        if (_albumArtist != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ArtistProfileScreen(artist: _albumArtist!),
-                            ),
-                          );
-                        }
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (widget.album.coverImageUrl != null)
+                    Image.network(
+                      widget.album.coverImageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(child: Icon(Icons.album, size: 100));
                       },
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: AppTheme.darkPrimary,
-                            backgroundImage: _albumArtist?.profilePicUrl != null
-                                ? NetworkImage(_albumArtist!.profilePicUrl!)
-                                : null,
-                            child: _albumArtist?.profilePicUrl == null
-                                ? const Icon(
-                                    Icons.person,
-                                    size: 20,
-                                    color: Colors.black,
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _albumArtist?.name ??
-                                      widget.album.displayArtist,
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.onSurface,
-                                  ),
-                                ),
-                                Text(
-                                  'Album • ${widget.album.releaseType?.toUpperCase() ?? 'ALBUM'}',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurface
-                                        .withOpacity(0.6),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              _isFavorite
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: _isFavorite
-                                  ? AppTheme.darkPrimary
-                                  : Colors.white54,
-                            ),
-                            onPressed: _toggleFavorite,
-                          ),
+                    )
+                  else
+                    Container(
+                      color: theme.colorScheme.onSurface.withOpacity(0.05),
+                      child: Icon(
+                        Icons.music_note,
+                        size: 100,
+                        color: theme.colorScheme.onSurface.withOpacity(0.1),
+                      ),
+                    ),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.5),
+                          theme.scaffoldBackgroundColor,
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
-                    // Play and actions
-                    Row(
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.paddingMd,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Artist info
+                  InkWell(
+                    onTap: () {
+                      if (_albumArtist != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                ArtistProfileScreen(artist: _albumArtist!),
+                          ),
+                        );
+                      }
+                    },
+                    child: Row(
                       children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: AppTheme.darkPrimary,
+                          backgroundImage: _albumArtist?.profilePicUrl != null
+                              ? NetworkImage(_albumArtist!.profilePicUrl!)
+                              : null,
+                          child: _albumArtist?.profilePicUrl == null
+                              ? const Icon(
+                                  Icons.person,
+                                  size: 20,
+                                  color: Colors.black,
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 12),
                         Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _tracks.isNotEmpty ? _playAlbum : null,
-                            icon: const Icon(
-                              Icons.play_arrow_rounded,
-                              size: 28,
-                            ),
-                            label: const Text('Play All'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: theme.colorScheme.onPrimary,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _albumArtist?.name ??
+                                    widget.album.displayArtist,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                              Text(
+                                'Album • ${widget.album.releaseType?.toUpperCase() ?? 'ALBUM'}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.6),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        _buildSmallActionButton(
-                          context,
-                          Icons.share_outlined,
-                          () {},
-                        ),
-                        const SizedBox(width: 8),
-                        _buildSmallActionButton(
-                          context,
-                          Icons.download_outlined,
-                          () {},
+                        IconButton(
+                          icon: Icon(
+                            _isFavorite
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: _isFavorite
+                                ? AppTheme.darkPrimary
+                                : Colors.white54,
+                          ),
+                          onPressed: _toggleFavorite,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 32),
+                  ),
+                  const SizedBox(height: 24),
 
-                    Text(
-                      'Tracks',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    if (_isLoadingTracks)
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(40),
-                          child: CircularProgressIndicator(),
+                  // Play and actions
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _tracks.isNotEmpty ? _playAlbum : null,
+                          icon: const Icon(Icons.play_arrow_rounded, size: 28),
+                          label: const Text('Play All'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
                         ),
-                      )
-                    else if (_tracks.isEmpty)
-                      Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(40),
-                          child: Text(
-                            'No tracks found',
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.54,
-                              ),
+                      ),
+                      const SizedBox(width: 16),
+                      _buildSmallActionButton(
+                        context,
+                        Icons.share_outlined,
+                        () {},
+                      ),
+                      const SizedBox(width: 8),
+                      _buildSmallActionButton(
+                        context,
+                        Icons.download_outlined,
+                        () {},
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+
+                  Text(
+                    'Tracks',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  if (_isLoadingTracks)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  else if (_tracks.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: Text(
+                          'No tracks found',
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withOpacity(
+                              0.54,
                             ),
                           ),
                         ),
-                      )
-                    else
-                      BlocBuilder<PlayerBloc, PlayerState>(
-                        builder: (context, state) {
-                          String? currentSongId;
-                          if (state is PlayerPlaying)
-                            currentSongId = state.song.id;
-                          if (state is PlayerPaused)
-                            currentSongId = state.song.id;
-                          if (state is PlayerLoading)
-                            currentSongId = state.song?.id;
+                      ),
+                    )
+                  else
+                    BlocBuilder<PlayerBloc, PlayerState>(
+                      builder: (context, state) {
+                        String? currentSongId;
+                        if (state is PlayerPlaying)
+                          currentSongId = state.song.id;
+                        if (state is PlayerPaused)
+                          currentSongId = state.song.id;
+                        if (state is PlayerLoading)
+                          currentSongId = state.song?.id;
 
-                          return ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _tracks.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 4),
-                            itemBuilder: (context, index) {
-                              final track = _tracks[index];
-                              final isCurrent = currentSongId == track.id;
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _tracks.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 4),
+                          itemBuilder: (context, index) {
+                            final track = _tracks[index];
+                            final isCurrent = currentSongId == track.id;
 
-                              return SongCard(
-                                song: track,
-                                isFavorite:
-                                    false, // We'll handle this if library state is provided
-                                onTap: () {
-                                  if (isCurrent) {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      useSafeArea: true,
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      builder: (context) =>
-                                          const FractionallySizedBox(
-                                            heightFactor: 1.0,
-                                            child: NowPlayingScreen(),
-                                          ),
-                                    );
-                                  } else {
-                                    final trackWithArtist = track.artist != null
-                                        ? track
-                                        : track.copyWith(artist: _albumArtist);
-                                    context.read<PlayerBloc>().add(
-                                      PlayerPlaySong(
-                                        trackWithArtist,
-                                        queue: _tracks,
-                                      ),
-                                    );
-                                  }
-                                },
-                                onPlayTap: () {
+                            return SongCard(
+                              song: track,
+                              isFavorite:
+                                  false, // We'll handle this if library state is provided
+                              onTap: () {
+                                if (isCurrent) {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    useSafeArea: true,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (context) =>
+                                        const FractionallySizedBox(
+                                          heightFactor: 1.0,
+                                          child: NowPlayingScreen(),
+                                        ),
+                                  );
+                                } else {
                                   final trackWithArtist = track.artist != null
                                       ? track
                                       : track.copyWith(artist: _albumArtist);
@@ -438,59 +408,68 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                                       queue: _tracks,
                                     ),
                                   );
-                                },
-                                // Colors will be handled by SongCard's internal state if we passed isCurrent
-                              );
-                            },
-                          );
-                        },
-                      ),
+                                }
+                              },
+                              onPlayTap: () {
+                                final trackWithArtist = track.artist != null
+                                    ? track
+                                    : track.copyWith(artist: _albumArtist);
+                                context.read<PlayerBloc>().add(
+                                  PlayerPlaySong(
+                                    trackWithArtist,
+                                    queue: _tracks,
+                                  ),
+                                );
+                              },
+                              // Colors will be handled by SongCard's internal state if we passed isCurrent
+                            );
+                          },
+                        );
+                      },
+                    ),
 
+                  const SizedBox(height: 24),
+                  Divider(color: theme.colorScheme.onSurface.withOpacity(0.1)),
+                  const SizedBox(height: 16),
+
+                  if (widget.album.description != null &&
+                      widget.album.description!.isNotEmpty) ...[
+                    Text(
+                      'About',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.album.description!,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
                     const SizedBox(height: 24),
-                    Divider(
-                      color: theme.colorScheme.onSurface.withOpacity(0.1),
-                    ),
-                    const SizedBox(height: 16),
-
-                    if (widget.album.description != null &&
-                        widget.album.description!.isNotEmpty) ...[
-                      Text(
-                        'About',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        widget.album.description!,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-
-                    _buildInfoRow(
-                      context,
-                      'Released',
-                      widget.album.createdAt != null
-                          ? _formatDate(widget.album.createdAt!)
-                          : 'Unknown',
-                    ),
-                    _buildInfoRow(
-                      context,
-                      'Language',
-                      widget.album.language ?? 'Unknown',
-                    ),
-
-                    const SizedBox(height: 100),
                   ],
-                ),
+
+                  _buildInfoRow(
+                    context,
+                    'Released',
+                    widget.album.createdAt != null
+                        ? _formatDate(widget.album.createdAt!)
+                        : 'Unknown',
+                  ),
+                  _buildInfoRow(
+                    context,
+                    'Language',
+                    widget.album.language ?? 'Unknown',
+                  ),
+
+                  const SizedBox(height: 100),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

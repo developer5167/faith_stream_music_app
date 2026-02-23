@@ -10,6 +10,8 @@ import '../../utils/constants.dart';
 import 'edit_profile_screen.dart';
 import 'artist_registration_screen.dart';
 import 'artist_dashboard_screen.dart';
+import 'subscription_screen.dart';
+import '../../repositories/user_repository.dart';
 
 class UserProfileScreen extends StatelessWidget {
   const UserProfileScreen({super.key});
@@ -26,7 +28,11 @@ class UserProfileScreen extends StatelessWidget {
 
         if (state is ProfileError) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Profile')),
+            appBar: AppBar(
+              title: const Text('Profile'),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+            ),
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -63,41 +69,36 @@ class UserProfileScreen extends StatelessWidget {
     final user = state.user;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: RefreshIndicator(
         onRefresh: () async {
           context.read<ProfileBloc>().add(ProfileLoad());
           // Wait a bit for the bloc to emit new state
           await Future.delayed(const Duration(milliseconds: 800));
         },
-        color: AppColors.primaryBrown,
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
               expandedHeight: 200,
               pinned: true,
               flexibleSpace: FlexibleSpaceBar(
-                title: Text(
-                  user.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
-                  ),
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(user.name),
+                    if (state.subscription?.isActive ?? false) ...[
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.workspace_premium,
+                        color: Colors.amber,
+                        size: 16,
+                      ),
+                    ],
+                  ],
                 ),
                 background: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            theme.colorScheme.primary,
-                            theme.colorScheme.secondary,
-                          ],
-                        ),
-                      ),
-                    ),
                     Center(
                       child: CircleAvatar(
                         radius: 60,
@@ -115,18 +116,6 @@ class UserProfileScreen extends StatelessWidget {
                                 ),
                               )
                             : null,
-                      ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.7),
-                          ],
-                        ),
                       ),
                     ),
                   ],
@@ -176,13 +165,66 @@ class UserProfileScreen extends StatelessWidget {
 
                     const SizedBox(height: AppSizes.paddingLg),
 
+                    // Test Push Notification Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(
+                          Icons.notifications_active,
+                          color: Colors.blue,
+                        ),
+                        label: const Text('Test Push Notification'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.blue,
+                          side: const BorderSide(color: Colors.blue),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        onPressed: () async {
+                          try {
+                            final repo = context.read<UserRepository>();
+                            final result = await repo.testPushNotification();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    result.success
+                                        ? 'Test notification sent from backend 🚀'
+                                        : 'Backend error: ${result.message}',
+                                  ),
+                                  backgroundColor: result.success
+                                      ? Colors.green
+                                      : Colors.red,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to send test: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(height: AppSizes.paddingLg),
+
+                    // Subscription status section
+                    _buildSubscriptionCard(context, state.subscription),
+
+                    const SizedBox(height: AppSizes.paddingLg),
+
                     // Artist status section
                     _buildArtistSection(context, user),
 
                     const SizedBox(height: AppSizes.paddingLg),
 
-                    // Settings options
-                    _buildSettingsTile(
+                    // Navigation Actions
+                    _buildActionCard(
                       context,
                       icon: Icons.notifications,
                       title: 'Notifications',
@@ -190,7 +232,7 @@ class UserProfileScreen extends StatelessWidget {
                         // TODO: Navigate to notifications settings
                       },
                     ),
-                    _buildSettingsTile(
+                    _buildActionCard(
                       context,
                       icon: Icons.security,
                       title: 'Privacy & Security',
@@ -198,13 +240,11 @@ class UserProfileScreen extends StatelessWidget {
                         // TODO: Navigate to privacy settings
                       },
                     ),
-                    _buildSettingsTile(
+                    _buildActionCard(
                       context,
                       icon: Icons.help_outline,
                       title: 'Help & Support',
-                      onTap: () {
-                        context.push('/support');
-                      },
+                      onTap: () => context.push('/support'),
                     ),
 
                     const SizedBox(height: AppSizes.paddingLg),
@@ -250,6 +290,7 @@ class UserProfileScreen extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.paddingSm),
+      color: Colors.white.withValues(alpha: 0.05),
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.paddingMd),
         child: Row(
@@ -277,8 +318,115 @@ class UserProfileScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildSubscriptionCard(BuildContext context, dynamic subscription) {
+    final theme = Theme.of(context);
+    final isActive = subscription?.isActive ?? false;
+    final planName = subscription?.planName ?? 'Free';
+
+    int daysLeft = 0;
+    if (isActive && subscription?.endDate != null) {
+      daysLeft = subscription.endDate.difference(DateTime.now()).inDays;
+    }
+
+    return Card(
+      margin: EdgeInsets.zero,
+      color: isActive
+          ? const Color(0xFF6A0DAD).withValues(alpha: 0.1)
+          : Colors.white.withValues(alpha: 0.05),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isActive
+              ? Colors.amber.withValues(alpha: 0.5)
+              : Colors.transparent,
+        ),
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SubscriptionScreen()),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.paddingMd),
+          child: Row(
+            children: [
+              Icon(
+                isActive ? Icons.workspace_premium : Icons.stars,
+                color: isActive ? Colors.amber : Colors.grey,
+                size: 32,
+              ),
+              const SizedBox(width: AppSizes.paddingMd),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          isActive ? 'Premium Member' : 'Free Plan',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: isActive ? Colors.amber : Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isActive
+                          ? '$planName • $daysLeft days remaining'
+                          : 'Upgrade for ad-free listening',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    final theme = Theme.of(context);
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppSizes.paddingSm),
+      color: Colors.white.withValues(alpha: 0.05),
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color: isDestructive ? Colors.red : theme.colorScheme.primary,
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isDestructive ? Colors.red : theme.colorScheme.onSurface,
+          ),
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: onTap,
+      ),
+    );
+  }
+
   Widget _buildArtistSection(BuildContext context, user) {
-    final theme = Theme.of(context); // Added this line to define 'theme'
+    final theme = Theme.of(context);
     if (user.isArtist) {
       return Card(
         color: theme.colorScheme.primary,
@@ -325,7 +473,7 @@ class UserProfileScreen extends StatelessWidget {
       );
     } else if (user.isArtistPending) {
       return Card(
-        color: theme.colorScheme.errorContainer.withOpacity(0.3),
+        color: theme.colorScheme.errorContainer.withValues(alpha: 0.2),
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.paddingMd),
           child: Row(
@@ -360,7 +508,7 @@ class UserProfileScreen extends StatelessWidget {
       );
     } else {
       return Card(
-        color: theme.colorScheme.primary.withOpacity(0.1),
+        color: theme.colorScheme.primary.withValues(alpha: 0.1),
         child: InkWell(
           onTap: () {
             Navigator.push(
@@ -405,21 +553,6 @@ class UserProfileScreen extends StatelessWidget {
         ),
       );
     }
-  }
-
-  Widget _buildSettingsTile(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    return ListTile(
-      leading: Icon(icon, color: theme.colorScheme.primary),
-      title: Text(title),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-      onTap: onTap,
-    );
   }
 
   void _showLogoutConfirmation(BuildContext context) {

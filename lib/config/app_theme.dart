@@ -13,10 +13,7 @@ class AppTheme {
   static const LinearGradient premiumDarkGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color.fromARGB(255, 243, 149, 8), // Dark Grey
-      Color(0xFF000000), // Pure Black
-    ],
+    colors: [Colors.black, Colors.black],
   );
 
   static const LinearGradient cardGradient = LinearGradient(
@@ -36,8 +33,7 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    scaffoldBackgroundColor:
-        darkBackground, // Will often be overridden by GradientBackground
+    scaffoldBackgroundColor: Colors.black,
     colorScheme: const ColorScheme.dark(
       primary: darkPrimary,
       secondary: darkSecondary,
@@ -94,7 +90,7 @@ class AppTheme {
     appBarTheme: AppBarTheme(
       elevation: 0,
       centerTitle: false,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.black,
       foregroundColor: Colors.white,
       titleTextStyle: GoogleFonts.inter(
         fontSize: 24,
@@ -108,7 +104,7 @@ class AppTheme {
     cardTheme: CardThemeData(
       elevation: 0, // Flat for modern look
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: darkSurface,
+      color: Colors.white.withValues(alpha: 0.05),
       margin: EdgeInsets.zero,
     ),
 

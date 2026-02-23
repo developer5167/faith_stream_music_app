@@ -14,7 +14,6 @@ import '../../config/app_theme.dart';
 import '../widgets/song_card.dart';
 import '../widgets/album_card.dart';
 import '../widgets/artist_card.dart';
-import '../widgets/gradient_background.dart';
 import 'album_detail_screen.dart';
 import 'artist_profile_screen.dart';
 
@@ -100,88 +99,87 @@ class _SearchScreenState extends State<SearchScreen>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return GradientBackground(
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          toolbarHeight: 80,
-          title: Container(
-            height: 50,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.onSurface.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: theme.colorScheme.onSurface.withOpacity(0.05),
-              ),
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        toolbarHeight: 80,
+        title: Container(
+          height: 50,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.onSurface.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: theme.colorScheme.onSurface.withOpacity(0.05),
             ),
-            child: TextField(
-              controller: _searchController,
-              autofocus: true,
-              style: TextStyle(color: theme.colorScheme.onSurface),
-              decoration: InputDecoration(
-                hintText: 'Search songs, albums, artists...',
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.onSurface.withOpacity(0.38),
-                ),
-                prefixIcon: Icon(
-                  Icons.search_rounded,
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                suffixIcon: _isSearching
-                    ? IconButton(
-                        icon: Icon(
-                          Icons.clear_rounded,
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                        },
-                      )
-                    : null,
+          ),
+          child: TextField(
+            controller: _searchController,
+            autofocus: true,
+            style: TextStyle(color: theme.colorScheme.onSurface),
+            decoration: InputDecoration(
+              hintText: 'Search songs, albums, artists...',
+              hintStyle: TextStyle(
+                color: theme.colorScheme.onSurface.withOpacity(0.38),
               ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              suffixIcon: _isSearching
+                  ? IconButton(
+                      icon: Icon(
+                        Icons.clear_rounded,
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                      onPressed: () {
+                        _searchController.clear();
+                      },
+                    )
+                  : null,
             ),
           ),
         ),
-        body: _isSearching
-            ? Column(
-                children: [
-                  TabBar(
+      ),
+      body: _isSearching
+          ? Column(
+              children: [
+                TabBar(
+                  controller: _tabController,
+                  labelColor: isDark
+                      ? AppTheme.darkPrimary
+                      : AppTheme.lightPrimary,
+                  unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(
+                    0.38,
+                  ),
+                  indicatorColor: isDark
+                      ? AppTheme.darkPrimary
+                      : AppTheme.lightPrimary,
+                  indicatorSize: TabBarIndicatorSize.label,
+                  dividerColor: Colors.transparent,
+                  tabs: [
+                    Tab(text: 'Songs (${_filteredSongs.length})'),
+                    Tab(text: 'Albums (${_filteredAlbums.length})'),
+                    Tab(text: 'Artists (${_filteredArtists.length})'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
                     controller: _tabController,
-                    labelColor: isDark
-                        ? AppTheme.darkPrimary
-                        : AppTheme.lightPrimary,
-                    unselectedLabelColor: theme.colorScheme.onSurface
-                        .withOpacity(0.38),
-                    indicatorColor: isDark
-                        ? AppTheme.darkPrimary
-                        : AppTheme.lightPrimary,
-                    indicatorSize: TabBarIndicatorSize.label,
-                    dividerColor: Colors.transparent,
-                    tabs: [
-                      Tab(text: 'Songs (${_filteredSongs.length})'),
-                      Tab(text: 'Albums (${_filteredAlbums.length})'),
-                      Tab(text: 'Artists (${_filteredArtists.length})'),
+                    children: [
+                      _buildSongsList(context),
+                      _buildAlbumsList(context),
+                      _buildArtistsList(context),
                     ],
                   ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildSongsList(context),
-                        _buildAlbumsList(context),
-                        _buildArtistsList(context),
-                      ],
-                    ),
-                  ),
-                ],
-              )
-            : _buildInitialState(),
-      ),
+                ),
+              ],
+            )
+          : _buildInitialState(),
     );
   }
 

@@ -2,20 +2,26 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../repositories/auth_repository.dart';
 import '../../services/storage_service.dart';
+import '../../services/notification_service.dart';
 import 'auth_event.dart';
+
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
   final StorageService _storageService;
+  final NotificationService _notificationService;
 
   AuthBloc({
     required AuthRepository authRepository,
     required StorageService storageService,
+    required NotificationService notificationService,
   }) : _authRepository = authRepository,
        _storageService = storageService,
+       _notificationService = notificationService,
        super(const AuthInitial()) {
     on<AuthCheckRequested>(_onAuthCheckRequested);
+
     on<AuthLoginRequested>(_onAuthLoginRequested);
     on<AuthRegisterRequested>(_onAuthRegisterRequested);
     on<AuthLogoutRequested>(_onAuthLogoutRequested);
@@ -63,6 +69,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             print('✅ Auth Authenticated - User: ${response.data!.name}');
           }
           emit(AuthAuthenticated(user: response.data!, token: token));
+
+          // Try to register token when opening app and restoring session
+          _notificationService.registerToken();
         } else {
           // Token invalid, clear storage
           if (kDebugMode) {
@@ -125,6 +134,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(
           AuthAuthenticated(user: authResponse.user, token: authResponse.token),
         );
+
+        // Register new token with backend on explicit login
+        _notificationService.registerToken();
       } else {
         if (kDebugMode) {
           print('❌ Login Failed: ${response.message}');
@@ -162,6 +174,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(
           AuthAuthenticated(user: authResponse.user, token: authResponse.token),
         );
+
+        // Register token for new accounts
+        _notificationService.registerToken();
       } else {
         emit(AuthError(response.message));
         emit(const AuthUnauthenticated());

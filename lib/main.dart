@@ -10,8 +10,12 @@ import 'config/app_router.dart';
 import 'services/api_client.dart';
 import 'services/storage_service.dart';
 import 'services/audio_player_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/home_repository.dart';
+import 'services/notification_service.dart';
+
 import 'repositories/stream_repository.dart';
 import 'repositories/library_repository.dart';
 import 'repositories/user_repository.dart';
@@ -61,6 +65,16 @@ void main() async {
     final libraryRepository = LibraryRepository(apiClient);
     final userRepository = UserRepository(apiClient);
     final audioPlayerService = AudioPlayerService();
+
+    // Initialize Firebase
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    final notificationService = NotificationService(apiClient);
+    await notificationService.init();
+    debugPrint('✅ Firebase & Notifications initialized');
+
     debugPrint('✅ All dependencies initialized');
 
     runApp(
@@ -72,6 +86,7 @@ void main() async {
         libraryRepository: libraryRepository,
         userRepository: userRepository,
         audioPlayerService: audioPlayerService,
+        notificationService: notificationService,
       ),
     );
   } catch (e, stackTrace) {
@@ -116,6 +131,7 @@ class MyApp extends StatelessWidget {
   final LibraryRepository libraryRepository;
   final UserRepository userRepository;
   final AudioPlayerService audioPlayerService;
+  final NotificationService notificationService;
 
   const MyApp({
     super.key,
@@ -126,6 +142,7 @@ class MyApp extends StatelessWidget {
     required this.libraryRepository,
     required this.userRepository,
     required this.audioPlayerService,
+    required this.notificationService,
   });
 
   @override
@@ -144,6 +161,7 @@ class MyApp extends StatelessWidget {
             create: (context) => AuthBloc(
               authRepository: authRepository,
               storageService: storageService,
+              notificationService: notificationService,
             ),
           ),
           BlocProvider(

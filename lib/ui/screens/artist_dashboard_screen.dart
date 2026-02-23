@@ -6,6 +6,7 @@ import '../../utils/constants.dart';
 import 'create_album_screen.dart';
 import 'upload_song_screen.dart';
 import 'manage_songs_screen.dart';
+import 'earnings_screen.dart';
 
 class ArtistDashboardScreen extends StatelessWidget {
   const ArtistDashboardScreen({super.key});
@@ -30,6 +31,23 @@ class ArtistDashboardScreen extends StatelessWidget {
   Widget _buildDashboard(BuildContext context, ProfileLoaded state) {
     final theme = Theme.of(context);
     final artistStatus = state.artistStatus;
+
+    // ── Stat formatting helpers ───────────────────────────────────────────
+    String fmtCount(String key) {
+      final val = int.tryParse(artistStatus?[key]?.toString() ?? '0') ?? 0;
+      if (val >= 1000000) return '${(val / 1000000).toStringAsFixed(1)}M';
+      if (val >= 1000) return '${(val / 1000).toStringAsFixed(1)}K';
+      return val.toString();
+    }
+
+    String fmtEarnings() {
+      final val =
+          double.tryParse(artistStatus?['total_earnings']?.toString() ?? '0') ??
+          0.0;
+      if (val >= 100000) return '₹${(val / 100000).toStringAsFixed(1)}L';
+      if (val >= 1000) return '₹${(val / 1000).toStringAsFixed(1)}K';
+      return '₹${val.toStringAsFixed(0)}';
+    }
 
     return Scaffold(
       body: CustomScrollView(
@@ -78,7 +96,7 @@ class ArtistDashboardScreen extends StatelessWidget {
                         context,
                         icon: Icons.music_note,
                         title: 'Total Songs',
-                        value: artistStatus?['total_songs']?.toString() ?? '0',
+                        value: fmtCount('total_songs'),
                         color: theme.colorScheme.primary,
                       ),
                     ),
@@ -88,10 +106,8 @@ class ArtistDashboardScreen extends StatelessWidget {
                         context,
                         icon: Icons.play_circle,
                         title: 'Total Streams',
-                        value:
-                            artistStatus?['total_streams']?.toString() ?? '0',
-                        color: Colors
-                            .green, // Keep green for success/streams but maybe use theme.colorScheme.secondary
+                        value: fmtCount('total_streams'),
+                        color: Colors.green,
                       ),
                     ),
                   ],
@@ -104,20 +120,26 @@ class ArtistDashboardScreen extends StatelessWidget {
                         context,
                         icon: Icons.album,
                         title: 'Albums',
-                        value: artistStatus?['total_albums']?.toString() ?? '0',
+                        value: fmtCount('total_albums'),
                         color: theme.colorScheme.secondary,
                       ),
                     ),
                     const SizedBox(width: AppSizes.paddingMd),
                     Expanded(
-                      child: _buildStatCard(
-                        context,
-                        icon: Icons.currency_rupee,
-                        title: 'Earnings',
-                        value:
-                            '₹${artistStatus?['total_earnings']?.toString() ?? '0'}',
-                        color: Colors
-                            .purple, // Keep purple as a distinct stat color
+                      child: GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EarningsScreen(),
+                          ),
+                        ),
+                        child: _buildStatCard(
+                          context,
+                          icon: Icons.currency_rupee,
+                          title: 'Earnings',
+                          value: fmtEarnings(),
+                          color: Colors.purple,
+                        ),
                       ),
                     ),
                   ],
@@ -178,15 +200,13 @@ class ArtistDashboardScreen extends StatelessWidget {
                 _buildActionTile(
                   context,
                   icon: Icons.analytics,
-                  title: 'View Analytics',
-                  subtitle: 'Track your performance and earnings',
+                  title: 'Earnings & Payouts',
+                  subtitle: 'View earnings, request payout',
                   color: Colors.green,
                   onTap: () {
-                    // TODO: Navigate to analytics
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Analytics feature coming soon!'),
-                      ),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const EarningsScreen()),
                     );
                   },
                 ),

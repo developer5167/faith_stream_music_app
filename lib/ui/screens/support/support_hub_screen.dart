@@ -10,7 +10,8 @@ class SupportHubScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Support & Help'),
-        backgroundColor: AppColors.primaryBrown,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -21,12 +22,15 @@ class SupportHubScreen extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(AppSizes.paddingLg),
-              decoration: BoxDecoration(gradient: AppColors.primaryGradient),
               child: Column(
                 children: [
-                  Icon(Icons.support_agent, size: 64, color: Colors.white),
+                  const Icon(
+                    Icons.support_agent,
+                    size: 64,
+                    color: Colors.white,
+                  ),
                   const SizedBox(height: AppSizes.paddingMd),
-                  Text(
+                  const Text(
                     'How can we help you?',
                     style: TextStyle(
                       fontSize: 24,
@@ -62,7 +66,7 @@ class SupportHubScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: AppSizes.paddingMd),
@@ -175,16 +179,13 @@ class _SupportOptionCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: AppSizes.paddingXs),
                     Text(
                       description,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
+                      style: TextStyle(fontSize: 13, color: Colors.white70),
                     ),
                   ],
                 ),

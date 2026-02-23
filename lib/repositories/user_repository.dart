@@ -66,6 +66,19 @@ class UserRepository {
     }
   }
 
+  // Debug function for Push Notifications
+  Future<ApiResponse<void>> testPushNotification() async {
+    try {
+      final response = await _apiClient.post('/notifications/test');
+      return ApiResponse(
+        success: response.data['success'] == true,
+        message: response.data['message'] ?? 'Test notification sent',
+      );
+    } catch (e) {
+      return ApiResponse(success: false, message: 'Failed to send test: $e');
+    }
+  }
+
   // Artist-related APIs
 
   // Request artist status
@@ -120,6 +133,27 @@ class UserRepository {
     }
   }
 
+  // Get artist dashboard stats (songs, albums, streams, earnings)
+  Future<ApiResponse<Map<String, dynamic>>> getArtistDashboardStats() async {
+    try {
+      final response = await _apiClient.get('/artist/dashboard-stats');
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return ApiResponse(
+          success: true,
+          data: data,
+          message: 'Stats retrieved',
+        );
+      }
+      return ApiResponse(success: false, message: 'Invalid stats response');
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Error getting dashboard stats: $e',
+      );
+    }
+  }
+
   // Subscription-related APIs
 
   // Get subscription status
@@ -153,20 +187,84 @@ class UserRepository {
     }
   }
 
-  // Create subscription
+  // Create subscription — returns { payment_url, payment_link_id, amount }
   Future<ApiResponse<Map<String, dynamic>>> createSubscription() async {
     try {
-      final response = await _apiClient.post('/subscriptions/create', data: {});
-
+      final response = await _apiClient.post(
+        '/subscriptions/create-link',
+        data: {},
+      );
+      final data = response.data;
+      if (data is Map<String, dynamic> && data['success'] == true) {
+        return ApiResponse(
+          success: true,
+          data: data,
+          message: 'Payment link created',
+        );
+      }
       return ApiResponse(
-        success: true,
-        data: response.data as Map<String, dynamic>,
-        message: 'Subscription created',
+        success: false,
+        message: data['message'] ?? 'Failed to create payment link',
       );
     } catch (e) {
       return ApiResponse(
         success: false,
         message: 'Error creating subscription: $e',
+      );
+    }
+  }
+
+  // Create Razorpay order for razorpay_flutter plugin checkout
+  Future<ApiResponse<Map<String, dynamic>>> createSubscriptionOrder() async {
+    try {
+      final response = await _apiClient.post(
+        '/subscriptions/create-order',
+        data: {},
+      );
+      final data = response.data;
+      if (data is Map<String, dynamic> && data['success'] == true) {
+        return ApiResponse(success: true, data: data, message: 'Order created');
+      }
+      return ApiResponse(
+        success: false,
+        message: data['message'] ?? 'Failed to create order',
+      );
+    } catch (e) {
+      return ApiResponse(success: false, message: 'Error creating order: $e');
+    }
+  }
+
+  // Verify Razorpay payment and activate subscription
+  Future<ApiResponse<Map<String, dynamic>>> verifySubscriptionPayment({
+    required String orderId,
+    required String paymentId,
+    required String signature,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/subscriptions/verify-payment',
+        data: {
+          'razorpay_order_id': orderId,
+          'razorpay_payment_id': paymentId,
+          'razorpay_signature': signature,
+        },
+      );
+      final data = response.data;
+      if (data is Map<String, dynamic> && data['success'] == true) {
+        return ApiResponse(
+          success: true,
+          data: data,
+          message: 'Subscription activated',
+        );
+      }
+      return ApiResponse(
+        success: false,
+        message: data['message'] ?? 'Verification failed',
+      );
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Error verifying payment: $e',
       );
     }
   }

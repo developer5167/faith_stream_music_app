@@ -25,12 +25,25 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         // Load subscription status
         final subResponse = await _userRepository.getSubscriptionStatus();
 
-        // Load artist status if applicable
+        // Load artist status + dashboard stats if artist
         Map<String, dynamic>? artistStatus;
         if (profileResponse.data!.artistStatus != null) {
-          final artistResponse = await _userRepository.getArtistStatus();
-          if (artistResponse.success) {
-            artistStatus = artistResponse.data;
+          final results = await Future.wait([
+            _userRepository.getArtistStatus(),
+            _userRepository.getArtistDashboardStats(),
+          ]);
+
+          final statusResp = results[0];
+          final statsResp = results[1];
+
+          if (statusResp.success) {
+            artistStatus = Map<String, dynamic>.from(
+              statusResp.data as Map<String, dynamic>,
+            );
+            // Merge stats into the same map
+            if (statsResp.success && statsResp.data != null) {
+              artistStatus.addAll(statsResp.data!);
+            }
           }
         }
 
@@ -125,10 +138,22 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     if (currentState is! ProfileLoaded) return;
 
     try {
-      final response = await _userRepository.getArtistStatus();
+      final results = await Future.wait([
+        _userRepository.getArtistStatus(),
+        _userRepository.getArtistDashboardStats(),
+      ]);
 
-      if (response.success && response.data != null) {
-        emit(currentState.copyWith(artistStatus: response.data));
+      final statusResp = results[0];
+      final statsResp = results[1];
+
+      if (statusResp.success && statusResp.data != null) {
+        final merged = Map<String, dynamic>.from(
+          statusResp.data as Map<String, dynamic>,
+        );
+        if (statsResp.success && statsResp.data != null) {
+          merged.addAll(statsResp.data!);
+        }
+        emit(currentState.copyWith(artistStatus: merged));
       }
     } catch (e) {
       // Silent fail

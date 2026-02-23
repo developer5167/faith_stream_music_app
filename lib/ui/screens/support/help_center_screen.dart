@@ -152,7 +152,8 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Help Center'),
-        backgroundColor: AppColors.primaryBrown,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         foregroundColor: Colors.white,
       ),
       body: Column(
@@ -160,16 +161,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
           // Search Bar
           Container(
             padding: const EdgeInsets.all(AppSizes.paddingMd),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
+            decoration: const BoxDecoration(color: Colors.transparent),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
@@ -189,8 +181,9 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Colors.grey.shade100,
+                fillColor: Colors.white.withValues(alpha: 0.1),
               ),
+              style: const TextStyle(color: Colors.white),
               onChanged: _filterArticles,
             ),
           ),
@@ -217,10 +210,10 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                             ),
                             child: Text(
                               category,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.primaryBrown,
+                                color: Colors.white,
                               ),
                             ),
                           ),
@@ -239,7 +232,9 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                               ),
                               child: ListTile(
                                 leading: Container(
-                                  padding: const EdgeInsets.all(AppSizes.paddingSm),
+                                  padding: const EdgeInsets.all(
+                                    AppSizes.paddingSm,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.primaryBrown.withOpacity(
                                       0.1,
@@ -261,7 +256,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                trailing: Icon(
+                                trailing: const Icon(
                                   Icons.chevron_right,
                                   color: AppColors.textTertiary,
                                 ),
@@ -348,7 +343,9 @@ class _ArticleBottomSheet extends StatelessWidget {
             children: [
               // Handle
               Container(
-                margin: const EdgeInsets.symmetric(vertical: AppSizes.paddingMd),
+                margin: const EdgeInsets.symmetric(
+                  vertical: AppSizes.paddingMd,
+                ),
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
@@ -370,7 +367,9 @@ class _ArticleBottomSheet extends StatelessWidget {
                         padding: const EdgeInsets.all(AppSizes.paddingMd),
                         decoration: BoxDecoration(
                           color: AppColors.primaryBrown.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(AppSizes.paddingMd),
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.paddingMd,
+                          ),
                         ),
                         child: Icon(
                           article.icon,
@@ -389,7 +388,9 @@ class _ArticleBottomSheet extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.primaryGold.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(AppSizes.paddingSm),
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.paddingSm,
+                          ),
                         ),
                         child: Text(
                           article.category,
@@ -432,7 +433,9 @@ class _ArticleBottomSheet extends StatelessWidget {
                         padding: const EdgeInsets.all(AppSizes.paddingMd),
                         decoration: BoxDecoration(
                           color: AppColors.info.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(AppSizes.paddingMd),
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.paddingMd,
+                          ),
                         ),
                         child: Row(
                           children: [

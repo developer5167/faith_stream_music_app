@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "551525729075",
+    "project_id": "faith-stream-notifications",
+    "storage_bucket": "faith-stream-notifications.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:551525729075:android:19c317f75d2cf707ac3446",
+        "android_client_info": {
+          "package_name": "com.faithstream.music"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2C-JAYfJYhu7pq0AQKrCZxbv5QPJVh-8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

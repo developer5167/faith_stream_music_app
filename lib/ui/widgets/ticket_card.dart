@@ -38,7 +38,7 @@ class TicketCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: Colors.white,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -85,7 +85,7 @@ class TicketCard extends StatelessWidget {
               // Description
               Text(
                 ticket.description,
-                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                style: const TextStyle(fontSize: 14, color: Colors.white70),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -123,10 +123,7 @@ class TicketCard extends StatelessWidget {
                       const SizedBox(height: AppSizes.paddingXs),
                       Text(
                         ticket.adminResponse!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.white70),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
