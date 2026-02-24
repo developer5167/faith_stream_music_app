@@ -90,23 +90,23 @@ class SupportHubScreen extends StatelessWidget {
                     onTap: () => context.push('/support/my-tickets'),
                   ),
 
-                  // File Complaint Card
-                  _SupportOptionCard(
-                    icon: Icons.report_problem_outlined,
-                    title: 'File a Complaint',
-                    description: 'Report inappropriate content or violations',
-                    color: AppColors.warning,
-                    onTap: () => context.push('/support/file-complaint'),
-                  ),
+                  // // File Complaint Card
+                  // _SupportOptionCard(
+                  //   icon: Icons.report_problem_outlined,
+                  //   title: 'File a Complaint',
+                  //   description: 'Report inappropriate content or violations',
+                  //   color: AppColors.warning,
+                  //   onTap: () => context.push('/support/file-complaint'),
+                  // ),
 
-                  // My Complaints Card
-                  _SupportOptionCard(
-                    icon: Icons.history,
-                    title: 'My Complaints',
-                    description: 'Track the status of your complaints',
-                    color: AppColors.error,
-                    onTap: () => context.push('/support/my-complaints'),
-                  ),
+                  // // My Complaints Card
+                  // _SupportOptionCard(
+                  //   icon: Icons.history,
+                  //   title: 'My Complaints',
+                  //   description: 'Track the status of your complaints',
+                  //   color: AppColors.error,
+                  //   onTap: () => context.push('/support/my-complaints'),
+                  // ),
 
                   // Help Center Card
                   _SupportOptionCard(

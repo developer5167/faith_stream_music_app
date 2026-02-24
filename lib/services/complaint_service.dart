@@ -25,13 +25,28 @@ class ComplaintService {
         },
       );
 
-      if (response.statusCode == 201 && response.data['success'] == true) {
-        return Complaint.fromJson(response.data['data']);
-      } else {
-        throw AppException(
-          response.data['message'] ?? 'Failed to file complaint',
-        );
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final complaintData = response.data is Map
+            ? (response.data['complaint'] ??
+                  response.data['data'] ??
+                  response.data)
+            : null;
+        if (complaintData != null && complaintData is Map<String, dynamic>) {
+          return Complaint.fromJson(complaintData);
+        } else if (response.data is Map<String, dynamic> &&
+            response.data['id'] != null) {
+          return Complaint.fromJson(response.data);
+        }
+
+        // If the backend returns a generic success message without data, try parsing anyway or throw
+        throw AppException('Complaint filed but no data returned');
       }
+
+      throw AppException(
+        (response.data is Map)
+            ? response.data['message'] ?? 'Failed to file complaint'
+            : 'Failed to file complaint',
+      );
     } catch (e) {
       rethrow;
     }
@@ -42,16 +57,31 @@ class ComplaintService {
     try {
       final response = await _apiClient.get('/complaints/my');
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<dynamic> complaintsJson = response.data['data'];
-        return complaintsJson
-            .map((json) => Complaint.fromJson(json))
-            .toList();
-      } else {
-        throw AppException(
-          response.data['message'] ?? 'Failed to fetch complaints',
-        );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is List) {
+          return data
+              .map(
+                (json) => Complaint.fromJson(Map<String, dynamic>.from(json)),
+              )
+              .toList();
+        } else if (data is Map &&
+            data['success'] == true &&
+            data['data'] is List) {
+          final List<dynamic> complaintsJson = data['data'];
+          return complaintsJson
+              .map(
+                (json) => Complaint.fromJson(Map<String, dynamic>.from(json)),
+              )
+              .toList();
+        }
       }
+
+      throw AppException(
+        (response.data is Map)
+            ? response.data['message'] ?? 'Failed to fetch complaints'
+            : 'Failed to fetch complaints',
+      );
     } catch (e) {
       rethrow;
     }
@@ -62,13 +92,20 @@ class ComplaintService {
     try {
       final response = await _apiClient.get('/complaints/$complaintId');
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        return Complaint.fromJson(response.data['data']);
-      } else {
-        throw AppException(
-          response.data['message'] ?? 'Failed to fetch complaint',
-        );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map && data['success'] == true && data['data'] != null) {
+          return Complaint.fromJson(Map<String, dynamic>.from(data['data']));
+        } else if (data is Map && data['id'] != null) {
+          return Complaint.fromJson(Map<String, dynamic>.from(data));
+        }
       }
+
+      throw AppException(
+        (response.data is Map)
+            ? response.data['message'] ?? 'Failed to fetch complaint'
+            : 'Failed to fetch complaint',
+      );
     } catch (e) {
       rethrow;
     }

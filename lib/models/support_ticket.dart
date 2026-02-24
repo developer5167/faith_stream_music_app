@@ -121,15 +121,21 @@ class SupportTicket extends Equatable {
 
   factory SupportTicket.fromJson(Map<String, dynamic> json) {
     return SupportTicket(
-      id: json['id'] as String,
-      subject: json['subject'] as String,
-      description: json['description'] as String,
-      category: TicketCategory.fromString(json['category'] as String),
-      status: TicketStatus.fromString(json['status'] as String),
-      adminResponse: json['admin_response'] as String?,
-      adminId: json['admin_id'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      id: json['id']?.toString() ?? '',
+      subject: json['subject'] as String? ?? 'No Subject',
+      description:
+          json['message'] as String? ?? json['description'] as String? ?? '',
+      category: TicketCategory.fromString(json['category'] as String? ?? ''),
+      status: TicketStatus.fromString(json['status'] as String? ?? ''),
+      adminResponse:
+          json['admin_reply'] as String? ?? json['admin_response'] as String?,
+      adminId: json['admin_id']?.toString(),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : DateTime.now(),
     );
   }
 
@@ -173,14 +179,14 @@ class SupportTicket extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        subject,
-        description,
-        category,
-        status,
-        adminResponse,
-        adminId,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    subject,
+    description,
+    category,
+    status,
+    adminResponse,
+    adminId,
+    createdAt,
+    updatedAt,
+  ];
 }

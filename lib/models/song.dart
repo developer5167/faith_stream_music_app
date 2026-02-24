@@ -16,6 +16,7 @@ class Song extends Equatable {
   final Artist? artist; // Add Artist object
   final String? streamCount;
   final DateTime? createdAt;
+  final String? lyrics;
 
   const Song({
     required this.id,
@@ -32,6 +33,7 @@ class Song extends Equatable {
     this.artist,
     this.streamCount,
     this.createdAt,
+    this.lyrics,
   });
 
   factory Song.fromJson(Map<String, dynamic> json) {
@@ -61,6 +63,7 @@ class Song extends Equatable {
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,
+      lyrics: json['lyrics'] as String?,
     );
   }
 
@@ -81,6 +84,7 @@ class Song extends Equatable {
       'artist': artist?.toJson(),
       'stream_count': streamCount,
       'created_at': createdAt?.toIso8601String(),
+      'lyrics': lyrics,
     };
   }
 
@@ -108,6 +112,7 @@ class Song extends Equatable {
     artist,
     streamCount,
     createdAt,
+    lyrics,
   ];
 
   Song copyWith({
@@ -125,6 +130,7 @@ class Song extends Equatable {
     Artist? artist,
     String? streamCount,
     DateTime? createdAt,
+    String? lyrics,
   }) {
     return Song(
       id: id ?? this.id,
@@ -141,6 +147,7 @@ class Song extends Equatable {
       artist: artist ?? this.artist,
       streamCount: streamCount ?? this.streamCount,
       createdAt: createdAt ?? this.createdAt,
+      lyrics: lyrics ?? this.lyrics,
     );
   }
 }

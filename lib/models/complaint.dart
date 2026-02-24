@@ -73,15 +73,19 @@ class Complaint extends Equatable {
 
   factory Complaint.fromJson(Map<String, dynamic> json) {
     return Complaint(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      contentId: json['content_id'] as String?,
+      id: json['id']?.toString() ?? '',
+      title: json['title'] as String? ?? 'Untitled',
+      description: json['description'] as String? ?? '',
+      contentId: json['content_id']?.toString(),
       contentType: json['content_type'] as String?,
-      status: ComplaintStatus.fromString(json['status'] as String),
+      status: ComplaintStatus.fromString(json['status'] as String? ?? ''),
       adminNotes: json['admin_notes'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : DateTime.now(),
     );
   }
 
@@ -125,14 +129,14 @@ class Complaint extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        description,
-        contentId,
-        contentType,
-        status,
-        adminNotes,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    title,
+    description,
+    contentId,
+    contentType,
+    status,
+    adminNotes,
+    createdAt,
+    updatedAt,
+  ];
 }

@@ -69,7 +69,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
 
             final isLoading = state is PlayerLoading;
 
-            return _buildPlayerUI(
+            return _buildScrollableUI(
               context,
               song,
               position,
@@ -81,6 +81,146 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildScrollableUI(
+    BuildContext context,
+    Song song,
+    Duration position,
+    Duration duration,
+    bool isPlaying,
+    RepeatMode repeatMode,
+    bool isShuffleEnabled, {
+    bool isLoading = false,
+  }) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        // ── Player section (fills the whole screen) ────────────────────────
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: screenHeight,
+            child: _buildPlayerUI(
+              context,
+              song,
+              position,
+              duration,
+              isPlaying,
+              repeatMode,
+              isShuffleEnabled,
+              isLoading: isLoading,
+            ),
+          ),
+        ),
+
+        // ── Scroll hint ────────────────────────────────────────────────────
+        SliverToBoxAdapter(child: _buildScrollHint(context)),
+
+        // ── Lyrics section ─────────────────────────────────────────────────
+        SliverToBoxAdapter(child: _buildLyricsSection(context, song)),
+      ],
+    );
+  }
+
+  /// A small visual cue at the bottom that tells the user they can scroll down
+  Widget _buildScrollHint(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        children: [
+          Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: Colors.white38,
+            size: 28,
+          ),
+          Text(
+            'Lyrics',
+            style: TextStyle(
+              color: Colors.white38,
+              fontSize: 12,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLyricsSection(BuildContext context, Song song) {
+    final theme = Theme.of(context);
+    final hasLyrics = song.lyrics != null && song.lyrics!.trim().isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 48),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.3),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section header
+          Row(
+            children: [
+              Icon(
+                Icons.lyrics_outlined,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Lyrics',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Divider(color: Colors.white.withValues(alpha: 0.1), thickness: 1),
+          const SizedBox(height: 16),
+
+          // Lyrics content
+          if (hasLyrics)
+            Text(
+              song.lyrics!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+                height: 2.0,
+                fontSize: 15,
+              ),
+            )
+          else
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 32),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.lyrics_outlined,
+                      color: Colors.white24,
+                      size: 48,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No lyrics available',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white38,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -281,11 +421,11 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                             0.0,
                             (duration.inSeconds.toDouble() > 0
                                 ? duration.inSeconds.toDouble()
-                                : 1.0), // Use 1.0 as max if duration is 0 to avoid clamping issues
+                                : 1.0),
                           ),
                     max: duration.inSeconds.toDouble() > 0
                         ? duration.inSeconds.toDouble()
-                        : 1.0, // Use 1.0 as max if duration is 0
+                        : 1.0,
                     onChangeStart: (value) {
                       setState(() {
                         _isDragging = true;

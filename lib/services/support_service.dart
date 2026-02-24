@@ -23,13 +23,18 @@ class SupportService {
         },
       );
 
-      if (response.statusCode == 201 && response.data['success'] == true) {
-        return SupportTicket.fromJson(response.data['data']);
-      } else {
-        throw AppException(
-          response.data['message'] ?? 'Failed to create support ticket',
-        );
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final ticketData = response.data['ticket'] ?? response.data['data'];
+        if (ticketData != null) {
+          return SupportTicket.fromJson(ticketData);
+        }
       }
+
+      throw AppException(
+        (response.data is Map)
+            ? response.data['message'] ?? 'Failed to create support ticket'
+            : 'Failed to create support ticket',
+      );
     } catch (e) {
       rethrow;
     }
@@ -40,16 +45,33 @@ class SupportService {
     try {
       final response = await _apiClient.get('/support/my');
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<dynamic> ticketsJson = response.data['data'];
-        return ticketsJson
-            .map((json) => SupportTicket.fromJson(json))
-            .toList();
-      } else {
-        throw AppException(
-          response.data['message'] ?? 'Failed to fetch support tickets',
-        );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is List) {
+          return data
+              .map(
+                (json) =>
+                    SupportTicket.fromJson(Map<String, dynamic>.from(json)),
+              )
+              .toList();
+        } else if (data is Map &&
+            data['success'] == true &&
+            data['data'] is List) {
+          final List<dynamic> ticketsJson = data['data'];
+          return ticketsJson
+              .map(
+                (json) =>
+                    SupportTicket.fromJson(Map<String, dynamic>.from(json)),
+              )
+              .toList();
+        }
       }
+
+      throw AppException(
+        (response.data is Map)
+            ? response.data['message'] ?? 'Failed to fetch support tickets'
+            : 'Failed to fetch support tickets',
+      );
     } catch (e) {
       rethrow;
     }
@@ -60,13 +82,22 @@ class SupportService {
     try {
       final response = await _apiClient.get('/support/$ticketId');
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        return SupportTicket.fromJson(response.data['data']);
-      } else {
-        throw AppException(
-          response.data['message'] ?? 'Failed to fetch support ticket',
-        );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map && data['success'] == true && data['data'] != null) {
+          return SupportTicket.fromJson(
+            Map<String, dynamic>.from(data['data']),
+          );
+        } else if (data is Map && data['id'] != null) {
+          return SupportTicket.fromJson(Map<String, dynamic>.from(data));
+        }
       }
+
+      throw AppException(
+        (response.data is Map)
+            ? response.data['message'] ?? 'Failed to fetch support ticket'
+            : 'Failed to fetch support ticket',
+      );
     } catch (e) {
       rethrow;
     }

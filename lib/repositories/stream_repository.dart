@@ -34,6 +34,16 @@ class StreamRepository {
     }
   }
 
+  /// Log only "Recently Played" without risking double-count on stream analytics.
+  /// Called immediately when a song starts playing (before 30s threshold).
+  Future<void> logRecentlyPlayed({required String songId}) async {
+    try {
+      await _apiClient.post('/stream/log-played', data: {'song_id': songId});
+    } catch (_) {
+      // Silently ignore — recently played is best-effort, not critical
+    }
+  }
+
   /// Get stream URL for a song (requires subscription)
   Future<ApiResponse<String>> getStreamUrl(String songId) async {
     try {

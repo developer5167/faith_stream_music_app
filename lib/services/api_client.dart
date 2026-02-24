@@ -65,14 +65,33 @@ class ApiClient {
     }
 
     if (error.type == DioExceptionType.connectionError) {
-      throw NetworkException();
+      throw NetworkException('No internet connection or server unreachable');
+    }
+
+    // Unknown errors (SSL issues, socket exceptions, etc.) have no response.
+    if (error.type == DioExceptionType.unknown) {
+      final underlying = error.error;
+      debugPrint('[ApiClient] Unknown DioException: $underlying');
+      debugPrint('[ApiClient] StackTrace: ${error.stackTrace}');
+      throw NetworkException(
+        underlying != null
+            ? underlying.toString()
+            : 'An unknown network error occurred',
+      );
     }
 
     final statusCode = error.response?.statusCode;
-    final message =
-        error.response?.data['message'] ??
-        error.response?.data['error'] ??
-        'An error occurred';
+
+    // Safely extract the message — response body may not always be a Map.
+    String message = 'An error occurred';
+    final data = error.response?.data;
+    if (data is Map) {
+      message = (data['message'] ?? data['error'] ?? message).toString();
+    } else if (data is String && data.isNotEmpty) {
+      message = data;
+    }
+
+    debugPrint('[ApiClient] HTTP $statusCode error: $message');
 
     switch (statusCode) {
       case 400:
