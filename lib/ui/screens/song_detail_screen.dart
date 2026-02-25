@@ -16,34 +16,75 @@ import '../../services/artist_service.dart';
 import 'artist_profile_screen.dart';
 import '../widgets/gradient_background.dart';
 
-class SongDetailScreen extends StatefulWidget {
-  final Song song;
+import '../../services/sharing_service.dart';
+import '../../services/song_service.dart';
 
-  const SongDetailScreen({super.key, required this.song});
+class SongDetailScreen extends StatefulWidget {
+  final Song? song;
+  final String? songId;
+
+  const SongDetailScreen({super.key, this.song, this.songId});
 
   @override
   State<SongDetailScreen> createState() => _SongDetailScreenState();
 }
 
 class _SongDetailScreenState extends State<SongDetailScreen> {
+  Song? _song;
   Artist? _artist;
+  bool _isLoadingSong = false;
   bool _isLoadingArtist = false;
 
   @override
   void initState() {
     super.initState();
+    _song = widget.song;
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    if (_song == null && widget.songId != null) {
+      await _loadSong(widget.songId!);
+    }
     _initArtist();
   }
 
+  Future<void> _loadSong(String id) async {
+    setState(() => _isLoadingSong = true);
+    try {
+      final storageService = context.read<StorageService>();
+      final apiClient = ApiClient(storageService);
+      final songService = SongService(apiClient);
+
+      final songData = await songService.getSong(id);
+      if (mounted && songData != null) {
+        setState(() {
+          _song = Song.fromJson(songData);
+          _isLoadingSong = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingSong = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading song: $e')));
+      }
+    }
+  }
+
   Future<void> _initArtist() async {
+    final song = _song;
+    if (song == null) return;
+
     // If artist is already attached to the song, just use it
-    if (widget.song.artist != null) {
-      _artist = widget.song.artist;
+    if (song.artist != null) {
+      _artist = song.artist;
       return;
     }
 
     // If we don't have an artistUserId, we can't fetch artist details
-    if (widget.song.artistUserId == null) return;
+    if (song.artistUserId == null) return;
 
     setState(() {
       _isLoadingArtist = true;
@@ -54,9 +95,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
       final apiClient = ApiClient(storageService);
       final artistService = ArtistService(apiClient);
 
-      final artist = await artistService.getArtistDetails(
-        widget.song.artistUserId!,
-      );
+      final artist = await artistService.getArtistDetails(song.artistUserId!);
 
       if (mounted && artist != null) {
         setState(() {
@@ -82,6 +121,21 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
+    if (_isLoadingSong) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_song == null) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(backgroundColor: Colors.transparent),
+        body: const Center(child: Text('Song not found')),
+      );
+    }
+
     return GradientBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -95,7 +149,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
               elevation: 0,
               flexibleSpace: FlexibleSpaceBar(
                 title: Text(
-                  widget.song.title,
+                  _song!.title,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -106,9 +160,9 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                   fit: StackFit.expand,
                   children: [
                     // Album/Song cover image
-                    if (widget.song.coverImageUrl != null)
+                    if (_song!.coverImageUrl != null)
                       Image.network(
-                        widget.song.coverImageUrl!,
+                        _song!.coverImageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
@@ -179,8 +233,8 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                     _buildMetadataSection(theme),
 
                     // About Section
-                    if (widget.song.description != null &&
-                        widget.song.description!.isNotEmpty) ...[
+                    if (_song!.description != null &&
+                        _song!.description!.isNotEmpty) ...[
                       const SizedBox(height: 32),
                       const Divider(height: 1),
                       const SizedBox(height: 24),
@@ -193,7 +247,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        widget.song.description!,
+                        _song!.description!,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurface.withOpacity(0.7),
                           height: 1.5,
@@ -213,7 +267,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
   }
 
   Widget _buildArtistSection(ThemeData theme) {
-    final Artist? artist = _artist ?? widget.song.artist;
+    final Artist? artist = _artist ?? _song!.artist;
 
     void _openArtistProfile() {
       if (artist == null) return;
@@ -268,7 +322,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                     ),
                   ),
                   Text(
-                    artist?.name ?? widget.song.displayArtist,
+                    artist?.name ?? _song!.displayArtist,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -292,10 +346,9 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
         builder: (context, playerState) {
           final isCurrentPlayingSong =
               (playerState is PlayerPlaying &&
-              playerState.song.id == widget.song.id);
+              playerState.song.id == _song!.id);
           final isCurrentPausedSong =
-              (playerState is PlayerPaused &&
-              playerState.song.id == widget.song.id);
+              (playerState is PlayerPaused && playerState.song.id == _song!.id);
 
           final bool isCurrentSong =
               isCurrentPlayingSong || isCurrentPausedSong;
@@ -329,10 +382,10 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                   return;
                 }
 
-                final artistForSong = _artist ?? widget.song.artist;
+                final artistForSong = _artist ?? _song!.artist;
                 final songToPlay = artistForSong != null
-                    ? widget.song.copyWith(artist: artistForSong)
-                    : widget.song;
+                    ? _song!.copyWith(artist: artistForSong)
+                    : _song!;
 
                 context.read<PlayerBloc>().add(PlayerPlaySong(songToPlay));
               },
@@ -363,8 +416,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
     return BlocBuilder<LibraryBloc, LibraryState>(
       builder: (context, libraryState) {
         final isFavorite =
-            libraryState is LibraryLoaded &&
-            libraryState.isFavorite(widget.song.id);
+            libraryState is LibraryLoaded && libraryState.isFavorite(_song!.id);
 
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -377,9 +429,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
               isFavorite ? 'Liked' : 'Like',
               color: isFavorite ? Colors.red : null,
               onTap: () {
-                context.read<LibraryBloc>().add(
-                  LibraryToggleFavorite(widget.song),
-                );
+                context.read<LibraryBloc>().add(LibraryToggleFavorite(_song!));
               },
             ),
             _buildActionIcon(
@@ -393,7 +443,11 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
               Icons.ios_share_rounded,
               'Share',
               onTap: () {
-                // TODO: Share implementation
+                SharingService().shareSong(
+                  id: _song!.id,
+                  title: _song!.title,
+                  artist: _song!.displayArtist,
+                );
               },
             ),
           ],
@@ -443,13 +497,13 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
       ),
       child: Column(
         children: [
-          _buildInfoRow(theme, 'Album', widget.song.albumTitle ?? 'Single'),
+          _buildInfoRow(theme, 'Album', _song!.albumTitle ?? 'Single'),
           const Divider(height: 24),
-          _buildInfoRow(theme, 'Genre', widget.song.genre ?? 'Christian'),
+          _buildInfoRow(theme, 'Genre', _song!.genre ?? 'Christian'),
           const Divider(height: 24),
-          _buildInfoRow(theme, 'Language', widget.song.language ?? 'English'),
+          _buildInfoRow(theme, 'Language', _song!.language ?? 'English'),
           const Divider(height: 24),
-          _buildInfoRow(theme, 'Streams', '${widget.song.streamCount} plays'),
+          _buildInfoRow(theme, 'Streams', '${_song!.streamCount} plays'),
         ],
       ),
     );
@@ -489,7 +543,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                             context.read<LibraryBloc>().add(
                               LibraryAddSongToPlaylist(
                                 playlistId: playlist.id,
-                                songId: widget.song.id,
+                                songId: _song!.id,
                               ),
                             );
                             Navigator.pop(context);

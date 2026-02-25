@@ -17,26 +17,65 @@ import '../../services/artist_service.dart';
 import 'artist_profile_screen.dart';
 import '../widgets/song_card.dart';
 
-class AlbumDetailScreen extends StatefulWidget {
-  final Album album;
+import '../../services/sharing_service.dart';
 
-  const AlbumDetailScreen({super.key, required this.album});
+class AlbumDetailScreen extends StatefulWidget {
+  final Album? album;
+  final String? albumId;
+
+  const AlbumDetailScreen({super.key, this.album, this.albumId});
 
   @override
   State<AlbumDetailScreen> createState() => _AlbumDetailScreenState();
 }
 
 class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
+  Album? _album;
   List<Song> _tracks = [];
   bool _isLoadingTracks = true;
+  bool _isLoadingAlbum = false;
   Artist? _albumArtist;
   bool _isFavorite = false;
 
   @override
   void initState() {
     super.initState();
-    _fetchTracks();
-    _checkFavoriteStatus();
+    _album = widget.album;
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    if (_album == null && widget.albumId != null) {
+      await _loadAlbum(widget.albumId!);
+    }
+    if (_album != null) {
+      _fetchTracks();
+      _checkFavoriteStatus();
+    }
+  }
+
+  Future<void> _loadAlbum(String id) async {
+    setState(() => _isLoadingAlbum = true);
+    try {
+      final storageService = context.read<StorageService>();
+      final apiClient = ApiClient(storageService);
+      final albumService = AlbumService(apiClient);
+
+      final albumData = await albumService.getAlbumDetails(id);
+      if (mounted && albumData != null) {
+        setState(() {
+          _album = Album.fromJson(albumData);
+          _isLoadingAlbum = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingAlbum = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading album: $e')));
+      }
+    }
   }
 
   Future<void> _checkFavoriteStatus() async {
@@ -45,9 +84,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
       final apiClient = ApiClient(storageService);
       final albumService = AlbumService(apiClient);
 
-      final isFav = await albumService.checkIsFavorite(
-        widget.album.id.toString(),
-      );
+      final isFav = await albumService.checkIsFavorite(_album!.id.toString());
       if (mounted) {
         setState(() {
           _isFavorite = isFav;
@@ -65,9 +102,9 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
       final albumService = AlbumService(apiClient);
 
       if (_isFavorite) {
-        await albumService.removeFromFavorites(widget.album.id.toString());
+        await albumService.removeFromFavorites(_album!.id.toString());
       } else {
-        await albumService.addToFavorites(widget.album.id.toString());
+        await albumService.addToFavorites(_album!.id.toString());
       }
 
       if (mounted) {
@@ -101,7 +138,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
       final artistService = ArtistService(apiClient);
 
       final tracksData = await albumService.getAlbumTracks(
-        widget.album.id.toString(),
+        _album!.id.toString(),
       );
 
       final List<Song> fetchedSongs = [];
@@ -109,7 +146,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 
       for (var json in tracksData) {
         Song song = Song.fromJson(json).copyWith(
-          coverImageUrl: json['cover_image_url'] ?? widget.album.coverImageUrl,
+          coverImageUrl: json['cover_image_url'] ?? _album!.coverImageUrl,
         );
 
         if (song.artistUserId != null && song.artist == null) {
@@ -155,7 +192,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Playing album ${widget.album.title}...'),
+        content: Text('Playing album ${_album!.title}...'),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -163,6 +200,21 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingAlbum) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_album == null) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(backgroundColor: Colors.transparent),
+        body: const Center(child: Text('Album not found')),
+      );
+    }
+
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
@@ -178,7 +230,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
             elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                widget.album.title,
+                _album!.title,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -188,9 +240,9 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (widget.album.coverImageUrl != null)
+                  if (_album!.coverImageUrl != null)
                     Image.network(
-                      widget.album.coverImageUrl!,
+                      _album!.coverImageUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(child: Icon(Icons.album, size: 100));
@@ -266,15 +318,14 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _albumArtist?.name ??
-                                    widget.album.displayArtist,
+                                _albumArtist?.name ?? _album!.displayArtist,
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: theme.colorScheme.onSurface,
                                 ),
                               ),
                               Text(
-                                'Album • ${widget.album.releaseType?.toUpperCase() ?? 'ALBUM'}',
+                                'Album • ${_album!.releaseType?.toUpperCase() ?? 'ALBUM'}',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurface
                                       .withOpacity(0.6),
@@ -318,7 +369,13 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                       _buildSmallActionButton(
                         context,
                         Icons.share_outlined,
-                        () {},
+                        () {
+                          SharingService().shareAlbum(
+                            id: _album!.id.toString(),
+                            title: _album!.title,
+                            artist: _album!.displayArtist,
+                          );
+                        },
                       ),
                       const SizedBox(width: 8),
                       _buildSmallActionButton(
@@ -432,8 +489,8 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   Divider(color: theme.colorScheme.onSurface.withOpacity(0.1)),
                   const SizedBox(height: 16),
 
-                  if (widget.album.description != null &&
-                      widget.album.description!.isNotEmpty) ...[
+                  if (_album!.description != null &&
+                      _album!.description!.isNotEmpty) ...[
                     Text(
                       'About',
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -443,7 +500,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      widget.album.description!,
+                      _album!.description!,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.7),
                       ),
@@ -454,14 +511,14 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   _buildInfoRow(
                     context,
                     'Released',
-                    widget.album.createdAt != null
-                        ? _formatDate(widget.album.createdAt!)
+                    _album!.createdAt != null
+                        ? _formatDate(_album!.createdAt!)
                         : 'Unknown',
                   ),
                   _buildInfoRow(
                     context,
                     'Language',
-                    widget.album.language ?? 'Unknown',
+                    _album!.language ?? 'Unknown',
                   ),
 
                   const SizedBox(height: 100),

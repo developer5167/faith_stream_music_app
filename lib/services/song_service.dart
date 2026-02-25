@@ -74,4 +74,10 @@ class SongService {
     if (data is List) return data;
     return [];
   }
+
+  /// Get song details
+  Future<Map<String, dynamic>?> getSong(String songId) async {
+    final response = await apiClient.get('/songs/$songId');
+    return response.data is Map ? response.data : null;
+  }
 }

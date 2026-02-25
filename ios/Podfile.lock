@@ -81,9 +81,6 @@ PODS:
     - Flutter
   - flutter_secure_storage (6.0.0):
     - Flutter
-  - fluttertoast (0.0.2):
-    - Flutter
-    - Toast
   - GoogleDataTransport (10.1.0):
     - nanopb (~> 3.30910.0)
     - PromisesObjC (~> 2.4)
@@ -145,13 +142,12 @@ PODS:
     - Flutter
     - FlutterMacOS
   - SwiftyGif (5.4.5)
-  - Toast (4.1.1)
   - url_launcher_ios (0.0.1):
     - Flutter
   - video_player_avfoundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - workmanager (0.0.1):
+  - workmanager_apple (0.0.1):
     - Flutter
 
 DEPENDENCIES:
@@ -166,7 +162,6 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
-  - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - just_audio (from `.symlinks/plugins/just_audio/darwin`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
@@ -177,7 +172,7 @@ DEPENDENCIES:
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
   - video_player_avfoundation (from `.symlinks/plugins/video_player_avfoundation/darwin`)
-  - workmanager (from `.symlinks/plugins/workmanager/ios`)
+  - workmanager_apple (from `.symlinks/plugins/workmanager_apple/ios`)
 
 SPEC REPOS:
   trunk:
@@ -196,7 +191,6 @@ SPEC REPOS:
     - razorpay-pod
     - SDWebImage
     - SwiftyGif
-    - Toast
 
 EXTERNAL SOURCES:
   app_links:
@@ -221,8 +215,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
   flutter_secure_storage:
     :path: ".symlinks/plugins/flutter_secure_storage/ios"
-  fluttertoast:
-    :path: ".symlinks/plugins/fluttertoast/ios"
   image_picker_ios:
     :path: ".symlinks/plugins/image_picker_ios/ios"
   just_audio:
@@ -243,8 +235,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
   video_player_avfoundation:
     :path: ".symlinks/plugins/video_player_avfoundation/darwin"
-  workmanager:
-    :path: ".symlinks/plugins/workmanager/ios"
+  workmanager_apple:
+    :path: ".symlinks/plugins/workmanager_apple/ios"
 
 SPEC CHECKSUMS:
   app_links: 585674be3c6661708e6cd794ab4f39fb9d8356f9
@@ -265,7 +257,6 @@ SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_local_notifications: ff50f8405aaa0ccdc7dcfb9022ca192e8ad9688f
   flutter_secure_storage: d33dac7ae2ea08509be337e775f6b59f1ff45f12
-  fluttertoast: e9a18c7be5413da53898f660530c56f35edfba9c
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   image_picker_ios: 4f2f91b01abdb52842a8e277617df877e40f905b
@@ -282,11 +273,10 @@ SPEC CHECKSUMS:
   shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6
   sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
-  Toast: 1f5ea13423a1e6674c4abdac5be53587ae481c4e
   url_launcher_ios: bb13df5870e8c4234ca12609d04010a21be43dfa
   video_player_avfoundation: 7993f492ae0bd77edaea24d9dc051d8bb2cd7c86
-  workmanager: 0afdcf5628bbde6924c21af7836fed07b42e30e6
+  workmanager_apple: 7bac258335c310689a641e2d66e88d4845d372e9
 
-PODFILE CHECKSUM: 97a7f54f8dd918a18681fdc0cf168da09b9d157f
+PODFILE CHECKSUM: 81213c908d5b0ba8f08bbd285b87fc1cb332df26
 
 COCOAPODS: 1.16.2

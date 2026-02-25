@@ -81,4 +81,10 @@ class AlbumService {
   Future<void> removeFromFavorites(String albumId) async {
     await apiClient.delete('/favorites/album/$albumId');
   }
+
+  /// Get album details
+  Future<Map<String, dynamic>?> getAlbumDetails(String albumId) async {
+    final response = await apiClient.get('/albums/$albumId');
+    return response.data is Map ? response.data : null;
+  }
 }

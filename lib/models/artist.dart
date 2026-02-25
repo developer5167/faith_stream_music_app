@@ -10,6 +10,7 @@ class Artist extends Equatable {
   final int? totalAlbums;
   final int? totalStreams;
   final int? totalFollowers;
+  final bool? isFollowing;
   final DateTime? createdAt;
 
   const Artist({
@@ -22,6 +23,7 @@ class Artist extends Equatable {
     this.totalAlbums,
     this.totalStreams,
     this.totalFollowers,
+    this.isFollowing,
     this.createdAt,
   });
 
@@ -55,7 +57,10 @@ class Artist extends Equatable {
       totalSongs: parseInt(json['song_count'] ?? json['total_songs']),
       totalAlbums: parseInt(json['album_count'] ?? json['total_albums']),
       totalStreams: parseInt(json['total_streams']),
-      totalFollowers: parseInt(json['total_followers']),
+      totalFollowers: parseInt(
+        json['total_followers'] ?? json['follower_count'],
+      ),
+      isFollowing: json['is_following'] as bool?,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,
@@ -76,6 +81,7 @@ class Artist extends Equatable {
       'total_albums': totalAlbums,
       'total_streams': totalStreams,
       'total_followers': totalFollowers,
+      'is_following': isFollowing,
       'created_at': createdAt?.toIso8601String(),
     };
   }
@@ -91,6 +97,7 @@ class Artist extends Equatable {
     totalAlbums,
     totalStreams,
     totalFollowers,
+    isFollowing,
     createdAt,
   ];
 
@@ -104,6 +111,7 @@ class Artist extends Equatable {
     int? totalAlbums,
     int? totalStreams,
     int? totalFollowers,
+    bool? isFollowing,
     DateTime? createdAt,
   }) {
     return Artist(
@@ -116,6 +124,7 @@ class Artist extends Equatable {
       totalAlbums: totalAlbums ?? this.totalAlbums,
       totalStreams: totalStreams ?? this.totalStreams,
       totalFollowers: totalFollowers ?? this.totalFollowers,
+      isFollowing: isFollowing ?? this.isFollowing,
       createdAt: createdAt ?? this.createdAt,
     );
   }

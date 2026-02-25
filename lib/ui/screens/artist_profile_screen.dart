@@ -1,3 +1,5 @@
+import 'package:faith_stream_music_app/blocs/auth/auth_bloc.dart';
+import 'package:faith_stream_music_app/blocs/auth/auth_state.dart';
 import 'package:faith_stream_music_app/blocs/player/player_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,25 +19,31 @@ import '../widgets/song_card.dart';
 import '../widgets/premium_card.dart';
 import 'album_detail_screen.dart';
 
-class ArtistProfileScreen extends StatefulWidget {
-  final Artist artist;
+import '../../services/sharing_service.dart';
 
-  const ArtistProfileScreen({super.key, required this.artist});
+class ArtistProfileScreen extends StatefulWidget {
+  final Artist? artist;
+  final String? artistId;
+
+  const ArtistProfileScreen({super.key, this.artist, this.artistId});
 
   @override
   State<ArtistProfileScreen> createState() => _ArtistProfileScreenState();
 }
 
 class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
+  Artist? _artist;
   bool _isFavorite = false;
   List<Song> _popularSongs = [];
   List<dynamic> _albums = [];
   bool _isLoadingSongs = true;
   bool _isLoadingAlbums = true;
+  bool _isLoadingArtist = false;
 
   @override
   void initState() {
     super.initState();
+    _artist = widget.artist;
     _loadData();
   }
 
@@ -44,30 +52,56 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
     final apiClient = ApiClient(storageService);
     final artistService = ArtistService(apiClient);
 
-    setState(() {
-      _isLoadingSongs = true;
-      _isLoadingAlbums = true;
-    });
+    if (_artist == null && widget.artistId != null) {
+      await _loadArtist(widget.artistId!, artistService);
+    }
 
-    _checkFavoriteStatus(artistService);
-    _fetchSongs(artistService);
-    _fetchAlbums(artistService);
+    if (_artist != null) {
+      setState(() {
+        _isLoadingSongs = true;
+        _isLoadingAlbums = true;
+      });
+
+      _checkFavoriteStatus(artistService);
+      _fetchSongs(artistService);
+      _fetchAlbums(artistService);
+    }
+  }
+
+  Future<void> _loadArtist(String id, ArtistService artistService) async {
+    setState(() => _isLoadingArtist = true);
+    try {
+      final artist = await artistService.getArtistDetails(id);
+      if (mounted && artist != null) {
+        setState(() {
+          _artist = artist;
+          _isLoadingArtist = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingArtist = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading artist: $e')));
+      }
+    }
   }
 
   Future<void> _checkFavoriteStatus(ArtistService artistService) async {
     try {
-      final isFav = await artistService.checkIsFavorite(widget.artist.id);
+      final isFollowing = await artistService.checkFollowing(_artist!.id);
       if (mounted) {
-        setState(() => _isFavorite = isFav);
+        setState(() => _isFavorite = isFollowing);
       }
     } catch (e) {
-      debugPrint('Error checking artist favorite: $e');
+      debugPrint('Error checking artist follow status: $e');
     }
   }
 
   Future<void> _fetchSongs(ArtistService artistService) async {
     try {
-      final songsData = await artistService.getArtistSongs(widget.artist.id);
+      final songsData = await artistService.getArtistSongs(_artist!.id);
       final List<Song> songs = [];
       for (var json in songsData) {
         songs.add(Song.fromJson(json));
@@ -86,7 +120,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
 
   Future<void> _fetchAlbums(ArtistService artistService) async {
     try {
-      final albumsData = await artistService.getArtistAlbums(widget.artist.id);
+      final albumsData = await artistService.getArtistAlbums(_artist!.id);
       if (mounted) {
         setState(() {
           _albums = albumsData;
@@ -106,9 +140,9 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
       final artistService = ArtistService(apiClient);
 
       if (_isFavorite) {
-        await artistService.removeFromFavorites(widget.artist.id);
+        await artistService.unfollowArtist(_artist!.id);
       } else {
-        await artistService.addToFavorites(widget.artist.id);
+        await artistService.followArtist(_artist!.id);
       }
 
       if (mounted) {
@@ -116,9 +150,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _isFavorite
-                  ? 'Added to favorite artists'
-                  : 'Removed from favorite artists',
+              _isFavorite ? 'Artist followed' : 'Artist unfollowed',
             ),
             duration: const Duration(seconds: 1),
           ),
@@ -127,7 +159,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update favorite: $e')),
+          SnackBar(content: Text('Failed to update follow status: $e')),
         );
       }
     }
@@ -137,6 +169,26 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
+    final authState = context.watch<AuthBloc>().state;
+    final currentUserId = authState is AuthAuthenticated
+        ? authState.user.id
+        : null;
+    final isOwnProfile = currentUserId == _artist!.id;
+
+    if (_isLoadingArtist) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_artist == null) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(backgroundColor: Colors.transparent),
+        body: const Center(child: Text('Artist not found')),
+      );
+    }
 
     return GradientBackground(
       child: Scaffold(
@@ -151,7 +203,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
               elevation: 0,
               flexibleSpace: FlexibleSpaceBar(
                 title: Text(
-                  widget.artist.name,
+                  _artist!.name,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -161,9 +213,9 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                 background: Stack(
                   fit: StackFit.expand,
                   children: [
-                    if (widget.artist.bannerImageUrl != null)
+                    if (_artist!.bannerImageUrl != null)
                       Image.network(
-                        widget.artist.bannerImageUrl!,
+                        _artist!.bannerImageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
@@ -219,19 +271,19 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                           _buildStatBadge(
                             context,
                             Icons.music_note_rounded,
-                            '${widget.artist.totalSongs ?? 0} Songs',
+                            '${_artist!.totalSongs ?? 0} Songs',
                           ),
                           const SizedBox(width: 8),
                           _buildStatBadge(
                             context,
                             Icons.album_rounded,
-                            '${widget.artist.totalAlbums ?? 0} Albums',
+                            '${_artist!.totalAlbums ?? 0} Albums',
                           ),
                           const SizedBox(width: 8),
                           _buildStatBadge(
                             context,
                             Icons.people_rounded,
-                            '${widget.artist.totalFollowers ?? 0} Followers',
+                            '${_artist!.totalFollowers ?? 0} Followers',
                           ),
                         ],
                       ),
@@ -241,30 +293,36 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                     // Actions
                     Row(
                       children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _toggleFavorite,
-                            icon: Icon(
-                              _isFavorite
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              size: 20,
-                            ),
-                            label: Text(
-                              _isFavorite ? 'Favorited' : 'Follow Artist',
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _isFavorite
-                                  ? theme.colorScheme.onSurface.withOpacity(0.1)
-                                  : theme.colorScheme.primary,
-                              foregroundColor: _isFavorite
-                                  ? theme.colorScheme.onSurface
-                                  : theme.colorScheme.onPrimary,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                        if (!isOwnProfile) ...[
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _toggleFavorite,
+                              icon: Icon(
+                                _isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                size: 20,
+                              ),
+                              label: Text(
+                                _isFavorite ? 'Following' : 'Follow Artist',
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _isFavorite
+                                    ? theme.colorScheme.onSurface.withOpacity(
+                                        0.1,
+                                      )
+                                    : theme.colorScheme.primary,
+                                foregroundColor: _isFavorite
+                                    ? theme.colorScheme.onSurface
+                                    : theme.colorScheme.onPrimary,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
+                          const SizedBox(width: 12),
+                        ],
                         Container(
                           decoration: BoxDecoration(
                             color: theme.colorScheme.onSurface.withOpacity(0.1),
@@ -276,15 +334,19 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                               color: theme.colorScheme.onSurface,
                               size: 20,
                             ),
-                            onPressed: () {},
+                            onPressed: () {
+                              SharingService().shareArtist(
+                                id: _artist!.id,
+                                name: _artist!.name,
+                              );
+                            },
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 32),
 
-                    if (widget.artist.bio != null &&
-                        widget.artist.bio!.isNotEmpty) ...[
+                    if (_artist!.bio != null && _artist!.bio!.isNotEmpty) ...[
                       Text(
                         'About',
                         style: theme.textTheme.titleMedium?.copyWith(
@@ -294,7 +356,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        widget.artist.bio!,
+                        _artist!.bio!,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurface.withOpacity(0.7),
                         ),

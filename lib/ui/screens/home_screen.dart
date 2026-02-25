@@ -206,8 +206,8 @@ class HomeScreen extends StatelessWidget {
                           const SizedBox(height: AppSizes.paddingLg),
                         ],
 
-                        // Popular Songs
-                        if (feed.songs.isNotEmpty) ...[
+                        // Trending Now (Songs)
+                        if (feed.trendingSongs.isNotEmpty) ...[
                           _buildSectionHeader(
                             context,
                             'Trending Now',
@@ -216,8 +216,8 @@ class HomeScreen extends StatelessWidget {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => AllSongsScreen(
-                                    title: 'Popular Songs',
-                                    songs: feed.songs,
+                                    title: 'Trending Now',
+                                    songs: feed.trendingSongs,
                                   ),
                                 ),
                               );
@@ -231,11 +231,11 @@ class HomeScreen extends StatelessWidget {
                                 horizontal: AppSizes.paddingMd,
                               ),
                               scrollDirection: Axis.horizontal,
-                              itemCount: feed.songs.length,
+                              itemCount: feed.trendingSongs.length,
                               separatorBuilder: (context, index) =>
                                   const SizedBox(width: AppSizes.paddingMd),
                               itemBuilder: (context, index) {
-                                final song = feed.songs[index];
+                                final song = feed.trendingSongs[index];
                                 return PremiumCard(
                                   title: song.title,
                                   subtitle: song.displayArtist,
@@ -252,7 +252,69 @@ class HomeScreen extends StatelessWidget {
                                   },
                                   onPlayTap: () {
                                     context.read<PlayerBloc>().add(
-                                      PlayerPlaySong(song, queue: feed.songs),
+                                      PlayerPlaySong(
+                                        song,
+                                        queue: feed.trendingSongs,
+                                      ),
+                                    );
+                                  },
+                                ).animate().fadeIn(delay: (index * 50).ms);
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.paddingLg),
+                        ],
+
+                        // Top 10 Most Played (Songs)
+                        if (feed.topPlayedSongs.isNotEmpty) ...[
+                          _buildSectionHeader(
+                            context,
+                            'Top 10 Most Played',
+                            onSeeAll: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AllSongsScreen(
+                                    title: 'Top 10 Most Played',
+                                    songs: feed.topPlayedSongs,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 230,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.topPlayedSongs.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingMd),
+                              itemBuilder: (context, index) {
+                                final song = feed.topPlayedSongs[index];
+                                return PremiumCard(
+                                  title: song.title,
+                                  subtitle: song.displayArtist,
+                                  imageUrl: song.coverImageUrl,
+                                  width: 150,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            SongDetailScreen(song: song),
+                                      ),
+                                    );
+                                  },
+                                  onPlayTap: () {
+                                    context.read<PlayerBloc>().add(
+                                      PlayerPlaySong(
+                                        song,
+                                        queue: feed.topPlayedSongs,
+                                      ),
                                     );
                                   },
                                 ).animate().fadeIn(delay: (index * 50).ms);
@@ -313,9 +375,9 @@ class HomeScreen extends StatelessWidget {
                           const SizedBox(height: AppSizes.paddingLg),
                         ],
 
-                        // Featured Artists
-                        if (feed.artists.isNotEmpty) ...[
-                          _buildSectionHeader(context, 'Your Favorite Artists'),
+                        // Trending Artists
+                        if (feed.topArtists.isNotEmpty) ...[
+                          _buildSectionHeader(context, 'Trending Artists'),
                           const SizedBox(height: AppSizes.paddingSm),
                           SizedBox(
                             height: 210,
@@ -324,14 +386,91 @@ class HomeScreen extends StatelessWidget {
                                 horizontal: AppSizes.paddingMd,
                               ),
                               scrollDirection: Axis.horizontal,
-                              itemCount: feed.artists.length,
+                              itemCount: feed.topArtists.length,
                               separatorBuilder: (context, index) =>
                                   const SizedBox(width: AppSizes.paddingMd),
                               itemBuilder: (context, index) {
-                                final artist = feed.artists[index];
+                                final artist = feed.topArtists[index];
                                 return PremiumCard(
                                   title: artist.name,
-                                  subtitle: 'Artist',
+                                  subtitle:
+                                      '${artist.totalFollowers ?? 0} Followers',
+                                  imageUrl: artist.profilePicUrl,
+                                  width: 130,
+                                  isCircle: true,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ArtistProfileScreen(artist: artist),
+                                      ),
+                                    );
+                                  },
+                                ).animate().fadeIn(delay: (index * 50).ms);
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.paddingLg),
+                        ],
+
+                        // Most Played Artists
+                        if (feed.topPlayedArtists.isNotEmpty) ...[
+                          _buildSectionHeader(context, 'Most Played Artists'),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 210,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.topPlayedArtists.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingMd),
+                              itemBuilder: (context, index) {
+                                final artist = feed.topPlayedArtists[index];
+                                return PremiumCard(
+                                  title: artist.name,
+                                  subtitle: 'Top Played',
+                                  imageUrl: artist.profilePicUrl,
+                                  width: 130,
+                                  isCircle: true,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ArtistProfileScreen(artist: artist),
+                                      ),
+                                    );
+                                  },
+                                ).animate().fadeIn(delay: (index * 50).ms);
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.paddingLg),
+                        ],
+
+                        // Artists You Follow (Followed Artists)
+                        if (feed.followedArtists.isNotEmpty) ...[
+                          _buildSectionHeader(context, 'Artists You Follow'),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 210,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.followedArtists.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingMd),
+                              itemBuilder: (context, index) {
+                                final artist = feed.followedArtists[index];
+                                return PremiumCard(
+                                  title: artist.name,
+                                  subtitle: 'Following',
                                   imageUrl: artist.profilePicUrl,
                                   width: 130,
                                   isCircle: true,

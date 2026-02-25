@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../blocs/home/home_bloc.dart';
 import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_event.dart';
 import '../../blocs/library/library_bloc.dart';
@@ -9,6 +8,9 @@ import '../../blocs/library/library_state.dart';
 import '../../models/song.dart';
 import '../../models/album.dart';
 import '../../models/artist.dart';
+import '../../blocs/search/search_bloc.dart';
+import '../../blocs/search/search_event.dart';
+import '../../blocs/search/search_state.dart';
 import '../../utils/constants.dart';
 import '../../config/app_theme.dart';
 import '../widgets/song_card.dart';
@@ -53,45 +55,13 @@ class _SearchScreenState extends State<SearchScreen>
     setState(() {
       _isSearching = _searchController.text.isNotEmpty;
       if (_isSearching) {
-        _performSearch(_searchController.text);
+        context.read<SearchBloc>().add(
+          SearchQueryChanged(_searchController.text),
+        );
       } else {
-        _clearSearch();
+        context.read<SearchBloc>().add(SearchClear());
       }
     });
-  }
-
-  void _performSearch(String query) {
-    final homeState = context.read<HomeBloc>().state;
-    if (homeState is HomeLoaded) {
-      final feed = homeState.feed;
-      final lowerQuery = query.toLowerCase();
-
-      // Filter songs
-      _filteredSongs = feed.songs.where((song) {
-        return song.title.toLowerCase().contains(lowerQuery) ||
-            song.displayArtist.toLowerCase().contains(lowerQuery) ||
-            (song.genre?.toLowerCase().contains(lowerQuery) ?? false) ||
-            (song.albumTitle?.toLowerCase().contains(lowerQuery) ?? false);
-      }).toList();
-
-      // Filter albums
-      _filteredAlbums = feed.albums.where((album) {
-        return album.title.toLowerCase().contains(lowerQuery) ||
-            album.displayArtist.toLowerCase().contains(lowerQuery);
-      }).toList();
-
-      // Filter artists
-      _filteredArtists = feed.artists.where((artist) {
-        return artist.name.toLowerCase().contains(lowerQuery) ||
-            (artist.name.toLowerCase().contains(lowerQuery) ?? false);
-      }).toList();
-    }
-  }
-
-  void _clearSearch() {
-    _filteredSongs = [];
-    _filteredAlbums = [];
-    _filteredArtists = [];
   }
 
   @override
@@ -146,38 +116,58 @@ class _SearchScreenState extends State<SearchScreen>
         ),
       ),
       body: _isSearching
-          ? Column(
-              children: [
-                TabBar(
-                  controller: _tabController,
-                  labelColor: isDark
-                      ? AppTheme.darkPrimary
-                      : AppTheme.lightPrimary,
-                  unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(
-                    0.38,
-                  ),
-                  indicatorColor: isDark
-                      ? AppTheme.darkPrimary
-                      : AppTheme.lightPrimary,
-                  indicatorSize: TabBarIndicatorSize.label,
-                  dividerColor: Colors.transparent,
-                  tabs: [
-                    Tab(text: 'Songs (${_filteredSongs.length})'),
-                    Tab(text: 'Albums (${_filteredAlbums.length})'),
-                    Tab(text: 'Artists (${_filteredArtists.length})'),
-                  ],
-                ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
+          ? BlocBuilder<SearchBloc, SearchState>(
+              builder: (context, state) {
+                if (state is SearchLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (state is SearchError) {
+                  return _buildEmptyState(context, 'Error performing search');
+                }
+
+                if (state is SearchLoaded) {
+                  _filteredSongs = state.songs;
+                  _filteredAlbums = state.albums;
+                  _filteredArtists = state.artists;
+
+                  return Column(
                     children: [
-                      _buildSongsList(context),
-                      _buildAlbumsList(context),
-                      _buildArtistsList(context),
+                      TabBar(
+                        controller: _tabController,
+                        labelColor: isDark
+                            ? AppTheme.darkPrimary
+                            : AppTheme.lightPrimary,
+                        unselectedLabelColor: theme.colorScheme.onSurface
+                            .withOpacity(0.38),
+                        indicatorColor: isDark
+                            ? AppTheme.darkPrimary
+                            : AppTheme.lightPrimary,
+                        indicatorSize: TabBarIndicatorSize.label,
+                        dividerColor: Colors.transparent,
+                        tabs: [
+                          Tab(text: 'Songs (${_filteredSongs.length})'),
+                          Tab(text: 'Albums (${_filteredAlbums.length})'),
+                          Tab(text: 'Artists (${_filteredArtists.length})'),
+                        ],
+                      ),
+                      Expanded(
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _buildSongsList(context),
+                            _buildAlbumsList(context),
+                            _buildArtistsList(context),
+                          ],
+                        ),
+                      ),
                     ],
-                  ),
-                ),
-              ],
+                  );
+                }
+
+                // Initial or empty
+                return _buildEmptyState(context, 'Start typing to search');
+              },
             )
           : _buildInitialState(),
     );
@@ -211,17 +201,71 @@ class _SearchScreenState extends State<SearchScreen>
             childAspectRatio: 1.6,
             children: [
               _buildCategoryCard(
-                'Worship',
+                'Gospel',
                 Colors.indigo,
-                Icons.volunteer_activism,
+                Icons.church,
+                context,
               ),
-              _buildCategoryCard('Praise', Colors.orange, Icons.auto_awesome),
+              _buildCategoryCard(
+                'Contemporary Christian',
+                Colors.blue,
+                Icons.speaker,
+                context,
+              ),
+              _buildCategoryCard(
+                'Worship',
+                Colors.purple,
+                Icons.volunteer_activism,
+                context,
+              ),
+              _buildCategoryCard(
+                'Praise',
+                Colors.orange,
+                Icons.auto_awesome,
+                context,
+              ),
+              _buildCategoryCard(
+                'Hymns',
+                Colors.green,
+                Icons.menu_book,
+                context,
+              ),
+              _buildCategoryCard(
+                'Christian Rock',
+                Colors.red,
+                Icons.electric_bolt,
+                context,
+              ),
+              _buildCategoryCard(
+                'Christian Pop',
+                Colors.pink,
+                Icons.music_note,
+                context,
+              ),
+              _buildCategoryCard(
+                'Christian Hip Hop',
+                Colors.deepOrange,
+                Icons.mic,
+                context,
+              ),
+              _buildCategoryCard(
+                'Southern Gospel',
+                Colors.brown,
+                Icons.home,
+                context,
+              ),
               _buildCategoryCard(
                 'Traditional',
                 Colors.teal,
                 Icons.account_balance,
+                context,
               ),
-              _buildCategoryCard('Contemporary', Colors.pink, Icons.music_note),
+              _buildCategoryCard(
+                'Instrumental',
+                Colors.blueGrey,
+                Icons.piano,
+                context,
+              ),
             ],
           ),
           const SizedBox(height: 40),
@@ -249,35 +293,46 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 
-  Widget _buildCategoryCard(String label, Color color, IconData icon) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(
-          colors: [color.withOpacity(0.8), color],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -15,
-            bottom: -15,
-            child: Icon(icon, size: 80, color: Colors.white12),
+  Widget _buildCategoryCard(
+    String label,
+    Color color,
+    IconData icon,
+    BuildContext context,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        _searchController.text = label;
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [color.withOpacity(0.8), color],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -15,
+              bottom: -15,
+              child: Icon(icon, size: 80, color: Colors.white12),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

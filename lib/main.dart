@@ -15,6 +15,8 @@ import 'firebase_options.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/home_repository.dart';
 import 'services/notification_service.dart';
+import 'services/search_service.dart';
+import 'services/deep_link_service.dart';
 
 import 'repositories/stream_repository.dart';
 import 'repositories/library_repository.dart';
@@ -23,6 +25,7 @@ import 'blocs/auth/auth_bloc.dart';
 import 'blocs/home/home_bloc.dart';
 import 'blocs/home/home_event.dart';
 import 'blocs/player/player_bloc.dart';
+import 'blocs/search/search_bloc.dart';
 import 'blocs/library/library_bloc.dart';
 import 'blocs/library/library_event.dart';
 import 'blocs/profile/profile_bloc.dart';
@@ -65,6 +68,7 @@ void main() async {
     final libraryRepository = LibraryRepository(apiClient);
     final userRepository = UserRepository(apiClient);
     final audioPlayerService = AudioPlayerService();
+    final searchService = SearchService(apiClient);
 
     // Initialize Firebase
     await Firebase.initializeApp(
@@ -87,6 +91,7 @@ void main() async {
         userRepository: userRepository,
         audioPlayerService: audioPlayerService,
         notificationService: notificationService,
+        searchService: searchService,
       ),
     );
   } catch (e, stackTrace) {
@@ -132,6 +137,7 @@ class MyApp extends StatelessWidget {
   final UserRepository userRepository;
   final AudioPlayerService audioPlayerService;
   final NotificationService notificationService;
+  final SearchService searchService;
 
   const MyApp({
     super.key,
@@ -143,6 +149,7 @@ class MyApp extends StatelessWidget {
     required this.userRepository,
     required this.audioPlayerService,
     required this.notificationService,
+    required this.searchService,
   });
 
   @override
@@ -154,6 +161,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<StreamRepository>.value(value: streamRepository),
         RepositoryProvider<UserRepository>.value(value: userRepository),
         RepositoryProvider<AudioPlayerService>.value(value: audioPlayerService),
+        RepositoryProvider<SearchService>.value(value: searchService),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -177,6 +185,7 @@ class MyApp extends StatelessWidget {
               storageService: storageService,
             ),
           ),
+          BlocProvider(create: (context) => SearchBloc(searchService)),
           BlocProvider(
             create: (context) =>
                 LibraryBloc(libraryRepository)..add(LibraryLoadAll()),
@@ -189,7 +198,11 @@ class MyApp extends StatelessWidget {
         child: Builder(
           builder: (context) {
             final authBloc = context.read<AuthBloc>();
-            final router = AppRouter(authBloc, storageService).router;
+            final appRouter = AppRouter(authBloc, storageService);
+            final router = appRouter.router;
+
+            // Initialize DeepLinkService
+            DeepLinkService(router).init();
 
             return DynamicColorBuilder(
               builder: (lightDynamic, darkDynamic) {

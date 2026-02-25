@@ -126,6 +126,20 @@ class ArtistDashboardScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSizes.paddingMd),
                     Expanded(
+                      child: _buildStatCard(
+                        context,
+                        icon: Icons.people,
+                        title: 'Followers',
+                        value: fmtCount('follower_count'),
+                        color: Colors.orange,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSizes.paddingMd),
+                Row(
+                  children: [
+                    Expanded(
                       child: GestureDetector(
                         onTap: () => Navigator.push(
                           context,
@@ -142,6 +156,7 @@ class ArtistDashboardScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const Spacer(),
                   ],
                 ),
                 const SizedBox(height: AppSizes.paddingXl),

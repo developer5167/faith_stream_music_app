@@ -38,6 +38,7 @@ class PremiumCard extends StatelessWidget {
           // Image Container
           GestureDetector(
             onTap: onTap,
+            behavior: HitTestBehavior.opaque,
             child: Stack(
               children: [
                 // Image

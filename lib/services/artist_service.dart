@@ -8,7 +8,7 @@ class ArtistService {
 
   Future<Artist?> getArtistDetails(String artistId) async {
     try {
-      final response = await apiClient.get('/artist/verified/$artistId');
+      final response = await apiClient.get('/artists/$artistId');
       if (response.data != null && response.data is Map<String, dynamic>) {
         return Artist.fromJson(response.data);
       }
@@ -19,24 +19,40 @@ class ArtistService {
     }
   }
 
-  /// Check if artist is favorite
-  Future<bool> checkIsFavorite(String artistId) async {
+  /// Check if following artist
+  Future<bool> checkFollowing(String artistId) async {
     try {
-      final response = await apiClient.get('/favorites/artist/$artistId/check');
-      return response.data['is_favorite'] ?? false;
+      final response = await apiClient.get('/follow/$artistId/check');
+      return response.data['isFollowing'] ?? false;
     } catch (e) {
       return false;
     }
   }
 
-  /// Add artist to favorites
-  Future<void> addToFavorites(String artistId) async {
-    await apiClient.post('/favorites/artist/$artistId');
+  /// Follow an artist
+  Future<void> followArtist(String artistId) async {
+    await apiClient.post('/follow/$artistId');
   }
 
-  /// Remove artist from favorites
-  Future<void> removeFromFavorites(String artistId) async {
-    await apiClient.delete('/favorites/artist/$artistId');
+  /// Unfollow an artist
+  Future<void> unfollowArtist(String artistId) async {
+    await apiClient.delete('/follow/$artistId');
+  }
+
+  /// Get top artists by followers
+  Future<List<Artist>> getTopArtists({int limit = 10}) async {
+    try {
+      final response = await apiClient.get('/follow/top?limit=$limit');
+      if (response.data is List) {
+        return (response.data as List)
+            .map((json) => Artist.fromJson(json))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching top artists: $e');
+      return [];
+    }
   }
 
   /// Get artist's albums (public)

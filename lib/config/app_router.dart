@@ -15,6 +15,9 @@ import '../ui/screens/support/support_hub_screen.dart';
 import '../ui/screens/support/contact_support_screen.dart';
 import '../ui/screens/support/my_tickets_screen.dart';
 import '../ui/screens/support/help_center_screen.dart';
+import '../ui/screens/song_detail_screen.dart';
+import '../ui/screens/album_detail_screen.dart';
+import '../ui/screens/artist_profile_screen.dart';
 
 class AppRouter {
   final AuthBloc authBloc;
@@ -99,6 +102,27 @@ class AppRouter {
       GoRoute(
         path: '/support/help-center',
         builder: (context, state) => const HelpCenterScreen(),
+      ),
+      GoRoute(
+        path: '/song/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'];
+          return SongDetailScreen(songId: id);
+        },
+      ),
+      GoRoute(
+        path: '/album/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'];
+          return AlbumDetailScreen(albumId: id);
+        },
+      ),
+      GoRoute(
+        path: '/artist/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'];
+          return ArtistProfileScreen(artistId: id);
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
