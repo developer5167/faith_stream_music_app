@@ -175,6 +175,15 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
       emit(PlayerLoading(song: songToPlay, queue: updatedQueue));
 
+      // Check daily limit here since backend URL is directly provided
+      final limitResponse = await _streamRepository.checkPlayLimit(
+        songToPlay.id,
+      );
+      if (!limitResponse.success) {
+        emit(PlayerError(limitResponse.message));
+        return;
+      }
+
       // New song → reset the listen ticker
       _resetListenTicker();
       _currentSongId = songToPlay.id;

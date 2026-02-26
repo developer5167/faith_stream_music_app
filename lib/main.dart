@@ -17,6 +17,7 @@ import 'repositories/home_repository.dart';
 import 'services/notification_service.dart';
 import 'services/search_service.dart';
 import 'services/deep_link_service.dart';
+import 'services/ads_service.dart';
 
 import 'repositories/stream_repository.dart';
 import 'repositories/library_repository.dart';
@@ -69,6 +70,7 @@ void main() async {
     final userRepository = UserRepository(apiClient);
     final audioPlayerService = AudioPlayerService();
     final searchService = SearchService(apiClient);
+    final adsService = AdsService(apiClient);
 
     // Initialize Firebase
     await Firebase.initializeApp(
@@ -92,6 +94,7 @@ void main() async {
         audioPlayerService: audioPlayerService,
         notificationService: notificationService,
         searchService: searchService,
+        adsService: adsService,
       ),
     );
   } catch (e, stackTrace) {
@@ -138,6 +141,7 @@ class MyApp extends StatelessWidget {
   final AudioPlayerService audioPlayerService;
   final NotificationService notificationService;
   final SearchService searchService;
+  final AdsService adsService;
 
   const MyApp({
     super.key,
@@ -150,6 +154,7 @@ class MyApp extends StatelessWidget {
     required this.audioPlayerService,
     required this.notificationService,
     required this.searchService,
+    required this.adsService,
   });
 
   @override
@@ -162,6 +167,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<UserRepository>.value(value: userRepository),
         RepositoryProvider<AudioPlayerService>.value(value: audioPlayerService),
         RepositoryProvider<SearchService>.value(value: searchService),
+        RepositoryProvider<AdsService>.value(value: adsService),
       ],
       child: MultiBlocProvider(
         providers: [

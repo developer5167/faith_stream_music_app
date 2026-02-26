@@ -9,10 +9,13 @@ import '../../blocs/player/player_state.dart';
 import '../../blocs/library/library_bloc.dart';
 import '../../blocs/library/library_event.dart';
 import '../../blocs/library/library_state.dart';
+import '../../blocs/profile/profile_bloc.dart';
+import '../../blocs/profile/profile_state.dart';
 import '../../services/audio_player_service.dart';
 import '../../config/app_theme.dart';
 import '../widgets/playlist_selection_sheet.dart';
 import '../widgets/gradient_background.dart';
+import '../widgets/ad_overlay.dart';
 
 class NowPlayingScreen extends StatefulWidget {
   const NowPlayingScreen({super.key});
@@ -239,6 +242,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
     final size = MediaQuery.of(context).size;
     final isDark = theme.brightness == Brightness.dark;
 
+    final profileState = context.watch<ProfileBloc>().state;
+    final isPremium =
+        profileState is ProfileLoaded &&
+        profileState.subscription != null &&
+        profileState.subscription!.isActive;
+
     return SafeArea(
       child: Column(
         children: [
@@ -304,19 +313,38 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                       ),
                     ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: song.coverImageUrl != null
-                        ? Image.network(
-                            song.coverImageUrl!,
-                            width: size.width * 0.85,
-                            height: size.width * 0.85,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                _buildPlaceholderArt(size),
-                          )
-                        : _buildPlaceholderArt(size),
-                  ),
+                  child: isPremium
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: song.coverImageUrl != null
+                              ? Image.network(
+                                  song.coverImageUrl!,
+                                  width: size.width * 0.85,
+                                  height: size.width * 0.85,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      _buildPlaceholderArt(size),
+                                )
+                              : _buildPlaceholderArt(size),
+                        )
+                      : AdOverlay(
+                          key: ValueKey('ad_${song.id}'),
+                          songId: song.id,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: song.coverImageUrl != null
+                                ? Image.network(
+                                    song.coverImageUrl!,
+                                    width: size.width * 0.85,
+                                    height: size.width * 0.85,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            _buildPlaceholderArt(size),
+                                  )
+                                : _buildPlaceholderArt(size),
+                          ),
+                        ),
                 ),
               )
               .animate()
@@ -405,11 +433,15 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                     overlayShape: const RoundSliderOverlayShape(
                       overlayRadius: 14,
                     ),
-                    activeTrackColor: theme.colorScheme.onSurface,
+                    activeTrackColor: isPremium
+                        ? theme.colorScheme.onSurface
+                        : Colors.grey,
                     inactiveTrackColor: theme.colorScheme.onSurface.withValues(
                       alpha: 0.1,
                     ),
-                    thumbColor: theme.colorScheme.onSurface,
+                    thumbColor: isPremium
+                        ? theme.colorScheme.onSurface
+                        : Colors.grey,
                     overlayColor: theme.colorScheme.onSurface.withValues(
                       alpha: 0.1,
                     ),
@@ -426,32 +458,42 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                     max: duration.inSeconds.toDouble() > 0
                         ? duration.inSeconds.toDouble()
                         : 1.0,
-                    onChangeStart: (value) {
-                      setState(() {
-                        _isDragging = true;
-                        _dragValue = value;
-                        _wasPlayingBeforeDrag = isPlaying;
-                      });
-                      if (isPlaying) {
-                        context.read<PlayerBloc>().add(const PlayerPause());
-                      }
-                    },
-                    onChanged: (value) {
-                      setState(() {
-                        _dragValue = value;
-                      });
-                    },
-                    onChangeEnd: (value) {
-                      context.read<PlayerBloc>().add(
-                        PlayerSeek(Duration(seconds: value.toInt())),
-                      );
-                      if (_wasPlayingBeforeDrag) {
-                        context.read<PlayerBloc>().add(const PlayerPlay());
-                      }
-                      setState(() {
-                        _isDragging = false;
-                      });
-                    },
+                    onChangeStart: isPremium
+                        ? (value) {
+                            setState(() {
+                              _isDragging = true;
+                              _dragValue = value;
+                              _wasPlayingBeforeDrag = isPlaying;
+                            });
+                            if (isPlaying) {
+                              context.read<PlayerBloc>().add(
+                                const PlayerPause(),
+                              );
+                            }
+                          }
+                        : null,
+                    onChanged: isPremium
+                        ? (value) {
+                            setState(() {
+                              _dragValue = value;
+                            });
+                          }
+                        : null,
+                    onChangeEnd: isPremium
+                        ? (value) {
+                            context.read<PlayerBloc>().add(
+                              PlayerSeek(Duration(seconds: value.toInt())),
+                            );
+                            if (_wasPlayingBeforeDrag) {
+                              context.read<PlayerBloc>().add(
+                                const PlayerPlay(),
+                              );
+                            }
+                            setState(() {
+                              _isDragging = false;
+                            });
+                          }
+                        : null,
                   ),
                 ),
                 Padding(
@@ -510,12 +552,16 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.skip_previous_rounded,
-                    color: theme.colorScheme.onSurface,
+                    color: isPremium
+                        ? theme.colorScheme.onSurface
+                        : Colors.grey.withOpacity(0.5),
                     size: 48,
                   ),
-                  onPressed: () => context.read<PlayerBloc>().add(
-                    const PlayerSkipPrevious(),
-                  ),
+                  onPressed: isPremium
+                      ? () => context.read<PlayerBloc>().add(
+                          const PlayerSkipPrevious(),
+                        )
+                      : null,
                 ),
                 GestureDetector(
                   onTap: () {
@@ -551,11 +597,16 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.skip_next_rounded,
-                    color: theme.colorScheme.onSurface,
+                    color: isPremium
+                        ? theme.colorScheme.onSurface
+                        : Colors.grey.withOpacity(0.5),
                     size: 48,
                   ),
-                  onPressed: () =>
-                      context.read<PlayerBloc>().add(const PlayerSkipNext()),
+                  onPressed: isPremium
+                      ? () => context.read<PlayerBloc>().add(
+                          const PlayerSkipNext(),
+                        )
+                      : null,
                 ),
                 IconButton(
                   icon: Icon(

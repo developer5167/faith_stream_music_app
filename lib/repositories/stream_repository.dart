@@ -63,6 +63,21 @@ class StreamRepository {
     }
   }
 
+  Future<ApiResponse<bool>> checkPlayLimit(String songId) async {
+    try {
+      final response = await _apiClient.get('/stream/$songId/check-limit');
+      final canPlay = response.data['canPlay'] == true;
+      if (!canPlay) {
+        return ApiResponse.error(
+          message: response.data['reason'] ?? 'Daily limit reached',
+        );
+      }
+      return ApiResponse.success(data: true, message: 'OK');
+    } catch (e) {
+      return ApiResponse.error(message: 'Failed to verify play limit: $e');
+    }
+  }
+
   void dispose() {
     _streamLoggedController.close();
   }

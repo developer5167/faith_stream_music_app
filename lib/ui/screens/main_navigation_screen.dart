@@ -1,14 +1,22 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../utils/constants.dart';
 import '../../blocs/profile/profile_bloc.dart';
 import '../../blocs/profile/profile_state.dart';
+import '../../blocs/player/player_bloc.dart';
+import '../../blocs/player/player_state.dart';
+import '../../blocs/player/player_event.dart';
+import '../../services/audio_player_service.dart';
+import '../../services/ads_service.dart';
 import '../widgets/mini_player_bar.dart';
 import 'home_screen.dart';
 import 'search_screen.dart';
 import 'library_screen.dart';
 import 'user_profile_screen.dart';
 import 'subscription_screen.dart';
+import 'ad_player_screen.dart';
+import '../../config/app_theme.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -22,6 +30,62 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   // Cached value — only updated on definitive ProfileLoaded state.
   // Stays stable during ProfileLoading so the tab bar doesn't flicker.
   bool _showSubscriptionTab = true;
+
+  StreamSubscription? _indexSubscription;
+  bool _isShowingAd = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final audioService = context.read<AudioPlayerService>();
+    _indexSubscription = audioService.currentIndexStream.listen((_) {
+      _checkAndPlayVideoAd();
+    });
+  }
+
+  Future<void> _checkAndPlayVideoAd() async {
+    if (_isShowingAd) return;
+
+    final profileState = context.read<ProfileBloc>().state;
+    final isPremium =
+        profileState is ProfileLoaded &&
+        profileState.subscription != null &&
+        profileState.subscription!.isActive;
+
+    if (isPremium) return;
+
+    final adService = context.read<AdsService>();
+    if (await adService.shouldPlayVideoAd()) {
+      final ad = await adService.getNextAd('POWER_VIDEO');
+      if (ad != null && mounted) {
+        _isShowingAd = true;
+
+        // Pause audio before showing ad
+        context.read<PlayerBloc>().add(const PlayerPause());
+
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => AdPlayerScreen(ad: ad),
+            fullscreenDialog: true,
+          ),
+        );
+
+        _isShowingAd = false;
+        await adService.markVideoAdPlayed();
+
+        // Resume playback after ad finishes
+        if (mounted) {
+          context.read<PlayerBloc>().add(const PlayerPlay());
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _indexSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,28 +145,77 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         // Safety clamp in case state is read before listener fires
         final safeIndex = _currentIndex.clamp(0, screens.length - 1);
 
-        return Scaffold(
-          backgroundColor: Colors.transparent,
-          body: screens[safeIndex],
-          bottomNavigationBar: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const MiniPlayerBar(),
-              BottomNavigationBar(
-                currentIndex: safeIndex,
-                onTap: (index) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                },
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                selectedItemColor: AppColors.primaryBrown,
-                unselectedItemColor: Colors.grey,
-                type: BottomNavigationBarType.fixed,
-                items: navItems,
-              ),
-            ],
+        return BlocListener<PlayerBloc, PlayerState>(
+          listenWhen: (previous, current) => current is PlayerError,
+          listener: (context, state) {
+            if (state is PlayerError) {
+              if (state.message == 'DAILY_LIMIT_REACHED') {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    title: const Text('Daily Limit Reached'),
+                    content: const Text(
+                      'You have reached your daily free play limit (2 plays) for this song.\n\nUpgrade to Premium for unlimited ad-free plays!',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'CANCEL',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.darkPrimary,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          if (_showSubscriptionTab) {
+                            setState(() {
+                              _currentIndex = 3; // Navigate to Premium tab
+                            });
+                          }
+                        },
+                        child: const Text('GO PREMIUM'),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(state.message)));
+              }
+            }
+          },
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: screens[safeIndex],
+            bottomNavigationBar: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const MiniPlayerBar(),
+                BottomNavigationBar(
+                  currentIndex: safeIndex,
+                  onTap: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  selectedItemColor: AppColors.primaryBrown,
+                  unselectedItemColor: Colors.grey,
+                  type: BottomNavigationBarType.fixed,
+                  items: navItems,
+                ),
+              ],
+            ),
           ),
         );
       },
