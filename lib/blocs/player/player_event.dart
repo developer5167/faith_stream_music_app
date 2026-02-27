@@ -121,3 +121,7 @@ class PlayerIndexChanged extends PlayerEvent {
   @override
   List<Object?> get props => [index];
 }
+
+class PlayerReset extends PlayerEvent {
+  const PlayerReset();
+}

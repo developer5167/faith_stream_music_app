@@ -28,7 +28,7 @@ class PremiumCard extends StatelessWidget {
     final theme = Theme.of(context);
     final borderRadius = isCircle
         ? BorderRadius.circular(100)
-        : BorderRadius.circular(12);
+        : BorderRadius.circular(3);
 
     return SizedBox(
       width: width,
@@ -45,16 +45,7 @@ class PremiumCard extends StatelessWidget {
                 Container(
                   height: width,
                   width: width,
-                  decoration: BoxDecoration(
-                    borderRadius: borderRadius,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
+                  decoration: BoxDecoration(borderRadius: borderRadius),
                   clipBehavior: Clip.antiAlias,
                   child: imageUrl != null && imageUrl!.isNotEmpty
                       ? CachedNetworkImage(

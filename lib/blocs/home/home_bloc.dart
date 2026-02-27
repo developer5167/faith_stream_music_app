@@ -52,6 +52,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
        super(const HomeInitial()) {
     on<HomeLoadRequested>(_onHomeLoadRequested);
     on<HomeRefreshRequested>(_onHomeRefreshRequested);
+    on<HomeReset>((event, emit) => emit(const HomeInitial()));
 
     _streamSubscription = _streamRepository.onStreamLogged.listen((_) {
       add(const HomeRefreshRequested());

@@ -65,6 +65,13 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     on<PlayerClearQueue>(_onClearQueue);
     on<PlayerSetVolume>(_onSetVolume);
     on<PlayerIndexChanged>(_onIndexChanged);
+    on<PlayerReset>((event, emit) async {
+      _stopListenTicker();
+      _listenedSeconds = 0;
+      _streamCounted = false;
+      await _audioService.stop();
+      emit(const PlayerInitial());
+    });
 
     _setupListeners();
   }
@@ -224,26 +231,42 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   }
 
   Future<void> _onPause(PlayerPause event, Emitter<PlayerState> emit) async {
-    if (state is! PlayerPlaying) return;
-    final playingState = state as PlayerPlaying;
+    if (state is! PlayerPlaying && state is! PlayerLoading) return;
 
+    final currentState = state;
     await _audioService.pause();
-
-    // Pause the ticker — counter is preserved for when we resume
     _stopListenTicker();
 
-    emit(
-      PlayerPaused(
-        song: playingState.song,
-        queue: playingState.queue,
-        currentIndex: playingState.currentIndex,
-        position: playingState.position,
-        duration: playingState.duration,
-        repeatMode: playingState.repeatMode,
-        isShuffleEnabled: playingState.isShuffleEnabled,
-        volume: playingState.volume,
-      ),
-    );
+    if (currentState is PlayerPlaying) {
+      emit(
+        PlayerPaused(
+          song: currentState.song,
+          queue: currentState.queue,
+          currentIndex: currentState.currentIndex,
+          position: currentState.position,
+          duration: currentState.duration,
+          repeatMode: currentState.repeatMode,
+          isShuffleEnabled: currentState.isShuffleEnabled,
+          volume: currentState.volume,
+        ),
+      );
+    } else if (currentState is PlayerLoading) {
+      // If we pause while loading, we should emit PlayerPaused when loading finishes
+      // but for now, we just emit a PlayerPaused with what we have
+      if (currentState.song != null) {
+        emit(
+          PlayerPaused(
+            song: currentState.song!,
+            queue: currentState.queue ?? [currentState.song!],
+            currentIndex: _audioService.currentIndex,
+            position: Duration.zero,
+            duration: Duration.zero,
+            repeatMode: _audioService.repeatMode,
+            isShuffleEnabled: _audioService.isShuffleEnabled,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _onStop(PlayerStop event, Emitter<PlayerState> emit) async {

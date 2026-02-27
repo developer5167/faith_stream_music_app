@@ -1,6 +1,6 @@
 class AppConfig {
   // API Configuration
-  static const String baseUrl = 'http://192.168.15.168:9000/api';
+  static const String baseUrl = 'http://KCSs-MacBook-Pro.local:9000/api';
 
   // Endpoints (without /api prefix since it's in baseUrl)
   static const String authEndpoint = '/auth';

@@ -14,3 +14,7 @@ class HomeLoadRequested extends HomeEvent {
 class HomeRefreshRequested extends HomeEvent {
   const HomeRefreshRequested();
 }
+
+class HomeReset extends HomeEvent {
+  const HomeReset();
+}

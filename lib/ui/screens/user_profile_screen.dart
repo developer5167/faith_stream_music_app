@@ -12,6 +12,7 @@ import 'artist_registration_screen.dart';
 import 'artist_dashboard_screen.dart';
 import 'subscription_screen.dart';
 import '../../repositories/user_repository.dart';
+import '../widgets/gradient_background.dart';
 
 class UserProfileScreen extends StatelessWidget {
   const UserProfileScreen({super.key});
@@ -68,213 +69,216 @@ class UserProfileScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final user = state.user;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          context.read<ProfileBloc>().add(ProfileLoad());
-          // Wait a bit for the bloc to emit new state
-          await Future.delayed(const Duration(milliseconds: 800));
-        },
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              expandedHeight: 200,
-              pinned: true,
-              flexibleSpace: FlexibleSpaceBar(
-                title: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(user.name),
-                    if (state.subscription?.isActive ?? false) ...[
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.workspace_premium,
-                        color: Colors.amber,
-                        size: 16,
+    return GradientBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: RefreshIndicator(
+          onRefresh: () async {
+            context.read<ProfileBloc>().add(ProfileLoad());
+            // Wait a bit for the bloc to emit new state
+            await Future.delayed(const Duration(milliseconds: 800));
+          },
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 200,
+                pinned: true,
+                backgroundColor: Colors.transparent,
+                flexibleSpace: FlexibleSpaceBar(
+                  title: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(user.name),
+                      if (state.subscription?.isActive ?? false) ...[
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.workspace_premium,
+                          color: Colors.amber,
+                          size: 16,
+                        ),
+                      ],
+                    ],
+                  ),
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Center(
+                        child: CircleAvatar(
+                          radius: 60,
+                          backgroundColor: Colors.white.withOpacity(0.1),
+                          backgroundImage: user.profilePicUrl != null
+                              ? NetworkImage(user.profilePicUrl!)
+                              : null,
+                          child: user.profilePicUrl == null
+                              ? Text(
+                                  user.name[0].toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 48,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                )
+                              : null,
+                        ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Center(
-                      child: CircleAvatar(
-                        radius: 60,
-                        backgroundColor: Colors.white,
-                        backgroundImage: user.profilePicUrl != null
-                            ? NetworkImage(user.profilePicUrl!)
-                            : null,
-                        child: user.profilePicUrl == null
-                            ? Text(
-                                user.name[0].toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              )
-                            : null,
-                      ),
-                    ),
-                  ],
-                ),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditProfileScreen(user: user),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EditProfileScreen(user: user),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.paddingMd),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // User info
-                    _buildInfoCard(
-                      context,
-                      icon: Icons.email,
-                      title: 'Email',
-                      value: user.email,
-                    ),
-                    if (user.phone != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSizes.paddingMd),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // User info
                       _buildInfoCard(
                         context,
-                        icon: Icons.phone,
-                        title: 'Phone',
-                        value: user.phone!,
+                        icon: Icons.email,
+                        title: 'Email',
+                        value: user.email,
                       ),
-                    if (user.bio != null && user.bio!.isNotEmpty)
-                      _buildInfoCard(
-                        context,
-                        icon: Icons.info_outline,
-                        title: 'Bio',
-                        value: user.bio!,
-                      ),
-
-                    const SizedBox(height: AppSizes.paddingLg),
-
-                    // Test Push Notification Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        icon: const Icon(
-                          Icons.notifications_active,
-                          color: Colors.blue,
+                      if (user.phone != null)
+                        _buildInfoCard(
+                          context,
+                          icon: Icons.phone,
+                          title: 'Phone',
+                          value: user.phone!,
                         ),
-                        label: const Text('Test Push Notification'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.blue,
-                          side: const BorderSide(color: Colors.blue),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                      if (user.bio != null && user.bio!.isNotEmpty)
+                        _buildInfoCard(
+                          context,
+                          icon: Icons.info_outline,
+                          title: 'Bio',
+                          value: user.bio!,
                         ),
-                        onPressed: () async {
-                          try {
-                            final repo = context.read<UserRepository>();
-                            final result = await repo.testPushNotification();
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    result.success
-                                        ? 'Test notification sent from backend 🚀'
-                                        : 'Backend error: ${result.message}',
+
+                      const SizedBox(height: AppSizes.paddingLg),
+
+                      // Test Push Notification Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          icon: const Icon(
+                            Icons.notifications_active,
+                            color: Colors.blue,
+                          ),
+                          label: const Text('Test Push Notification'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.blue,
+                            side: const BorderSide(color: Colors.blue),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          onPressed: () async {
+                            try {
+                              final repo = context.read<UserRepository>();
+                              final result = await repo.testPushNotification();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      result.success
+                                          ? 'Test notification sent from backend 🚀'
+                                          : 'Backend error: ${result.message}',
+                                    ),
+                                    backgroundColor: result.success
+                                        ? Colors.green
+                                        : Colors.red,
                                   ),
-                                  backgroundColor: result.success
-                                      ? Colors.green
-                                      : Colors.red,
-                                ),
-                              );
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed to send test: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
                             }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Failed to send test: $e'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          }
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: AppSizes.paddingLg),
+
+                      // Subscription status section
+                      _buildSubscriptionCard(context, state.subscription),
+
+                      const SizedBox(height: AppSizes.paddingLg),
+
+                      // Artist status section
+                      _buildArtistSection(context, user),
+
+                      const SizedBox(height: AppSizes.paddingLg),
+
+                      // Navigation Actions
+                      _buildActionCard(
+                        context,
+                        icon: Icons.notifications,
+                        title: 'Notifications',
+                        onTap: () {
+                          // TODO: Navigate to notifications settings
                         },
                       ),
-                    ),
-
-                    const SizedBox(height: AppSizes.paddingLg),
-
-                    // Subscription status section
-                    _buildSubscriptionCard(context, state.subscription),
-
-                    const SizedBox(height: AppSizes.paddingLg),
-
-                    // Artist status section
-                    _buildArtistSection(context, user),
-
-                    const SizedBox(height: AppSizes.paddingLg),
-
-                    // Navigation Actions
-                    _buildActionCard(
-                      context,
-                      icon: Icons.notifications,
-                      title: 'Notifications',
-                      onTap: () {
-                        // TODO: Navigate to notifications settings
-                      },
-                    ),
-                    _buildActionCard(
-                      context,
-                      icon: Icons.security,
-                      title: 'Privacy & Security',
-                      onTap: () {
-                        // TODO: Navigate to privacy settings
-                      },
-                    ),
-                    _buildActionCard(
-                      context,
-                      icon: Icons.help_outline,
-                      title: 'Help & Support',
-                      onTap: () => context.push('/support'),
-                    ),
-
-                    const SizedBox(height: AppSizes.paddingLg),
-
-                    // Logout button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          _showLogoutConfirmation(context);
+                      _buildActionCard(
+                        context,
+                        icon: Icons.security,
+                        title: 'Privacy & Security',
+                        onTap: () {
+                          // TODO: Navigate to privacy settings
                         },
-                        icon: const Icon(Icons.logout),
-                        label: const Text('Logout'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      ),
+                      _buildActionCard(
+                        context,
+                        icon: Icons.help_outline,
+                        title: 'Help & Support',
+                        onTap: () => context.push('/support'),
+                      ),
+
+                      const SizedBox(height: AppSizes.paddingLg),
+
+                      // Logout button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            _showLogoutConfirmation(context);
+                          },
+                          icon: const Icon(Icons.logout),
+                          label: const Text('Logout'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.withOpacity(0.8),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: AppSizes.paddingXl),
-                  ],
+                      const SizedBox(height: AppSizes.paddingXl),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -290,7 +294,9 @@ class UserProfileScreen extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.paddingSm),
-      color: Colors.white.withValues(alpha: 0.05),
+      color: Colors.white.withOpacity(0.05),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.paddingMd),
         child: Row(
@@ -331,14 +337,13 @@ class UserProfileScreen extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       color: isActive
-          ? const Color(0xFF6A0DAD).withValues(alpha: 0.1)
-          : Colors.white.withValues(alpha: 0.05),
+          ? const Color(0xFF6A0DAD).withOpacity(0.1)
+          : Colors.white.withOpacity(0.05),
+      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isActive
-              ? Colors.amber.withValues(alpha: 0.5)
-              : Colors.transparent,
+          color: isActive ? Colors.amber.withOpacity(0.5) : Colors.transparent,
         ),
       ),
       child: InkWell(
@@ -386,10 +391,7 @@ class UserProfileScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right,
-                color: Colors.white.withValues(alpha: 0.5),
-              ),
+              Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.5)),
             ],
           ),
         ),
@@ -407,7 +409,9 @@ class UserProfileScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.paddingSm),
-      color: Colors.white.withValues(alpha: 0.05),
+      color: Colors.white.withOpacity(0.05),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Icon(
           icon,
@@ -430,6 +434,8 @@ class UserProfileScreen extends StatelessWidget {
     if (user.isArtist) {
       return Card(
         color: theme.colorScheme.primary,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
           onTap: () {
             Navigator.push(
@@ -439,6 +445,7 @@ class UserProfileScreen extends StatelessWidget {
               ),
             );
           },
+          borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(AppSizes.paddingMd),
             child: Row(
@@ -473,7 +480,9 @@ class UserProfileScreen extends StatelessWidget {
       );
     } else if (user.isArtistPending) {
       return Card(
-        color: theme.colorScheme.errorContainer.withValues(alpha: 0.2),
+        color: theme.colorScheme.errorContainer.withOpacity(0.2),
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.paddingMd),
           child: Row(
@@ -508,7 +517,9 @@ class UserProfileScreen extends StatelessWidget {
       );
     } else {
       return Card(
-        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+        color: theme.colorScheme.primary.withOpacity(0.1),
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
           onTap: () {
             Navigator.push(
@@ -518,6 +529,7 @@ class UserProfileScreen extends StatelessWidget {
               ),
             );
           },
+          borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(AppSizes.paddingMd),
             child: Row(
@@ -568,7 +580,7 @@ class UserProfileScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              context.read<AuthBloc>().add(AuthLogoutRequested());
+              context.read<AuthBloc>().add(const AuthLogoutRequested());
               Navigator.pop(dialogContext);
             },
             style: ElevatedButton.styleFrom(

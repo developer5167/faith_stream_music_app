@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:faith_stream_music_app/ui/widgets/gradient_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -207,55 +208,47 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         final sub = profileState?.subscription;
         final isActive = sub?.isActive ?? false;
 
-        return Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
+        return GradientBackground(
+          child: Scaffold(
             backgroundColor: Colors.transparent,
-            elevation: 0,
-            systemOverlayStyle: SystemUiOverlayStyle.light,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-            title: const Text(
-              'Subscription',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              systemOverlayStyle: SystemUiOverlayStyle.light,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
               ),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh, color: Colors.white),
-                tooltip: 'Refresh',
-                onPressed: () => context.read<ProfileBloc>().add(ProfileLoad()),
+              title: const Text(
+                'Subscription',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ],
-          ),
-          body: RefreshIndicator(
-            color: const Color(0xFF6A0DAD),
-            backgroundColor: Colors.black,
-            onRefresh: () async {
-              context.read<ProfileBloc>().add(ProfileLoad());
-              // Wait a moment for the bloc to process
-              await Future.delayed(const Duration(milliseconds: 800));
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                children: [
-                  // ── Hero header ───────────────────────────────────────
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0xFF6A0DAD), Colors.black],
-                      ),
-                    ),
-                    child: Column(
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: Colors.white),
+                  tooltip: 'Refresh',
+                  onPressed: () =>
+                      context.read<ProfileBloc>().add(ProfileLoad()),
+                ),
+              ],
+            ),
+            body: RefreshIndicator(
+              color: const Color(0xFF6A0DAD),
+              backgroundColor: Colors.black,
+              onRefresh: () async {
+                context.read<ProfileBloc>().add(ProfileLoad());
+                // Wait a moment for the bloc to process
+                await Future.delayed(const Duration(milliseconds: 800));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    // ── Hero header ───────────────────────────────────────
+                    Column(
                       children: [
                         const Icon(
                           Icons.workspace_premium,
@@ -284,74 +277,73 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                         ),
                       ],
                     ),
-                  ),
 
-                  if (isActive && sub != null)
-                    _ActiveSubscriptionCard(subscription: sub)
-                  else ...[
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(20, 24, 20, 8),
-                      child: Text(
-                        'Choose Your Plan',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                    if (isActive && sub != null)
+                      _ActiveSubscriptionCard(subscription: sub)
+                    else ...[
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(20, 24, 20, 8),
+                        child: Text(
+                          'Choose Your Plan',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
 
-                    // Free plan
-                    _PlanCard(
-                      name: 'Free',
-                      price: '₹0',
-                      period: 'forever',
-                      features: const [
-                        _Feature('Ads between songs', false),
-                        _Feature('6 skips per hour', false),
-                        _Feature('Background play', false),
-                        _Feature('Offline downloads', false),
-                      ],
-                      isHighlighted: false,
-                      isCurrentPlan: !isActive,
-                      onSelect: null,
-                      isLoading: false,
-                    ),
+                      // Free plan
+                      _PlanCard(
+                        name: 'Free',
+                        price: '₹0',
+                        period: 'forever',
+                        features: const [
+                          _Feature('Ads between songs', false),
+                          _Feature('0 skips', false),
+                          _Feature('Offline downloads', false),
+                        ],
+                        isHighlighted: false,
+                        isCurrentPlan: !isActive,
+                        onSelect: null,
+                        isLoading: false,
+                      ),
 
-                    // Premium plan
-                    _PlanCard(
-                      name: 'Premium',
-                      price: '₹99',
-                      period: '/month',
-                      features: const [
-                        _Feature('Ad-free listening', true),
-                        _Feature('Unlimited skips', true),
-                        _Feature('Background play', true),
-                        _Feature('Offline downloads', true),
-                      ],
-                      isHighlighted: true,
-                      isCurrentPlan: false,
-                      onSelect: _isLoading ? null : () => _subscribe(context),
-                      isLoading: _isLoading,
-                    ),
+                      // Premium plan
+                      _PlanCard(
+                        name: 'Premium',
+                        price: '₹99',
+                        period: '/month',
+                        features: const [
+                          _Feature('Ad-free listening', true),
+                          _Feature('Unlimited skips', true),
+                          _Feature('Background play', true),
+                          _Feature('Offline downloads', true),
+                        ],
+                        isHighlighted: true,
+                        isCurrentPlan: false,
+                        onSelect: _isLoading ? null : () => _subscribe(context),
+                        isLoading: _isLoading,
+                      ),
 
-                    const SizedBox(height: 24),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Text(
-                        'Payment processed securely via Razorpay. '
-                        'Your browser will open to complete the payment. '
-                        'Subscription activates instantly after payment.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 12,
+                      const SizedBox(height: 24),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text(
+                          'Payment processed securely via Razorpay. '
+                          'Your browser will open to complete the payment. '
+                          'Subscription activates instantly after payment.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 12,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
+                    const SizedBox(height: 40),
                   ],
-                  const SizedBox(height: 40),
-                ],
+                ),
               ),
             ),
           ),
@@ -543,11 +535,13 @@ class _PlanCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
         color: isHighlighted
-            ? const Color(0xFF1A0030)
+            ? const Color.fromARGB(255, 1, 45, 17)
             : const Color(0xFF111111),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isHighlighted ? const Color(0xFF6A0DAD) : Colors.white12,
+          color: isHighlighted
+              ? Color.fromARGB(255, 1, 45, 17)
+              : Colors.white12,
           width: isHighlighted ? 2 : 1,
         ),
       ),
@@ -646,7 +640,7 @@ class _PlanCard extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onSelect,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6A0DAD),
+                    backgroundColor: Color.fromARGB(255, 1, 69, 26),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(

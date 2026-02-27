@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/ad_model.dart';
+import '../../blocs/player/player_bloc.dart';
+import '../../blocs/player/player_event.dart';
 import '../../services/ads_service.dart';
+import '../../config/app_theme.dart';
 
 class AdPlayerScreen extends StatefulWidget {
   final AdModel ad;
@@ -19,7 +23,13 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
   late VideoPlayerController _controller;
   bool _isInitialized = false;
   bool _hasTrackedView = false;
-  int _timeLeft = 0;
+  bool _showControls = true;
+  Timer? _hideTimer;
+
+  // Timer for the 30s progress bar
+  double _progress = 0.0;
+  Timer? _progressTimer;
+  static const int _adDurationSeconds = 30;
 
   @override
   void initState() {
@@ -32,9 +42,9 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
             if (mounted) {
               setState(() {
                 _isInitialized = true;
-                _timeLeft = _controller.value.duration.inSeconds;
               });
               _controller.play();
+              _startAdTimers();
 
               if (!_hasTrackedView) {
                 context.read<AdsService>().trackAdEvent(widget.ad.id, 'VIEW');
@@ -43,28 +53,50 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
             }
           });
 
-    _controller.addListener(_videoListener);
+    // Safety pause to ensure global music is stopped
+    context.read<PlayerBloc>().add(const PlayerPause());
+
+    _startHideTimer();
   }
 
-  void _videoListener() {
-    if (_isInitialized) {
-      final value = _controller.value;
-
+  void _startAdTimers() {
+    _progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       if (mounted) {
         setState(() {
-          _timeLeft = (value.duration.inSeconds - value.position.inSeconds)
-              .clamp(0, value.duration.inSeconds);
+          _progress += 0.1 / _adDurationSeconds;
+          if (_progress >= 1.0) {
+            _progress = 1.0;
+            _progressTimer?.cancel();
+            _finishAd();
+          }
         });
       }
+    });
+  }
 
-      if (value.isInitialized &&
-          (value.duration == value.position ||
-              value.position > value.duration)) {
-        // Video finished
-        if (mounted) {
-          Navigator.of(context).pop(true);
-        }
+  void _finishAd() {
+    if (mounted) {
+      Navigator.of(context).pop(true);
+    }
+  }
+
+  void _startHideTimer() {
+    _hideTimer?.cancel();
+    _hideTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _showControls = false;
+        });
       }
+    });
+  }
+
+  void _toggleControls() {
+    setState(() {
+      _showControls = !_showControls;
+    });
+    if (_showControls) {
+      _startHideTimer();
     }
   }
 
@@ -84,7 +116,8 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _controller.removeListener(_videoListener);
+    _hideTimer?.cancel();
+    _progressTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -93,7 +126,7 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
     context.read<AdsService>().trackAdEvent(widget.ad.id, 'CLICK');
     final uri = Uri.parse(widget.ad.landingUrl);
     if (await canLaunchUrl(uri)) {
-      _controller.pause(); // Pause video while viewing URL
+      _controller.pause();
       await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (mounted) {
         _controller.play();
@@ -104,130 +137,211 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => false, // Prevent back button
+      onWillPop: () async => false,
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: SafeArea(
-          child: Stack(
-            children: [
-              Center(
-                child: _isInitialized
-                    ? AspectRatio(
-                        aspectRatio: _controller.value.aspectRatio,
-                        child: VideoPlayer(_controller),
-                      )
-                    : const CircularProgressIndicator(color: Colors.white),
+        body: GestureDetector(
+          onTap: _toggleControls,
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF1A1A1A), Colors.black],
               ),
+            ),
+            child: SafeArea(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Video content
+                  Center(
+                    child: _isInitialized
+                        ? AspectRatio(
+                            aspectRatio: _controller.value.aspectRatio,
+                            child: VideoPlayer(_controller),
+                          )
+                        : const CircularProgressIndicator(color: Colors.white),
+                  ),
 
-              // Tap overlay for landing URL
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: _isInitialized ? _launchUrl : null,
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(color: Colors.transparent),
-                ),
-              ),
+                  // Shadow overlay when controls are visible
+                  AnimatedOpacity(
+                    opacity: _showControls ? 0.6 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: Container(color: Colors.black),
+                  ),
 
-              // Top row: Ad badge and countdown timer
-              if (_isInitialized)
-                Positioned(
-                  top: 16,
-                  left: 16,
-                  right: 16,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
+                  // Top: Ad Badge
+                  Positioned(
+                    top: 20,
+                    left: 20,
+                    child: AnimatedOpacity(
+                      opacity: _showControls ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 300),
+                      child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: 10,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.amber.shade700,
-                          borderRadius: BorderRadius.circular(4),
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(5),
+                          border: Border.all(color: Colors.white24),
                         ),
                         child: const Text(
-                          'SPONSORED',
+                          'SPONSORED VIDEO',
                           style: TextStyle(
-                            color: Colors.black,
+                            color: Colors.white70,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
+                            letterSpacing: 2,
                           ),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.white24, width: 1),
-                        ),
-                        child: Text(
-                          'Reward in $_timeLeft s',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
 
-              // Bottom: Learn More banner
-              if (_isInitialized)
-                Positioned(
-                  bottom: 32,
-                  left: 16,
-                  right: 16,
-                  child: GestureDetector(
-                    onTap: _launchUrl,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.blueAccent.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
+                  // Middle: Dummy Controls
+                  Center(
+                    child: AnimatedOpacity(
+                      opacity: _showControls ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 300),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
-                            'Learn More',
-                            style: TextStyle(
+                          IconButton(
+                            icon: const Icon(
+                              Icons.skip_previous_rounded,
+                              size: 48,
+                              color: Colors.white70,
+                            ),
+                            onPressed: () {},
+                          ),
+                          const SizedBox(width: 32),
+                          Container(
+                            decoration: const BoxDecoration(
                               color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Icon(
+                                Icons.pause_rounded,
+                                size: 56,
+                                color: Colors.black,
+                              ),
                             ),
                           ),
-                          const Icon(
-                            Icons.arrow_forward_ios,
-                            color: Colors.white,
-                            size: 16,
+                          const SizedBox(width: 32),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.skip_next_rounded,
+                              size: 48,
+                              color: Colors.white70,
+                            ),
+                            onPressed: () {},
                           ),
                         ],
                       ),
                     ),
                   ),
-                ),
-            ],
+
+                  // Bottom: Progress and Learn More
+                  Positioned(
+                    bottom: 40,
+                    left: 24,
+                    right: 24,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Progress Bar
+                        SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            trackHeight: 2,
+                            thumbShape: SliderComponentShape.noThumb,
+                            overlayShape: SliderComponentShape.noOverlay,
+                            activeTrackColor: Colors.white,
+                            inactiveTrackColor: Colors.white24,
+                          ),
+                          child: Slider(value: _progress, onChanged: (_) {}),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _formatDuration(
+                                Duration(
+                                  seconds: (_progress * _adDurationSeconds)
+                                      .toInt(),
+                                ),
+                              ),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                            Text(
+                              _formatDuration(
+                                const Duration(seconds: _adDurationSeconds),
+                              ),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 40),
+                        // Learn More Button
+                        GestureDetector(
+                          onTap: _launchUrl,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'LEARN MORE',
+                                  style: TextStyle(
+                                    color: AppTheme.darkPrimary,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.open_in_new_rounded,
+                                  size: 18,
+                                  color: AppTheme.darkPrimary,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$twoDigitMinutes:$twoDigitSeconds";
   }
 }

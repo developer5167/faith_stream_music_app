@@ -36,206 +36,213 @@ class _PlaylistSelectionSheetState extends State<PlaylistSelectionSheet> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.paddingMd,
-                vertical: AppSizes.paddingSm,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Add to Playlist',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            ),
-
-            const Divider(height: 1),
-
-            // Create new playlist button
-            if (!_showCreatePlaylist)
-              ListTile(
-                leading: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.add,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+        top: false, // Sheet handle handles top
+        bottom: true,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                title: const Text('Create New Playlist'),
-                onTap: () {
-                  setState(() {
-                    _showCreatePlaylist = true;
-                  });
-                },
               ),
 
-            // Create playlist form
-            if (_showCreatePlaylist)
+              // Header
               Padding(
-                padding: const EdgeInsets.all(AppSizes.paddingMd),
-                child: Column(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.paddingMd,
+                  vertical: AppSizes.paddingSm,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    TextField(
-                      controller: _playlistNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Playlist Name',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.playlist_play),
+                    Text(
+                      'Add to Playlist',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                      autofocus: true,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _createPlaylistAndAddSong(),
                     ),
-                    const SizedBox(height: AppSizes.paddingSm),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _showCreatePlaylist = false;
-                              _playlistNameController.clear();
-                            });
-                          },
-                          child: const Text('Cancel'),
-                        ),
-                        const SizedBox(width: AppSizes.paddingSm),
-                        ElevatedButton(
-                          onPressed: _isCreating
-                              ? null
-                              : _createPlaylistAndAddSong,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            foregroundColor: Theme.of(
-                              context,
-                            ).colorScheme.onPrimary,
-                          ),
-                          child: _isCreating
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                )
-                              : const Text('Create'),
-                        ),
-                      ],
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
               ),
 
-            if (!_showCreatePlaylist) const Divider(height: 1),
+              const Divider(height: 1),
 
-            // Playlist list
-            if (!_showCreatePlaylist)
-              BlocBuilder<LibraryBloc, LibraryState>(
-                builder: (context, state) {
-                  if (state is LibraryLoading) {
-                    return const Padding(
-                      padding: EdgeInsets.all(AppSizes.paddingLg),
-                      child: CircularProgressIndicator(),
-                    );
-                  }
+              // Create new playlist button
+              if (!_showCreatePlaylist)
+                ListTile(
+                  leading: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.add,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  title: const Text('Create New Playlist'),
+                  onTap: () {
+                    setState(() {
+                      _showCreatePlaylist = true;
+                    });
+                  },
+                ),
 
-                  if (state is LibraryLoaded) {
-                    final playlists = state.playlists;
-
-                    if (playlists.isEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.all(AppSizes.paddingLg),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.playlist_play,
-                              size: 48,
-                              color: Theme.of(
+              // Create playlist form
+              if (_showCreatePlaylist)
+                Padding(
+                  padding: const EdgeInsets.all(AppSizes.paddingMd),
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _playlistNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Playlist Name',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.playlist_play),
+                        ),
+                        autofocus: true,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _createPlaylistAndAddSong(),
+                      ),
+                      const SizedBox(height: AppSizes.paddingSm),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _showCreatePlaylist = false;
+                                _playlistNameController.clear();
+                              });
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                          const SizedBox(width: AppSizes.paddingSm),
+                          ElevatedButton(
+                            onPressed: _isCreating
+                                ? null
+                                : _createPlaylistAndAddSong,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(
                                 context,
-                              ).colorScheme.onSurface.withOpacity(0.3),
+                              ).colorScheme.primary,
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.onPrimary,
                             ),
-                            const SizedBox(height: AppSizes.paddingSm),
-                            Text(
-                              'No playlists yet',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withOpacity(0.6),
-                                  ),
-                            ),
-                            const SizedBox(height: AppSizes.paddingSm),
-                            Text(
-                              'Create your first playlist above',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withOpacity(0.5),
-                                  ),
-                            ),
-                          ],
+                            child: _isCreating
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Text('Create'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+              if (!_showCreatePlaylist) const Divider(height: 1),
+
+              // Playlist list
+              if (!_showCreatePlaylist)
+                BlocBuilder<LibraryBloc, LibraryState>(
+                  builder: (context, state) {
+                    if (state is LibraryLoading) {
+                      return const Padding(
+                        padding: EdgeInsets.all(AppSizes.paddingLg),
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+
+                    if (state is LibraryLoaded) {
+                      final playlists = state.playlists;
+
+                      if (playlists.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.all(AppSizes.paddingLg),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.playlist_play,
+                                size: 48,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.3),
+                              ),
+                              const SizedBox(height: AppSizes.paddingSm),
+                              Text(
+                                'No playlists yet',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withOpacity(0.6),
+                                    ),
+                              ),
+                              const SizedBox(height: AppSizes.paddingSm),
+                              Text(
+                                'Create your first playlist above',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withOpacity(0.5),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height * 0.4,
+                        ),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: playlists.length,
+                          itemBuilder: (context, index) {
+                            final playlist = playlists[index];
+                            return _buildPlaylistTile(context, playlist);
+                          },
                         ),
                       );
                     }
 
-                    return ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.4,
-                      ),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: playlists.length,
-                        itemBuilder: (context, index) {
-                          final playlist = playlists[index];
-                          return _buildPlaylistTile(context, playlist);
-                        },
-                      ),
-                    );
-                  }
+                    return const SizedBox.shrink();
+                  },
+                ),
 
-                  return const SizedBox.shrink();
-                },
-              ),
-
-            const SizedBox(height: AppSizes.paddingSm),
-          ],
+              const SizedBox(height: AppSizes.paddingSm),
+            ],
+          ),
         ),
       ),
     );

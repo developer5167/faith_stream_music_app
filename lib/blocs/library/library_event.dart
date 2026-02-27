@@ -14,6 +14,8 @@ class LibraryLoadAll extends LibraryEvent {}
 
 class LibraryRefresh extends LibraryEvent {}
 
+class LibraryReset extends LibraryEvent {}
+
 // ==================== FAVORITES ====================
 
 class LibraryLoadFavorites extends LibraryEvent {}

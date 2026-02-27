@@ -24,6 +24,7 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     on<LibraryDeletePlaylist>(_onDeletePlaylist);
     on<LibraryAddSongToPlaylist>(_onAddSongToPlaylist);
     on<LibraryRemoveSongFromPlaylist>(_onRemoveSongFromPlaylist);
+    on<LibraryReset>((event, emit) => emit(LibraryInitial()));
   }
 
   Future<void> _onLoadAll(

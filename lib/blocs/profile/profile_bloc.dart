@@ -13,6 +13,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<ProfileCheckArtistStatus>(_onCheckArtistStatus);
     on<ProfileLoadSubscription>(_onLoadSubscription);
     on<ProfileCreateSubscription>(_onCreateSubscription);
+    on<ProfileReset>((event, emit) => emit(ProfileInitial()));
   }
 
   Future<void> _onLoad(ProfileLoad event, Emitter<ProfileState> emit) async {

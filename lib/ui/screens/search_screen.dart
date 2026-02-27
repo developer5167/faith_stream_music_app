@@ -18,6 +18,7 @@ import '../widgets/album_card.dart';
 import '../widgets/artist_card.dart';
 import 'album_detail_screen.dart';
 import 'artist_profile_screen.dart';
+import '../widgets/gradient_background.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -69,107 +70,109 @@ class _SearchScreenState extends State<SearchScreen>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
+    return GradientBackground(
+      child: Scaffold(
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        toolbarHeight: 80,
-        title: Container(
-          height: 50,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.onSurface.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: theme.colorScheme.onSurface.withOpacity(0.05),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          toolbarHeight: 80,
+          title: Container(
+            height: 50,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.onSurface.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.onSurface.withOpacity(0.05),
+              ),
             ),
-          ),
-          child: TextField(
-            controller: _searchController,
-            autofocus: true,
-            style: TextStyle(color: theme.colorScheme.onSurface),
-            decoration: InputDecoration(
-              hintText: 'Search songs, albums, artists...',
-              hintStyle: TextStyle(
-                color: theme.colorScheme.onSurface.withOpacity(0.38),
+            child: TextField(
+              controller: _searchController,
+              autofocus: true,
+              style: TextStyle(color: theme.colorScheme.onSurface),
+              decoration: InputDecoration(
+                hintText: 'Search songs, albums, artists...',
+                hintStyle: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.38),
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                suffixIcon: _isSearching
+                    ? IconButton(
+                        icon: Icon(
+                          Icons.clear_rounded,
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                        },
+                      )
+                    : null,
               ),
-              prefixIcon: Icon(
-                Icons.search_rounded,
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              suffixIcon: _isSearching
-                  ? IconButton(
-                      icon: Icon(
-                        Icons.clear_rounded,
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                      },
-                    )
-                  : null,
             ),
           ),
         ),
-      ),
-      body: _isSearching
-          ? BlocBuilder<SearchBloc, SearchState>(
-              builder: (context, state) {
-                if (state is SearchLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+        body: _isSearching
+            ? BlocBuilder<SearchBloc, SearchState>(
+                builder: (context, state) {
+                  if (state is SearchLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                if (state is SearchError) {
-                  return _buildEmptyState(context, 'Error performing search');
-                }
+                  if (state is SearchError) {
+                    return _buildEmptyState(context, 'Error performing search');
+                  }
 
-                if (state is SearchLoaded) {
-                  _filteredSongs = state.songs;
-                  _filteredAlbums = state.albums;
-                  _filteredArtists = state.artists;
+                  if (state is SearchLoaded) {
+                    _filteredSongs = state.songs;
+                    _filteredAlbums = state.albums;
+                    _filteredArtists = state.artists;
 
-                  return Column(
-                    children: [
-                      TabBar(
-                        controller: _tabController,
-                        labelColor: isDark
-                            ? AppTheme.darkPrimary
-                            : AppTheme.lightPrimary,
-                        unselectedLabelColor: theme.colorScheme.onSurface
-                            .withOpacity(0.38),
-                        indicatorColor: isDark
-                            ? AppTheme.darkPrimary
-                            : AppTheme.lightPrimary,
-                        indicatorSize: TabBarIndicatorSize.label,
-                        dividerColor: Colors.transparent,
-                        tabs: [
-                          Tab(text: 'Songs (${_filteredSongs.length})'),
-                          Tab(text: 'Albums (${_filteredAlbums.length})'),
-                          Tab(text: 'Artists (${_filteredArtists.length})'),
-                        ],
-                      ),
-                      Expanded(
-                        child: TabBarView(
+                    return Column(
+                      children: [
+                        TabBar(
                           controller: _tabController,
-                          children: [
-                            _buildSongsList(context),
-                            _buildAlbumsList(context),
-                            _buildArtistsList(context),
+                          labelColor: isDark
+                              ? AppTheme.darkPrimary
+                              : AppTheme.lightPrimary,
+                          unselectedLabelColor: theme.colorScheme.onSurface
+                              .withOpacity(0.38),
+                          indicatorColor: isDark
+                              ? AppTheme.darkPrimary
+                              : AppTheme.lightPrimary,
+                          indicatorSize: TabBarIndicatorSize.label,
+                          dividerColor: Colors.transparent,
+                          tabs: [
+                            Tab(text: 'Songs (${_filteredSongs.length})'),
+                            Tab(text: 'Albums (${_filteredAlbums.length})'),
+                            Tab(text: 'Artists (${_filteredArtists.length})'),
                           ],
                         ),
-                      ),
-                    ],
-                  );
-                }
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _buildSongsList(context),
+                              _buildAlbumsList(context),
+                              _buildArtistsList(context),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }
 
-                // Initial or empty
-                return _buildEmptyState(context, 'Start typing to search');
-              },
-            )
-          : _buildInitialState(),
+                  // Initial or empty
+                  return _buildEmptyState(context, 'Start typing to search');
+                },
+              )
+            : _buildInitialState(),
+      ),
     );
   }
 

@@ -54,3 +54,5 @@ class ProfileCheckArtistStatus extends ProfileEvent {}
 class ProfileLoadSubscription extends ProfileEvent {}
 
 class ProfileCreateSubscription extends ProfileEvent {}
+
+class ProfileReset extends ProfileEvent {}

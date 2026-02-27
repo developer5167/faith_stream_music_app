@@ -7,7 +7,6 @@ import '../../blocs/profile/profile_state.dart';
 import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_state.dart';
 import '../../blocs/player/player_event.dart';
-import '../../services/audio_player_service.dart';
 import '../../services/ads_service.dart';
 import '../widgets/mini_player_bar.dart';
 import 'home_screen.dart';
@@ -37,17 +36,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   void initState() {
     super.initState();
-    final audioService = context.read<AudioPlayerService>();
-    _indexSubscription = audioService.currentIndexStream.listen((_) {
-      _checkAndPlayVideoAd();
-    });
+    // Ad trigger moved to BlocListener in build method for better state synchronization
   }
 
   Future<void> _checkAndPlayVideoAd() async {
     if (_isShowingAd) return;
 
     final profileState = context.read<ProfileBloc>().state;
-    final isPremium =
+    // CRITICAL: Robust check for premium status
+    final bool isPremium =
         profileState is ProfileLoaded &&
         profileState.subscription != null &&
         profileState.subscription!.isActive;
@@ -145,54 +142,65 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         // Safety clamp in case state is read before listener fires
         final safeIndex = _currentIndex.clamp(0, screens.length - 1);
 
-        return BlocListener<PlayerBloc, PlayerState>(
-          listenWhen: (previous, current) => current is PlayerError,
-          listener: (context, state) {
-            if (state is PlayerError) {
-              if (state.message == 'DAILY_LIMIT_REACHED') {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    backgroundColor: Theme.of(context).colorScheme.surface,
-                    title: const Text('Daily Limit Reached'),
-                    content: const Text(
-                      'You have reached your daily free play limit (2 plays) for this song.\n\nUpgrade to Premium for unlimited ad-free plays!',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          'CANCEL',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
+        return MultiBlocListener(
+          listeners: [
+            BlocListener<PlayerBloc, PlayerState>(
+              listenWhen: (previous, current) =>
+                  (previous is! PlayerLoading) && (current is PlayerLoading),
+              listener: (context, state) {
+                _checkAndPlayVideoAd();
+              },
+            ),
+            BlocListener<PlayerBloc, PlayerState>(
+              listenWhen: (previous, current) => current is PlayerError,
+              listener: (context, state) {
+                if (state is PlayerError) {
+                  if (state.message == 'DAILY_LIMIT_REACHED') {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        title: const Text('Daily Limit Reached'),
+                        content: const Text(
+                          'You have reached your daily free play limit (2 plays) for this song.\n\nUpgrade to Premium for unlimited ad-free plays!',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              'CANCEL',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
                           ),
-                        ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.darkPrimary,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              if (_showSubscriptionTab) {
+                                setState(() {
+                                  _currentIndex = 3; // Navigate to Premium tab
+                                });
+                              }
+                            },
+                            child: const Text('GO PREMIUM'),
+                          ),
+                        ],
                       ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.darkPrimary,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          if (_showSubscriptionTab) {
-                            setState(() {
-                              _currentIndex = 3; // Navigate to Premium tab
-                            });
-                          }
-                        },
-                        child: const Text('GO PREMIUM'),
-                      ),
-                    ],
-                  ),
-                );
-              } else {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(state.message)));
-              }
-            }
-          },
+                    );
+                  } else {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(state.message)));
+                  }
+                }
+              },
+            ),
+          ],
           child: Scaffold(
             backgroundColor: Colors.transparent,
             body: screens[safeIndex],

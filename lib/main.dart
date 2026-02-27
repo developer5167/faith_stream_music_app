@@ -23,9 +23,11 @@ import 'repositories/stream_repository.dart';
 import 'repositories/library_repository.dart';
 import 'repositories/user_repository.dart';
 import 'blocs/auth/auth_bloc.dart';
+import 'blocs/auth/auth_state.dart';
 import 'blocs/home/home_bloc.dart';
 import 'blocs/home/home_event.dart';
 import 'blocs/player/player_bloc.dart';
+import 'blocs/player/player_event.dart';
 import 'blocs/search/search_bloc.dart';
 import 'blocs/library/library_bloc.dart';
 import 'blocs/library/library_event.dart';
@@ -201,32 +203,49 @@ class MyApp extends StatelessWidget {
                 ProfileBloc(userRepository)..add(ProfileLoad()),
           ),
         ],
-        child: Builder(
-          builder: (context) {
-            final authBloc = context.read<AuthBloc>();
-            final appRouter = AppRouter(authBloc, storageService);
-            final router = appRouter.router;
-
-            // Initialize DeepLinkService
-            DeepLinkService(router).init();
-
-            return DynamicColorBuilder(
-              builder: (lightDynamic, darkDynamic) {
-                // Use darkDynamic to customize our dark theme if available
-                final theme = AppTheme.darkTheme.copyWith(
-                  colorScheme: darkDynamic ?? AppTheme.darkTheme.colorScheme,
-                );
-
-                return MaterialApp.router(
-                  title: 'FaithStream',
-                  debugShowCheckedModeBanner: false,
-                  theme: theme,
-                  themeMode: ThemeMode.dark,
-                  routerConfig: router,
-                );
-              },
-            );
+        child: BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthAuthenticated) {
+              // Reload all user-specific data on login
+              context.read<HomeBloc>().add(const HomeLoadRequested());
+              context.read<LibraryBloc>().add(LibraryLoadAll());
+              context.read<ProfileBloc>().add(ProfileLoad());
+            } else if (state is AuthUnauthenticated) {
+              // Reset all blocs to initial states on logout
+              context.read<HomeBloc>().add(const HomeReset());
+              context.read<LibraryBloc>().add(LibraryReset());
+              context.read<ProfileBloc>().add(ProfileReset());
+              // Reset player state as well
+              context.read<PlayerBloc>().add(const PlayerReset());
+            }
           },
+          child: Builder(
+            builder: (context) {
+              final authBloc = context.read<AuthBloc>();
+              final appRouter = AppRouter(authBloc, storageService);
+              final router = appRouter.router;
+
+              // Initialize DeepLinkService
+              DeepLinkService(router).init();
+
+              return DynamicColorBuilder(
+                builder: (lightDynamic, darkDynamic) {
+                  // Use darkDynamic to customize our dark theme if available
+                  final theme = AppTheme.darkTheme.copyWith(
+                    colorScheme: darkDynamic ?? AppTheme.darkTheme.colorScheme,
+                  );
+
+                  return MaterialApp.router(
+                    title: 'FaithStream',
+                    debugShowCheckedModeBanner: false,
+                    theme: theme,
+                    themeMode: ThemeMode.dark,
+                    routerConfig: router,
+                  );
+                },
+              );
+            },
+          ),
         ),
       ),
     );

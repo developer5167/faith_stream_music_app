@@ -249,11 +249,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
         profileState.subscription!.isActive;
 
     return SafeArea(
+      bottom: false, // CustomScrollView handles bottom padding/lyrics
       child: Column(
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.fromLTRB(16, 32, 16, 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -265,34 +266,31 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                   ),
                   onPressed: () => Navigator.pop(context),
                 ),
-                Column(
-                  children: [
-                    Text(
-                      'PLAYING FROM ALBUM',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.6,
+                Expanded(
+                  child: Column(
+                    children: [
+                      Text(
+                        'PLAYING FROM ALBUM',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
+                          letterSpacing: 1.2,
                         ),
-                        letterSpacing: 1.2,
                       ),
-                    ),
-                    Text(
-                      song.albumTitle ?? 'Single',
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                      Text(
+                        song.albumTitle ?? 'Single',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.more_vert_rounded,
-                    color: theme.colorScheme.onSurface,
+                    ],
                   ),
-                  onPressed: () {},
                 ),
+                const SizedBox(width: 48), // Spacer to balance the back button
               ],
             ),
           ),
@@ -633,7 +631,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 IconButton(
                   icon: Icon(
@@ -659,13 +657,6 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                       'Check out ${song.title} by ${song.displayArtist} on FaithStream!',
                     );
                   },
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.queue_music_rounded,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-                  onPressed: () {},
                 ),
               ],
             ),

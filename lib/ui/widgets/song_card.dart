@@ -36,7 +36,7 @@ class SongCard extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(3),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
             child: Row(
@@ -46,7 +46,7 @@ class SongCard extends StatelessWidget {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(3),
                     color: Colors.white10,
                   ),
                   clipBehavior: Clip.antiAlias,

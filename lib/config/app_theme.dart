@@ -11,9 +11,15 @@ class AppTheme {
 
   // Smooth Gradients
   static const LinearGradient premiumDarkGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Colors.black, Colors.black],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF1A0B2E), Colors.black],
+  );
+
+  static const LinearGradient freeDarkGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color.fromARGB(255, 1, 45, 17), Colors.black],
   );
 
   static const LinearGradient cardGradient = LinearGradient(
@@ -103,7 +109,7 @@ class AppTheme {
     // Card Theme
     cardTheme: CardThemeData(
       elevation: 0, // Flat for modern look
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
       color: Colors.white.withValues(alpha: 0.05),
       margin: EdgeInsets.zero,
     ),
