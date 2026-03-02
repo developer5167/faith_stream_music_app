@@ -377,12 +377,6 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                           );
                         },
                       ),
-                      const SizedBox(width: 8),
-                      _buildSmallActionButton(
-                        context,
-                        Icons.download_outlined,
-                        () {},
-                      ),
                     ],
                   ),
                   const SizedBox(height: 32),

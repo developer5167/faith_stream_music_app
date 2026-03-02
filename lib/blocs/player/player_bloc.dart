@@ -148,6 +148,21 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   ) async {
     try {
       Song songToPlay = event.song;
+      final bool isOfflineSong =
+          songToPlay.audioUrl != null &&
+          songToPlay.audioUrl!.startsWith('file://');
+
+      if (isOfflineSong) {
+        // ── Offline downloaded song – skip every network call ──────────────
+        emit(PlayerLoading(song: songToPlay, queue: event.queue));
+        _resetListenTicker();
+        _currentSongId = songToPlay.id;
+        await _audioService.playSong(songToPlay, queue: event.queue);
+        _startListenTicker();
+        return;
+      }
+
+      // ── Online song – normal flow ──────────────────────────────────────────
       if (songToPlay.artistUserId != null && songToPlay.artist == null) {
         final Artist? artist = await _artistService.getArtistDetails(
           songToPlay.artistUserId!,
@@ -182,7 +197,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
       emit(PlayerLoading(song: songToPlay, queue: updatedQueue));
 
-      // Check daily limit here since backend URL is directly provided
+      // Check daily play limit (online only)
       final limitResponse = await _streamRepository.checkPlayLimit(
         songToPlay.id,
       );
@@ -197,7 +212,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
       await _audioService.playSong(songToPlay, queue: updatedQueue);
 
-      // Update recently-played immediately (does NOT increment stream count)
+      // Update recently-played (online only)
       await _streamRepository.logRecentlyPlayed(songId: _currentSongId!);
 
       // Start the 30-second ticker for this new song

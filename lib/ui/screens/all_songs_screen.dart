@@ -8,6 +8,7 @@ import '../../blocs/library/library_bloc.dart';
 import '../../blocs/library/library_event.dart';
 import '../../blocs/library/library_state.dart';
 import '../widgets/song_card.dart';
+import '../widgets/song_download_handler.dart';
 import 'song_detail_screen.dart';
 
 class AllSongsScreen extends StatelessWidget {
@@ -35,28 +36,38 @@ class AllSongsScreen extends StatelessWidget {
                         libraryState is LibraryLoaded &&
                         libraryState.isFavorite(song.id);
 
-                    return SongCard(
+                    return SongDownloadHandler(
                       song: song,
-                      showFavoriteButton: true,
-                      isFavorite: isFavorite,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SongDetailScreen(song: song),
-                          ),
-                        );
-                      },
-                      onPlayTap: () {
-                        context.read<PlayerBloc>().add(
-                          PlayerPlaySong(song, queue: songs),
-                        );
-                      },
-                      onFavoriteTap: () {
-                        context.read<LibraryBloc>().add(
-                          LibraryToggleFavorite(song),
-                        );
-                      },
+                      builder:
+                          (context, isDownloaded, progress, onDownloadTap) =>
+                              SongCard(
+                                song: song,
+                                showFavoriteButton: true,
+                                isFavorite: isFavorite,
+                                showDownloadButton: true,
+                                isDownloaded: isDownloaded,
+                                downloadProgress: progress,
+                                onDownloadTap: onDownloadTap,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          SongDetailScreen(song: song),
+                                    ),
+                                  );
+                                },
+                                onPlayTap: () {
+                                  context.read<PlayerBloc>().add(
+                                    PlayerPlaySong(song, queue: songs),
+                                  );
+                                },
+                                onFavoriteTap: () {
+                                  context.read<LibraryBloc>().add(
+                                    LibraryToggleFavorite(song),
+                                  );
+                                },
+                              ),
                     );
                   },
                 );

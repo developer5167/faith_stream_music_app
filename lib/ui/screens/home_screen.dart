@@ -131,7 +131,7 @@ class HomeScreen extends StatelessWidget {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Good evening,',
+                                          'Shalom!,Good evening,',
                                           style: theme.textTheme.titleMedium
                                               ?.copyWith(
                                                 color: theme
@@ -142,7 +142,7 @@ class HomeScreen extends StatelessWidget {
                                         ),
                                         Text(
                                           isPremium
-                                              ? '$name! You are blessed 🙌🏻'
+                                              ? '$name! you are blessed 🙌🏻'
                                               : name,
                                           style: theme.textTheme.headlineMedium
                                               ?.copyWith(

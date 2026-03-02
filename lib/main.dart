@@ -5,11 +5,14 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'config/app_theme.dart';
 import 'config/app_router.dart';
 import 'services/api_client.dart';
 import 'services/storage_service.dart';
 import 'services/audio_player_service.dart';
+import 'services/download_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'repositories/auth_repository.dart';
@@ -63,6 +66,12 @@ void main() async {
     final prefs = await SharedPreferences.getInstance();
     debugPrint('✅ Storage initialized');
 
+    // Initialize Hive for local downloads
+    await Hive.initFlutter();
+    final downloadService = DownloadService();
+    await downloadService.init();
+    debugPrint('✅ Hive & DownloadService initialized');
+
     final storageService = StorageService(secureStorage, prefs);
     final apiClient = ApiClient(storageService);
     final authRepository = AuthRepository(apiClient);
@@ -83,6 +92,19 @@ void main() async {
     await notificationService.init();
     debugPrint('✅ Firebase & Notifications initialized');
 
+    // Check connectivity for offline launch routing
+    final connectivityResult = await Connectivity().checkConnectivity();
+    final bool isOffline =
+        connectivityResult.contains(ConnectivityResult.none) ||
+        connectivityResult.isEmpty;
+    final bool hasDownloads = downloadService.downloadCount > 0;
+    final String initialRoute = (isOffline && hasDownloads)
+        ? '/offline-downloads'
+        : '/splash';
+    debugPrint(
+      '✅ Connectivity checked: offline=$isOffline, hasDownloads=$hasDownloads, route=$initialRoute',
+    );
+
     debugPrint('✅ All dependencies initialized');
 
     runApp(
@@ -97,6 +119,8 @@ void main() async {
         notificationService: notificationService,
         searchService: searchService,
         adsService: adsService,
+        downloadService: downloadService,
+        initialRoute: initialRoute,
       ),
     );
   } catch (e, stackTrace) {
@@ -144,6 +168,8 @@ class MyApp extends StatelessWidget {
   final NotificationService notificationService;
   final SearchService searchService;
   final AdsService adsService;
+  final DownloadService downloadService;
+  final String initialRoute;
 
   const MyApp({
     super.key,
@@ -157,6 +183,8 @@ class MyApp extends StatelessWidget {
     required this.notificationService,
     required this.searchService,
     required this.adsService,
+    required this.downloadService,
+    required this.initialRoute,
   });
 
   @override
@@ -170,6 +198,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<AudioPlayerService>.value(value: audioPlayerService),
         RepositoryProvider<SearchService>.value(value: searchService),
         RepositoryProvider<AdsService>.value(value: adsService),
+        RepositoryProvider<DownloadService>.value(value: downloadService),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -222,7 +251,11 @@ class MyApp extends StatelessWidget {
           child: Builder(
             builder: (context) {
               final authBloc = context.read<AuthBloc>();
-              final appRouter = AppRouter(authBloc, storageService);
+              final appRouter = AppRouter(
+                authBloc,
+                storageService,
+                initialRoute: initialRoute,
+              );
               final router = appRouter.router;
 
               // Initialize DeepLinkService

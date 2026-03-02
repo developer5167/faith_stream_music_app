@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_event.dart';
 import '../../blocs/player/player_state.dart';
@@ -12,9 +13,11 @@ import '../../blocs/library/library_state.dart';
 import '../../blocs/profile/profile_bloc.dart';
 import '../../blocs/profile/profile_state.dart';
 import '../../services/audio_player_service.dart';
+import '../../services/download_service.dart';
 import '../../config/app_theme.dart';
 import '../widgets/playlist_selection_sheet.dart';
 import '../widgets/gradient_background.dart';
+import '../widgets/cover_image.dart';
 import '../widgets/ad_overlay.dart';
 
 class NowPlayingScreen extends StatefulWidget {
@@ -28,6 +31,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
   bool _isDragging = false;
   double _dragValue = 0;
   bool _wasPlayingBeforeDrag = false;
+  double? _downloadProgress; // null=idle, 0.0–1.0=in progress
+  String? _downloadedSongId; // id of the downloaded song in this session
 
   @override
   Widget build(BuildContext context) {
@@ -314,33 +319,24 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                   child: isPremium
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: song.coverImageUrl != null
-                              ? Image.network(
-                                  song.coverImageUrl!,
-                                  width: size.width * 0.85,
-                                  height: size.width * 0.85,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      _buildPlaceholderArt(size),
-                                )
-                              : _buildPlaceholderArt(size),
+                          child: CoverImage(
+                            url: song.coverImageUrl,
+                            width: size.width * 0.85,
+                            height: size.width * 0.85,
+                            placeholder: _buildPlaceholderArt(size),
+                          ),
                         )
                       : AdOverlay(
                           key: ValueKey('ad_${song.id}'),
                           songId: song.id,
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: song.coverImageUrl != null
-                                ? Image.network(
-                                    song.coverImageUrl!,
-                                    width: size.width * 0.85,
-                                    height: size.width * 0.85,
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            _buildPlaceholderArt(size),
-                                  )
-                                : _buildPlaceholderArt(size),
+                            child: CoverImage(
+                              url: song.coverImageUrl,
+                              width: size.width * 0.85,
+                              height: size.width * 0.85,
+                              placeholder: _buildPlaceholderArt(size),
+                            ),
                           ),
                         ),
                 ),
@@ -658,6 +654,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                     );
                   },
                 ),
+                if (isPremium) _buildDownloadButton(context, song, theme),
               ],
             ),
           ),
@@ -665,6 +662,125 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildDownloadButton(
+    BuildContext context,
+    Song song,
+    ThemeData theme,
+  ) {
+    final ds = context.read<DownloadService>();
+    final isDownloaded =
+        ds.isDownloaded(song.id) || _downloadedSongId == song.id;
+
+    if (_downloadProgress != null) {
+      return SizedBox(
+        width: 48,
+        height: 48,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: CircularProgressIndicator(
+            value: _downloadProgress,
+            strokeWidth: 2.5,
+            color: Colors.white,
+            backgroundColor: Colors.white24,
+          ),
+        ),
+      );
+    }
+
+    return IconButton(
+      icon: Icon(
+        isDownloaded
+            ? Icons.download_done_rounded
+            : Icons.download_for_offline_outlined,
+        color: isDownloaded
+            ? Colors.greenAccent
+            : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+      ),
+      onPressed: isDownloaded ? null : () => _triggerDownload(context, song),
+    );
+  }
+
+  Future<void> _triggerDownload(BuildContext context, Song song) async {
+    final ds = context.read<DownloadService>();
+    if (ds.isDownloaded(song.id)) {
+      setState(() => _downloadedSongId = song.id);
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    const warningKey = 'download_device_warning_shown';
+    if (!prefs.containsKey(warningKey)) {
+      if (!mounted) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.phone_android, color: Colors.amber, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Device Downloads',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Downloads are saved on this device only. '
+            'Switching to another device will not transfer your downloads.',
+            style: TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white38),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text(
+                'Got It',
+                style: TextStyle(color: Colors.greenAccent),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      await prefs.setBool(warningKey, true);
+    }
+
+    if (!mounted) return;
+    setState(() => _downloadProgress = 0.0);
+
+    final success = await ds.downloadSong(
+      song,
+      onProgress: (p) {
+        if (mounted) setState(() => _downloadProgress = p);
+      },
+    );
+
+    if (mounted) {
+      setState(() {
+        _downloadProgress = null;
+        if (success) _downloadedSongId = song.id;
+      });
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Download failed. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildPlaceholderArt(Size size) {

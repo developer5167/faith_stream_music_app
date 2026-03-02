@@ -13,7 +13,7 @@ class AppTheme {
   static const LinearGradient premiumDarkGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF1A0B2E), Colors.black],
+    colors: [Color.fromARGB(255, 122, 67, 0), Colors.black],
   );
 
   static const LinearGradient freeDarkGradient = LinearGradient(

@@ -3,9 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_event.dart';
 import '../../blocs/player/player_state.dart';
+import '../../blocs/profile/profile_bloc.dart';
+import '../../blocs/profile/profile_state.dart';
 import '../../utils/constants.dart';
 import '../screens/now_playing_screen.dart';
 import '../../config/app_theme.dart';
+import 'cover_image.dart'; // New import
 
 class MiniPlayerBar extends StatelessWidget {
   const MiniPlayerBar({super.key});
@@ -94,37 +97,11 @@ class MiniPlayerBar extends StatelessWidget {
                           // Album art
                           ClipRRect(
                             borderRadius: BorderRadius.circular(4),
-                            child: song.coverImageUrl != null
-                                ? Image.network(
-                                    song.coverImageUrl!,
-                                    width: 48,
-                                    height: 48,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        width: 48,
-                                        height: 48,
-                                        color: theme.colorScheme.primary
-                                            .withOpacity(0.2),
-                                        child: Icon(
-                                          Icons.music_note,
-                                          color: theme.colorScheme.primary,
-                                          size: 24,
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : Container(
-                                    width: 48,
-                                    height: 48,
-                                    color: theme.colorScheme.primary
-                                        .withOpacity(0.2),
-                                    child: Icon(
-                                      Icons.music_note,
-                                      color: theme.colorScheme.primary,
-                                      size: 24,
-                                    ),
-                                  ),
+                            child: CoverImage(
+                              url: song.coverImageUrl,
+                              width: 48,
+                              height: 48,
+                            ),
                           ),
                           const SizedBox(width: AppSizes.paddingSm),
 
@@ -170,12 +147,40 @@ class MiniPlayerBar extends StatelessWidget {
                               ),
                             )
                           else ...[
-                            IconButton(
-                              icon: const Icon(Icons.skip_previous),
-                              color: theme.colorScheme.onSurface,
-                              onPressed: () {
-                                context.read<PlayerBloc>().add(
-                                  const PlayerSkipPrevious(),
+                            // Skip Previous — premium only
+                            Builder(
+                              builder: (context) {
+                                final profileState = context
+                                    .read<ProfileBloc>()
+                                    .state;
+                                final isPremium =
+                                    profileState is ProfileLoaded &&
+                                    (profileState.subscription?.isActive ??
+                                        false);
+                                return IconButton(
+                                  icon: Icon(
+                                    Icons.skip_previous,
+                                    color: isPremium
+                                        ? theme.colorScheme.onSurface
+                                        : theme.colorScheme.onSurface
+                                              .withOpacity(0.3),
+                                  ),
+                                  onPressed: isPremium
+                                      ? () => context.read<PlayerBloc>().add(
+                                          const PlayerSkipPrevious(),
+                                        )
+                                      : () {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Upgrade to Premium to skip songs',
+                                              ),
+                                              duration: Duration(seconds: 2),
+                                            ),
+                                          );
+                                        },
                                 );
                               },
                             ),
@@ -197,12 +202,40 @@ class MiniPlayerBar extends StatelessWidget {
                                 }
                               },
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.skip_next),
-                              color: theme.colorScheme.onSurface,
-                              onPressed: () {
-                                context.read<PlayerBloc>().add(
-                                  const PlayerSkipNext(),
+                            // Skip Next — premium only
+                            Builder(
+                              builder: (context) {
+                                final profileState = context
+                                    .read<ProfileBloc>()
+                                    .state;
+                                final isPremium =
+                                    profileState is ProfileLoaded &&
+                                    (profileState.subscription?.isActive ??
+                                        false);
+                                return IconButton(
+                                  icon: Icon(
+                                    Icons.skip_next,
+                                    color: isPremium
+                                        ? theme.colorScheme.onSurface
+                                        : theme.colorScheme.onSurface
+                                              .withOpacity(0.3),
+                                  ),
+                                  onPressed: isPremium
+                                      ? () => context.read<PlayerBloc>().add(
+                                          const PlayerSkipNext(),
+                                        )
+                                      : () {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Upgrade to Premium to skip songs',
+                                              ),
+                                              duration: Duration(seconds: 2),
+                                            ),
+                                          );
+                                        },
                                 );
                               },
                             ),

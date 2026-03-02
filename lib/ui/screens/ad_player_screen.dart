@@ -4,8 +4,6 @@ import 'package:video_player/video_player.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/ad_model.dart';
-import '../../blocs/player/player_bloc.dart';
-import '../../blocs/player/player_event.dart';
 import '../../services/ads_service.dart';
 import '../../config/app_theme.dart';
 
@@ -52,9 +50,6 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
               }
             }
           });
-
-    // Safety pause to ensure global music is stopped
-    context.read<PlayerBloc>().add(const PlayerPause());
 
     _startHideTimer();
   }
@@ -165,9 +160,9 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
                         : const CircularProgressIndicator(color: Colors.white),
                   ),
 
-                  // Shadow overlay when controls are visible
+                  // Shadow overlay when controls are visible — kept very subtle
                   AnimatedOpacity(
-                    opacity: _showControls ? 0.6 : 0.0,
+                    opacity: _showControls ? 0.35 : 0.0,
                     duration: const Duration(milliseconds: 300),
                     child: Container(color: Colors.black),
                   ),
@@ -202,10 +197,10 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
                     ),
                   ),
 
-                  // Middle: Dummy Controls
+                  // Middle: Dummy Controls — kept at low opacity so they look subtle
                   Center(
                     child: AnimatedOpacity(
-                      opacity: _showControls ? 1.0 : 0.0,
+                      opacity: _showControls ? 0.4 : 0.0,
                       duration: const Duration(milliseconds: 300),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -213,23 +208,23 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
                           IconButton(
                             icon: const Icon(
                               Icons.skip_previous_rounded,
-                              size: 48,
-                              color: Colors.white70,
+                              size: 40,
+                              color: Colors.white38,
                             ),
                             onPressed: () {},
                           ),
                           const SizedBox(width: 32),
                           Container(
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
                               shape: BoxShape.circle,
                             ),
-                            child: const Padding(
-                              padding: EdgeInsets.all(8.0),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
                               child: Icon(
                                 Icons.pause_rounded,
-                                size: 56,
-                                color: Colors.black,
+                                size: 48,
+                                color: Colors.white.withOpacity(0.5),
                               ),
                             ),
                           ),
@@ -237,8 +232,8 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
                           IconButton(
                             icon: const Icon(
                               Icons.skip_next_rounded,
-                              size: 48,
-                              color: Colors.white70,
+                              size: 40,
+                              color: Colors.white38,
                             ),
                             onPressed: () {},
                           ),
@@ -255,6 +250,48 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        // Reward note
+                        AnimatedOpacity(
+                          opacity: _showControls ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 300),
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white24,
+                                width: 0.5,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(
+                                  Icons.music_note_rounded,
+                                  color: Colors.white70,
+                                  size: 14,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Watch this ad · Enjoy 30 min of uninterrupted music',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
                         // Progress Bar
                         SliderTheme(
                           data: SliderTheme.of(context).copyWith(

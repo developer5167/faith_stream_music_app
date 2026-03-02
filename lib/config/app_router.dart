@@ -18,25 +18,34 @@ import '../ui/screens/support/help_center_screen.dart';
 import '../ui/screens/song_detail_screen.dart';
 import '../ui/screens/album_detail_screen.dart';
 import '../ui/screens/artist_profile_screen.dart';
+import '../ui/screens/offline_downloads_screen.dart';
 
 class AppRouter {
   final AuthBloc authBloc;
   final StorageService storageService;
+  final String initialRoute;
 
-  AppRouter(this.authBloc, this.storageService);
+  AppRouter(
+    this.authBloc,
+    this.storageService, {
+    this.initialRoute = '/splash',
+  });
 
   late final GoRouter router = GoRouter(
-    initialLocation: '/splash',
+    initialLocation: initialRoute,
     refreshListenable: GoRouterRefreshStream(authBloc.stream),
     redirect: (context, state) {
       final authState = authBloc.state;
-      final isOnSplash = state.matchedLocation == '/splash';
-      final isOnOnboarding = state.matchedLocation == '/onboarding';
-      final isOnAuth =
-          state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register';
+      final loc = state.matchedLocation;
+      final isOnSplash = loc == '/splash';
+      final isOnOnboarding = loc == '/onboarding';
+      final isOnAuth = loc == '/login' || loc == '/register';
+      final isOnOffline = loc == '/offline-downloads';
 
-      // If loading, stay where we are
+      // Never redirect away from the offline downloads screen on launch
+      if (isOnOffline) return null;
+
+      // If loading, stay on splash
       if (authState is AuthLoading && isOnSplash) {
         return null;
       }
@@ -78,19 +87,15 @@ class AppRouter {
         path: '/home',
         builder: (context, state) => const MainNavigationScreen(),
       ),
+      GoRoute(
+        path: '/offline-downloads',
+        builder: (context, state) => const OfflineDownloadsScreen(),
+      ),
       // Support & Complaints Routes
       GoRoute(
         path: '/support',
         builder: (context, state) => const SupportHubScreen(),
       ),
-      // GoRoute(
-      //   path: '/support/file-complaint',
-      //   builder: (context, state) => const FileComplaintScreen(),
-      // ),
-      // GoRoute(
-      //   path: '/support/my-complaints',
-      //   builder: (context, state) => const MyComplaintsScreen(),
-      // ),
       GoRoute(
         path: '/support/contact',
         builder: (context, state) => const ContactSupportScreen(),

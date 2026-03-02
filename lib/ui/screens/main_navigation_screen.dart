@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:go_router/go_router.dart';
 import '../../utils/constants.dart';
 import '../../blocs/profile/profile_bloc.dart';
 import '../../blocs/profile/profile_state.dart';
@@ -8,7 +10,10 @@ import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_state.dart';
 import '../../blocs/player/player_event.dart';
 import '../../services/ads_service.dart';
+import '../../services/audio_player_service.dart';
+import '../../services/download_service.dart';
 import '../widgets/mini_player_bar.dart';
+import '../widgets/app_open_ad_dialog.dart';
 import 'home_screen.dart';
 import 'search_screen.dart';
 import 'library_screen.dart';
@@ -31,12 +36,53 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   bool _showSubscriptionTab = true;
 
   StreamSubscription? _indexSubscription;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   bool _isShowingAd = false;
 
   @override
   void initState() {
     super.initState();
-    // Ad trigger moved to BlocListener in build method for better state synchronization
+    // Show the interstitial app-open ad once per session after the UI is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeShowAppOpenAd();
+    });
+    // Global connectivity monitor – if internet drops, go to offline screen
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
+      _onConnectivityChanged,
+    );
+  }
+
+  void _onConnectivityChanged(List<ConnectivityResult> results) {
+    if (!mounted) return;
+    final isOffline =
+        results.isEmpty || results.every((r) => r == ConnectivityResult.none);
+    if (isOffline) {
+      final ds = context.read<DownloadService>();
+      if (ds.downloadCount > 0) {
+        // Navigate to offline downloads
+        context.go('/offline-downloads');
+      } else {
+        // No downloads — just show a brief snackbar
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No internet connection'),
+            duration: Duration(seconds: 3),
+            backgroundColor: Colors.black87,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _maybeShowAppOpenAd() async {
+    if (!mounted) return;
+    final profileState = context.read<ProfileBloc>().state;
+    final bool isPremium =
+        profileState is ProfileLoaded &&
+        profileState.subscription != null &&
+        profileState.subscription!.isActive;
+    if (isPremium) return; // premium users never see ads
+    await AppOpenAdDialog.showIfAvailable(context);
   }
 
   Future<void> _checkAndPlayVideoAd() async {
@@ -57,8 +103,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       if (ad != null && mounted) {
         _isShowingAd = true;
 
-        // Pause audio before showing ad
-        context.read<PlayerBloc>().add(const PlayerPause());
+        // Pause audio DIRECTLY via AudioPlayerService — this is synchronous
+        // and guaranteed to stop audio before the video ad starts.
+        // Using PlayerBloc.add(PlayerPause()) is async and arrives too late.
+        await context.read<AudioPlayerService>().pause();
 
         await Navigator.of(context).push(
           MaterialPageRoute(
@@ -70,9 +118,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         _isShowingAd = false;
         await adService.markVideoAdPlayed();
 
-        // Resume playback after ad finishes
+        // Resume only if the player has a song loaded (Playing or Paused state)
         if (mounted) {
-          context.read<PlayerBloc>().add(const PlayerPlay());
+          final playerState = context.read<PlayerBloc>().state;
+          if (playerState is PlayerPlaying || playerState is PlayerPaused) {
+            context.read<PlayerBloc>().add(const PlayerPlay());
+          }
         }
       }
     }
@@ -81,6 +132,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   void dispose() {
     _indexSubscription?.cancel();
+    _connectivitySubscription?.cancel();
     super.dispose();
   }
 

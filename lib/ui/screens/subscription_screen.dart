@@ -214,11 +214,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             appBar: AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
+              automaticallyImplyLeading: false,
               systemOverlayStyle: SystemUiOverlayStyle.light,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
-              ),
               title: const Text(
                 'Subscription',
                 style: TextStyle(
@@ -300,7 +297,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                         period: 'forever',
                         features: const [
                           _Feature('Ads between songs', false),
-                          _Feature('0 skips', false),
+                          _Feature('No skips', false),
+                          _Feature('2 plays/day per song', false),
                           _Feature('Offline downloads', false),
                         ],
                         isHighlighted: false,
@@ -317,7 +315,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                         features: const [
                           _Feature('Ad-free listening', true),
                           _Feature('Unlimited skips', true),
-                          _Feature('Background play', true),
+                          _Feature('Unlimited song plays', true),
                           _Feature('Offline downloads', true),
                         ],
                         isHighlighted: true,
@@ -460,7 +458,7 @@ class _ActiveSubscriptionCard extends StatelessWidget {
           for (final f in [
             'Ad-free listening',
             'Unlimited skips',
-            'Background play',
+            'Unlimited song plays',
             'Offline downloads',
           ])
             Padding(

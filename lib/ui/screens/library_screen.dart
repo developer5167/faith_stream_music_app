@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../blocs/library/library_bloc.dart';
 import '../../blocs/library/library_event.dart';
 import '../../blocs/library/library_state.dart';
@@ -8,6 +9,7 @@ import '../../blocs/auth/auth_state.dart';
 import '../../blocs/profile/profile_bloc.dart';
 import '../../blocs/profile/profile_state.dart';
 import '../../config/app_theme.dart';
+import '../../services/download_service.dart';
 import '../widgets/loading_indicator.dart';
 import '../widgets/error_display.dart';
 import 'favorites_screen.dart';
@@ -244,6 +246,29 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       );
                     },
                   ),
+
+                  // ── Offline Downloads (premium only) ────────────────
+                  if ((() {
+                    final ps = context.watch<ProfileBloc>().state;
+                    return ps is ProfileLoaded &&
+                        ps.subscription != null &&
+                        ps.subscription!.isActive;
+                  })())
+                    Builder(
+                      builder: (context) {
+                        final count = context
+                            .read<DownloadService>()
+                            .downloadCount;
+                        return _buildCategoryItem(
+                          context,
+                          icon: Icons.download_rounded,
+                          iconColor: Colors.tealAccent,
+                          title: 'Offline Downloads',
+                          count: count,
+                          onTap: () => context.push('/offline-downloads'),
+                        );
+                      },
+                    ),
                 ],
               ],
             );

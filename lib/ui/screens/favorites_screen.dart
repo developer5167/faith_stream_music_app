@@ -9,6 +9,7 @@ import '../../utils/constants.dart';
 import '../widgets/mini_player_bar.dart';
 import '../widgets/loading_indicator.dart';
 import '../widgets/song_card.dart';
+import '../widgets/song_download_handler.dart';
 import 'song_detail_screen.dart';
 
 import '../widgets/gradient_background.dart';
@@ -89,29 +90,45 @@ class FavoritesScreen extends StatelessWidget {
                             const SizedBox(height: AppSizes.paddingSm),
                         itemBuilder: (context, index) {
                           final song = state.favorites[index];
-                          return SongCard(
+                          return SongDownloadHandler(
                             song: song,
-                            showFavoriteButton: true,
-                            isFavorite: true,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      SongDetailScreen(song: song),
+                            builder:
+                                (
+                                  context,
+                                  isDownloaded,
+                                  progress,
+                                  onDownloadTap,
+                                ) => SongCard(
+                                  song: song,
+                                  showFavoriteButton: true,
+                                  isFavorite: true,
+                                  showDownloadButton: true,
+                                  isDownloaded: isDownloaded,
+                                  downloadProgress: progress,
+                                  onDownloadTap: onDownloadTap,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            SongDetailScreen(song: song),
+                                      ),
+                                    );
+                                  },
+                                  onPlayTap: () {
+                                    context.read<PlayerBloc>().add(
+                                      PlayerPlaySong(
+                                        song,
+                                        queue: state.favorites,
+                                      ),
+                                    );
+                                  },
+                                  onFavoriteTap: () {
+                                    context.read<LibraryBloc>().add(
+                                      LibraryToggleFavorite(song),
+                                    );
+                                  },
                                 ),
-                              );
-                            },
-                            onPlayTap: () {
-                              context.read<PlayerBloc>().add(
-                                PlayerPlaySong(song, queue: state.favorites),
-                              );
-                            },
-                            onFavoriteTap: () {
-                              context.read<LibraryBloc>().add(
-                                LibraryToggleFavorite(song),
-                              );
-                            },
                           );
                         },
                       ),

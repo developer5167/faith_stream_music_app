@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/song.dart';
 import '../../models/artist.dart';
 import '../../utils/constants.dart';
@@ -10,9 +11,12 @@ import '../../blocs/player/player_state.dart';
 import '../../blocs/library/library_bloc.dart';
 import '../../blocs/library/library_event.dart';
 import '../../blocs/library/library_state.dart';
+import '../../blocs/profile/profile_bloc.dart';
+import '../../blocs/profile/profile_state.dart';
 import '../../services/api_client.dart';
 import '../../services/storage_service.dart';
 import '../../services/artist_service.dart';
+import '../../services/download_service.dart';
 import 'artist_profile_screen.dart';
 import '../widgets/gradient_background.dart';
 
@@ -34,12 +38,22 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
   Artist? _artist;
   bool _isLoadingSong = false;
   bool _isLoadingArtist = false;
+  double? _downloadProgress; // null=idle, 0.0-1.0=downloading
+  bool _isDownloaded = false;
 
   @override
   void initState() {
     super.initState();
     _song = widget.song;
     _initData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_song != null) {
+      _isDownloaded = context.read<DownloadService>().isDownloaded(_song!.id);
+    }
   }
 
   Future<void> _initData() async {
@@ -413,6 +427,12 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
   }
 
   Widget _buildActionButtons(ThemeData theme) {
+    final profileState = context.watch<ProfileBloc>().state;
+    final isPremium =
+        profileState is ProfileLoaded &&
+        profileState.subscription != null &&
+        profileState.subscription!.isActive;
+
     return BlocBuilder<LibraryBloc, LibraryState>(
       builder: (context, libraryState) {
         final isFavorite =
@@ -450,10 +470,134 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                 );
               },
             ),
+            if (isPremium) _buildDownloadIcon(theme),
           ],
         );
       },
     );
+  }
+
+  Widget _buildDownloadIcon(ThemeData theme) {
+    if (_downloadProgress != null) {
+      // Downloading — show progress ring
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          children: [
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                value: _downloadProgress,
+                strokeWidth: 2.5,
+                color: theme.colorScheme.primary,
+                backgroundColor: Colors.white12,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Saving…',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return _buildActionIcon(
+      theme,
+      _isDownloaded
+          ? Icons.download_done_rounded
+          : Icons.download_for_offline_outlined,
+      _isDownloaded ? 'Downloaded' : 'Download',
+      color: _isDownloaded ? Colors.greenAccent : null,
+      onTap: _isDownloaded ? () {} : _triggerDownload,
+    );
+  }
+
+  Future<void> _triggerDownload() async {
+    if (_song == null) return;
+    final ds = context.read<DownloadService>();
+    if (ds.isDownloaded(_song!.id)) {
+      setState(() => _isDownloaded = true);
+      return;
+    }
+
+    // One-time device warning
+    final prefs = await SharedPreferences.getInstance();
+    const warningKey = 'download_device_warning_shown';
+    if (!prefs.containsKey(warningKey)) {
+      if (!mounted) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.phone_android, color: Colors.amber, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Device Downloads',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Downloads are saved on this device only. '
+            'Switching to another device will not transfer your downloads.',
+            style: TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white38),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text(
+                'Got It',
+                style: TextStyle(color: Colors.greenAccent),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      await prefs.setBool(warningKey, true);
+    }
+
+    if (!mounted) return;
+    setState(() => _downloadProgress = 0.0);
+
+    final success = await ds.downloadSong(
+      _song!,
+      onProgress: (p) {
+        if (mounted) setState(() => _downloadProgress = p);
+      },
+    );
+
+    if (mounted) {
+      setState(() {
+        _downloadProgress = null;
+        _isDownloaded = success;
+      });
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Download failed. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildActionIcon(

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../models/song.dart';
@@ -7,9 +8,19 @@ class SongCard extends StatelessWidget {
   final Song song;
   final VoidCallback? onTap;
   final VoidCallback? onPlayTap;
+
+  // Favourite
   final bool showFavoriteButton;
   final bool isFavorite;
   final VoidCallback? onFavoriteTap;
+
+  // Download (premium only)
+  final bool showDownloadButton;
+  final bool isDownloaded;
+  final double? downloadProgress; // 0.0–1.0 while in progress, null = idle
+  final VoidCallback? onDownloadTap;
+
+  // Remove (used in downloads screen)
   final bool showRemoveButton;
   final VoidCallback? onRemoveTap;
 
@@ -21,6 +32,10 @@ class SongCard extends StatelessWidget {
     this.showFavoriteButton = false,
     this.isFavorite = false,
     this.onFavoriteTap,
+    this.showDownloadButton = false,
+    this.isDownloaded = false,
+    this.downloadProgress,
+    this.onDownloadTap,
     this.showRemoveButton = false,
     this.onRemoveTap,
   });
@@ -28,6 +43,36 @@ class SongCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    Widget coverWidget;
+    if (song.coverImageUrl != null && song.coverImageUrl!.isNotEmpty) {
+      if (song.coverImageUrl!.startsWith('file://')) {
+        // Local file
+        coverWidget = Image.file(
+          File(Uri.parse(song.coverImageUrl!).toFilePath()),
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Icon(
+            Icons.music_note,
+            color: theme.colorScheme.onSurface.withOpacity(0.24),
+          ),
+        );
+      } else {
+        // Network image
+        coverWidget = CachedNetworkImage(
+          imageUrl: song.coverImageUrl!,
+          fit: BoxFit.cover,
+          errorWidget: (_, __, ___) => Icon(
+            Icons.music_note,
+            color: theme.colorScheme.onSurface.withOpacity(0.24),
+          ),
+        );
+      }
+    } else {
+      coverWidget = Icon(
+        Icons.music_note,
+        color: theme.colorScheme.onSurface.withOpacity(0.24),
+      );
+    }
 
     return Material(
       color: Colors.transparent,
@@ -50,23 +95,7 @@ class SongCard extends StatelessWidget {
                     color: Colors.white10,
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child:
-                      song.coverImageUrl != null &&
-                          song.coverImageUrl!.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: song.coverImageUrl!,
-                          fit: BoxFit.cover,
-                          errorWidget: (context, url, error) => Icon(
-                            Icons.music_note,
-                            color: theme.colorScheme.onSurface.withOpacity(
-                              0.24,
-                            ),
-                          ),
-                        )
-                      : Icon(
-                          Icons.music_note,
-                          color: theme.colorScheme.onSurface.withOpacity(0.24),
-                        ),
+                  child: coverWidget,
                 ),
                 const SizedBox(width: 16),
 
@@ -129,7 +158,7 @@ class SongCard extends StatelessWidget {
                   ),
                 ),
 
-                // Favorite Action
+                // ── Favourite button ───────────────────────────────────
                 if (showFavoriteButton)
                   IconButton(
                     icon: Icon(
@@ -144,7 +173,40 @@ class SongCard extends StatelessWidget {
                     onPressed: onFavoriteTap,
                   ),
 
-                // Play / Action Button
+                // ── Download button (premium) ──────────────────────────
+                if (showDownloadButton)
+                  SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: downloadProgress != null
+                        // Downloading — show circular progress
+                        ? Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: CircularProgressIndicator(
+                              value: downloadProgress,
+                              strokeWidth: 2.5,
+                              color: AppTheme.darkPrimary,
+                              backgroundColor: Colors.white12,
+                            ),
+                          )
+                        : IconButton(
+                            padding: EdgeInsets.zero,
+                            icon: Icon(
+                              isDownloaded
+                                  ? Icons.download_done_rounded
+                                  : Icons.download_for_offline_outlined,
+                              color: isDownloaded
+                                  ? Colors.greenAccent
+                                  : theme.colorScheme.onSurface.withOpacity(
+                                      0.54,
+                                    ),
+                              size: 22,
+                            ),
+                            onPressed: isDownloaded ? null : onDownloadTap,
+                          ),
+                  ),
+
+                // ── Play button ────────────────────────────────────────
                 if (onPlayTap != null)
                   IconButton(
                     icon: Icon(
@@ -155,6 +217,7 @@ class SongCard extends StatelessWidget {
                     onPressed: onPlayTap,
                   ),
 
+                // ── Remove button (downloads screen) ──────────────────
                 if (showRemoveButton)
                   IconButton(
                     icon: const Icon(
