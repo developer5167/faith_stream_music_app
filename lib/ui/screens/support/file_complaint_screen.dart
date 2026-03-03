@@ -11,7 +11,14 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/loading_indicator.dart';
 
 class FileComplaintScreen extends StatefulWidget {
-  const FileComplaintScreen({super.key});
+  final String? initialTitle;
+  final String? initialContentType;
+
+  const FileComplaintScreen({
+    super.key,
+    this.initialTitle,
+    this.initialContentType,
+  });
 
   @override
   State<FileComplaintScreen> createState() => _FileComplaintScreenState();
@@ -21,8 +28,12 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _artistNameController = TextEditingController();
+  final _songNameController = TextEditingController();
+  final _albumNameController = TextEditingController();
   String? _selectedContentType;
   bool _isLoading = false;
+  bool _serviceReady = false;
 
   final List<String> _contentTypes = [
     'SONG',
@@ -34,9 +45,16 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
 
   late final ComplaintService _complaintService;
 
+  bool get _isCopyrightMode =>
+      widget.initialTitle != null &&
+      widget.initialTitle!.toLowerCase().contains('copyright');
+
   @override
   void initState() {
     super.initState();
+    _titleController.text = widget.initialTitle ?? '';
+    _selectedContentType = widget.initialContentType;
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final storageService = StorageService(
         const FlutterSecureStorage(),
@@ -44,6 +62,7 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
       );
       final apiClient = ApiClient(storageService);
       _complaintService = ComplaintService(apiClient);
+      if (mounted) setState(() => _serviceReady = true);
     });
   }
 
@@ -51,13 +70,14 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _artistNameController.dispose();
+    _songNameController.dispose();
+    _albumNameController.dispose();
     super.dispose();
   }
 
   Future<void> _submitComplaint() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
@@ -66,6 +86,9 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         contentType: _selectedContentType,
+        artistName: _artistNameController.text.trim(),
+        songName: _songNameController.text.trim(),
+        albumName: _albumNameController.text.trim(),
       );
 
       if (mounted) {
@@ -97,7 +120,7 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('File a Complaint'),
+        title: Text(_isCopyrightMode ? 'Report Copyright' : 'File a Complaint'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.white,
@@ -115,20 +138,32 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
                   Container(
                     padding: const EdgeInsets.all(AppSizes.paddingMd),
                     decoration: BoxDecoration(
-                      color: AppColors.info.withOpacity(0.1),
+                      color: (_isCopyrightMode ? Colors.orange : AppColors.info)
+                          .withOpacity(0.1),
                       borderRadius: BorderRadius.circular(AppSizes.paddingMd),
                       border: Border.all(
-                        color: AppColors.info.withOpacity(0.3),
+                        color:
+                            (_isCopyrightMode ? Colors.orange : AppColors.info)
+                                .withOpacity(0.3),
                       ),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.info_outline, color: AppColors.info),
+                        Icon(
+                          _isCopyrightMode
+                              ? Icons.copyright
+                              : Icons.info_outline,
+                          color: _isCopyrightMode
+                              ? Colors.orange
+                              : AppColors.info,
+                        ),
                         const SizedBox(width: AppSizes.paddingMd),
                         Expanded(
                           child: Text(
-                            'Use this form to report content that violates our community guidelines or terms of service.',
-                            style: TextStyle(
+                            _isCopyrightMode
+                                ? 'Report a song that you believe belongs to you or another rightful owner. Provide as many details as possible so our team can investigate.'
+                                : 'Use this form to report content that violates our community guidelines or terms of service.',
+                            style: const TextStyle(
                               fontSize: 13,
                               color: Colors.white70,
                             ),
@@ -141,19 +176,14 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
                   const SizedBox(height: AppSizes.paddingLg),
 
                   // Title Field
-                  Text(
-                    'Title',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+                  _buildLabel('Title'),
                   const SizedBox(height: AppSizes.paddingSm),
                   CustomTextField(
                     label: 'Title',
                     controller: _titleController,
-                    hint: 'Brief title for your complaint',
+                    hint: _isCopyrightMode
+                        ? 'e.g. Copyright Dispute - My Song Name'
+                        : 'Brief title for your complaint',
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Please enter a title';
@@ -168,21 +198,12 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
                   const SizedBox(height: AppSizes.paddingMd),
 
                   // Content Type Dropdown
-                  Text(
-                    'Content Type (Optional)',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+                  _buildLabel('Content Type'),
                   const SizedBox(height: AppSizes.paddingSm),
                   DropdownButtonFormField<String>(
                     value: _selectedContentType,
                     decoration: InputDecoration(
-                      hint: Text(
-                        'Select content type related to your complaint',
-                      ),
+                      hintText: 'Select content type',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppSizes.paddingMd),
                       ),
@@ -196,31 +217,80 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
                     onChanged: (value) {
                       setState(() => _selectedContentType = value);
                     },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a content type';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: AppSizes.paddingMd),
+
+                  // ── Copyright-specific fields ───────────────────────
+                  _buildLabel('Artist Name'),
+                  const SizedBox(height: AppSizes.paddingSm),
+                  CustomTextField(
+                    label: 'Artist Name',
+                    controller: _artistNameController,
+                    hint: 'The artist who uploaded the duplicate',
+                    validator: _isCopyrightMode
+                        ? (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please provide the artist name';
+                            }
+                            return null;
+                          }
+                        : null,
+                  ),
+
+                  const SizedBox(height: AppSizes.paddingMd),
+
+                  _buildLabel('Song Name'),
+                  const SizedBox(height: AppSizes.paddingSm),
+                  CustomTextField(
+                    label: 'Song Name',
+                    controller: _songNameController,
+                    hint: 'Name of the song you want to report',
+                    validator:
+                        (_selectedContentType == 'SONG' || _isCopyrightMode)
+                        ? (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please provide the song name';
+                            }
+                            return null;
+                          }
+                        : null,
+                  ),
+
+                  const SizedBox(height: AppSizes.paddingMd),
+
+                  _buildLabel('Album Name (if applicable)'),
+                  const SizedBox(height: AppSizes.paddingSm),
+                  CustomTextField(
+                    label: 'Album Name',
+                    controller: _albumNameController,
+                    hint: 'If the song is inside an album, mention it here',
                   ),
 
                   const SizedBox(height: AppSizes.paddingMd),
 
                   // Description Field
-                  Text(
-                    'Description',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+                  _buildLabel('Clear Explanation'),
                   const SizedBox(height: AppSizes.paddingSm),
                   CustomTextField(
-                    label: 'Description',
+                    label: 'Clear Explanation',
                     controller: _descriptionController,
-                    hint: 'Detailed description of the issue',
+                    hint: _isCopyrightMode
+                        ? 'Explain why you believe this content belongs to you. Include any proof links, release dates, or other details.'
+                        : 'Detailed description of the issue',
                     maxLines: 6,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Please enter a description';
+                        return 'Please enter a detailed explanation';
                       }
                       if (value.trim().length < 20) {
-                        return 'Description must be at least 20 characters';
+                        return 'Explanation must be at least 20 characters';
                       }
                       return null;
                     },
@@ -230,8 +300,12 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
 
                   // Submit Button
                   CustomButton(
-                    text: 'Submit Complaint',
-                    onPressed: () => _submitComplaint(),
+                    text: _isCopyrightMode
+                        ? 'Submit Copyright Report'
+                        : 'Submit Complaint',
+                    onPressed: () {
+                      if (_serviceReady) _submitComplaint();
+                    },
                     isLoading: _isLoading,
                   ),
 
@@ -246,6 +320,17 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
               child: const Center(child: LoadingIndicator()),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
       ),
     );
   }

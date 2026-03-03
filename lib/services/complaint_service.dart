@@ -13,6 +13,9 @@ class ComplaintService {
     required String description,
     String? contentId,
     String? contentType,
+    String? artistName,
+    String? songName,
+    String? albumName,
   }) async {
     try {
       final response = await _apiClient.post(
@@ -22,6 +25,11 @@ class ComplaintService {
           'description': description,
           if (contentId != null) 'content_id': contentId,
           if (contentType != null) 'content_type': contentType,
+          if (artistName != null && artistName.isNotEmpty)
+            'artist_name': artistName,
+          if (songName != null && songName.isNotEmpty) 'song_name': songName,
+          if (albumName != null && albumName.isNotEmpty)
+            'album_name': albumName,
         },
       );
 
@@ -38,7 +46,6 @@ class ComplaintService {
           return Complaint.fromJson(response.data);
         }
 
-        // If the backend returns a generic success message without data, try parsing anyway or throw
         throw AppException('Complaint filed but no data returned');
       }
 

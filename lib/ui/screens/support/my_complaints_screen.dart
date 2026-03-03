@@ -380,6 +380,8 @@ class _ComplaintDetailsBottomSheet extends StatelessWidget {
     switch (status) {
       case ComplaintStatus.pending:
         return AppColors.warning;
+      case ComplaintStatus.open:
+        return AppColors.info;
       case ComplaintStatus.inReview:
         return AppColors.info;
       case ComplaintStatus.resolved:

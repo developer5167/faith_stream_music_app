@@ -25,6 +25,10 @@ class StatusBadge extends StatelessWidget {
         bgColor = AppColors.warning.withOpacity(0.1);
         txtColor = AppColors.warning;
         break;
+      case ComplaintStatus.open:
+        bgColor = AppColors.info.withOpacity(0.1);
+        txtColor = AppColors.info;
+        break;
       case ComplaintStatus.inReview:
         bgColor = AppColors.info.withOpacity(0.1);
         txtColor = AppColors.info;

@@ -90,7 +90,18 @@ class SupportHubScreen extends StatelessWidget {
                     onTap: () => context.push('/support/my-tickets'),
                   ),
 
-                  // // File Complaint Card
+                  // Report Copyright Card
+                  _SupportOptionCard(
+                    icon: Icons.copyright_outlined,
+                    title: 'Report Copyright',
+                    description: 'Report duplicate songs or ownership disputes',
+                    color: Colors.orange,
+                    onTap: () => context.push(
+                      '/support/file-complaint?title=Copyright Dispute&type=SONG',
+                    ),
+                  ),
+
+                  // File Complaint Card
                   // _SupportOptionCard(
                   //   icon: Icons.report_problem_outlined,
                   //   title: 'File a Complaint',
@@ -99,14 +110,14 @@ class SupportHubScreen extends StatelessWidget {
                   //   onTap: () => context.push('/support/file-complaint'),
                   // ),
 
-                  // // My Complaints Card
-                  // _SupportOptionCard(
-                  //   icon: Icons.history,
-                  //   title: 'My Complaints',
-                  //   description: 'Track the status of your complaints',
-                  //   color: AppColors.error,
-                  //   onTap: () => context.push('/support/my-complaints'),
-                  // ),
+                  // My Complaints Card
+                  _SupportOptionCard(
+                    icon: Icons.history,
+                    title: 'My Complaints',
+                    description: 'Track the status of your complaints',
+                    color: AppColors.error,
+                    onTap: () => context.push('/support/my-complaints'),
+                  ),
 
                   // Help Center Card
                   _SupportOptionCard(

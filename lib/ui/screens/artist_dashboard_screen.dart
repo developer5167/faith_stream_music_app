@@ -159,6 +159,8 @@ class ArtistDashboardScreen extends StatelessWidget {
                     const Spacer(),
                   ],
                 ),
+                const SizedBox(height: AppSizes.paddingMd),
+                _buildStrikesCard(context, state.user.copyrightStrikes),
                 const SizedBox(height: AppSizes.paddingXl),
 
                 // Quick Actions
@@ -268,6 +270,80 @@ class ArtistDashboardScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStrikesCard(BuildContext context, int strikes) {
+    Color cardColor;
+    IconData iconData;
+    String title = 'Copyright Strikes: $strikes/3';
+    String message;
+
+    if (strikes == 0) {
+      cardColor = Colors.green.shade700;
+      iconData = Icons.check_circle;
+      message =
+          'Great job adhering to our platform guidelines! You have 0 copyright strikes. Keep up the good work.';
+    } else if (strikes == 1) {
+      cardColor = Colors.yellow.shade800;
+      iconData = Icons.warning_amber_rounded;
+      message =
+          'You have received 1 copyright strike. Please ensure you own the rights to the music you upload to avoid further action.';
+    } else if (strikes == 2) {
+      cardColor = Colors.orange.shade800;
+      iconData = Icons.error_outline;
+      message =
+          'Warning: You have 2 copyright strikes. If you reach 3 strikes, your artist account and all uploaded content will be permanently deleted and you will lose access forever.';
+    } else {
+      cardColor = Colors.red.shade800;
+      iconData = Icons.block;
+      message =
+          'CRITICAL: You have reached 3 copyright strikes. Your account is flagged for deletion and you will no longer have access to upload or manage music.';
+    }
+
+    return Card(
+      elevation: 2,
+      color: cardColor.withOpacity(0.15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: cardColor, width: 1.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSizes.paddingLg),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(iconData, color: cardColor, size: 32),
+            const SizedBox(width: AppSizes.paddingMd),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: cardColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    message,
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.4,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

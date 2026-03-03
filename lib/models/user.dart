@@ -9,6 +9,7 @@ class User extends Equatable {
   final String? profilePicUrl;
   final String? artistStatus;
   final bool isAdmin;
+  final int copyrightStrikes;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -21,6 +22,7 @@ class User extends Equatable {
     this.profilePicUrl,
     this.artistStatus,
     this.isAdmin = false,
+    this.copyrightStrikes = 0,
     this.createdAt,
     this.updatedAt,
   });
@@ -38,6 +40,7 @@ class User extends Equatable {
       profilePicUrl: profilePic,
       artistStatus: json['artist_status'] as String?,
       isAdmin: json['is_admin'] as bool? ?? false,
+      copyrightStrikes: json['copyright_strikes'] as int? ?? 0,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,
@@ -57,6 +60,7 @@ class User extends Equatable {
       'profile_pic_url': profilePicUrl,
       'artist_status': artistStatus,
       'is_admin': isAdmin,
+      'copyright_strikes': copyrightStrikes,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };
@@ -71,6 +75,7 @@ class User extends Equatable {
     String? profilePicUrl,
     String? artistStatus,
     bool? isAdmin,
+    int? copyrightStrikes,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -83,6 +88,7 @@ class User extends Equatable {
       profilePicUrl: profilePicUrl ?? this.profilePicUrl,
       artistStatus: artistStatus ?? this.artistStatus,
       isAdmin: isAdmin ?? this.isAdmin,
+      copyrightStrikes: copyrightStrikes ?? this.copyrightStrikes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -101,6 +107,7 @@ class User extends Equatable {
     profilePicUrl,
     artistStatus,
     isAdmin,
+    copyrightStrikes,
     createdAt,
     updatedAt,
   ];

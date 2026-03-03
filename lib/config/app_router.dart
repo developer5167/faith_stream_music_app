@@ -10,8 +10,9 @@ import '../ui/screens/auth/login_screen.dart';
 import '../ui/screens/auth/register_screen.dart';
 import '../ui/screens/main_navigation_screen.dart';
 import '../ui/screens/support/support_hub_screen.dart';
-// import '../ui/screens/support/file_complaint_screen.dart'; // hidden feature
-// import '../ui/screens/support/my_complaints_screen.dart'; // hidden feature
+import '../ui/screens/support/file_complaint_screen.dart';
+import '../ui/screens/support/my_complaints_screen.dart';
+
 import '../ui/screens/support/contact_support_screen.dart';
 import '../ui/screens/support/my_tickets_screen.dart';
 import '../ui/screens/support/help_center_screen.dart';
@@ -108,6 +109,22 @@ class AppRouter {
         path: '/support/help-center',
         builder: (context, state) => const HelpCenterScreen(),
       ),
+      GoRoute(
+        path: '/support/file-complaint',
+        builder: (context, state) {
+          final title = state.uri.queryParameters['title'];
+          final type = state.uri.queryParameters['type'];
+          return FileComplaintScreen(
+            initialTitle: title,
+            initialContentType: type,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/support/my-complaints',
+        builder: (context, state) => const MyComplaintsScreen(),
+      ),
+
       GoRoute(
         path: '/song/:id',
         builder: (context, state) {

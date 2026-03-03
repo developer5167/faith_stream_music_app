@@ -2,19 +2,22 @@ import 'package:equatable/equatable.dart';
 
 enum ComplaintStatus {
   pending,
+  open,
   inReview,
   resolved,
   rejected;
 
   static ComplaintStatus fromString(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
+    switch (status.toUpperCase()) {
+      case 'PENDING':
         return ComplaintStatus.pending;
-      case 'in_review':
+      case 'OPEN':
+        return ComplaintStatus.open;
+      case 'IN_REVIEW':
         return ComplaintStatus.inReview;
-      case 'resolved':
+      case 'RESOLVED':
         return ComplaintStatus.resolved;
-      case 'rejected':
+      case 'REJECTED':
         return ComplaintStatus.rejected;
       default:
         return ComplaintStatus.pending;
@@ -25,6 +28,8 @@ enum ComplaintStatus {
     switch (this) {
       case ComplaintStatus.pending:
         return 'Pending';
+      case ComplaintStatus.open:
+        return 'Open';
       case ComplaintStatus.inReview:
         return 'In Review';
       case ComplaintStatus.resolved:
@@ -37,13 +42,15 @@ enum ComplaintStatus {
   String toApiString() {
     switch (this) {
       case ComplaintStatus.pending:
-        return 'pending';
+        return 'PENDING';
+      case ComplaintStatus.open:
+        return 'OPEN';
       case ComplaintStatus.inReview:
-        return 'in_review';
+        return 'IN_REVIEW';
       case ComplaintStatus.resolved:
-        return 'resolved';
+        return 'RESOLVED';
       case ComplaintStatus.rejected:
-        return 'rejected';
+        return 'REJECTED';
     }
   }
 }
@@ -56,6 +63,9 @@ class Complaint extends Equatable {
   final String? contentType;
   final ComplaintStatus status;
   final String? adminNotes;
+  final String? artistName;
+  final String? songName;
+  final String? albumName;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -67,6 +77,9 @@ class Complaint extends Equatable {
     this.contentType,
     required this.status,
     this.adminNotes,
+    this.artistName,
+    this.songName,
+    this.albumName,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -80,6 +93,9 @@ class Complaint extends Equatable {
       contentType: json['content_type'] as String?,
       status: ComplaintStatus.fromString(json['status'] as String? ?? ''),
       adminNotes: json['admin_notes'] as String?,
+      artistName: json['artist_name'] as String?,
+      songName: json['song_name'] as String?,
+      albumName: json['album_name'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
@@ -98,33 +114,12 @@ class Complaint extends Equatable {
       'content_type': contentType,
       'status': status.toApiString(),
       'admin_notes': adminNotes,
+      'artist_name': artistName,
+      'song_name': songName,
+      'album_name': albumName,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
-  }
-
-  Complaint copyWith({
-    String? id,
-    String? title,
-    String? description,
-    String? contentId,
-    String? contentType,
-    ComplaintStatus? status,
-    String? adminNotes,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return Complaint(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      contentId: contentId ?? this.contentId,
-      contentType: contentType ?? this.contentType,
-      status: status ?? this.status,
-      adminNotes: adminNotes ?? this.adminNotes,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
   }
 
   @override
@@ -136,6 +131,9 @@ class Complaint extends Equatable {
     contentType,
     status,
     adminNotes,
+    artistName,
+    songName,
+    albumName,
     createdAt,
     updatedAt,
   ];
