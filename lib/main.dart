@@ -36,6 +36,7 @@ import 'blocs/library/library_bloc.dart';
 import 'blocs/library/library_event.dart';
 import 'blocs/profile/profile_bloc.dart';
 import 'blocs/profile/profile_event.dart';
+import 'blocs/profile/profile_state.dart';
 
 void main() async {
   debugPrint('🚀 App Starting...');
@@ -64,15 +65,15 @@ void main() async {
     // Initialize dependencies
     const secureStorage = FlutterSecureStorage();
     final prefs = await SharedPreferences.getInstance();
+    final storageService = StorageService(secureStorage, prefs);
     debugPrint('✅ Storage initialized');
 
     // Initialize Hive for local downloads
     await Hive.initFlutter();
-    final downloadService = DownloadService();
+    final downloadService = DownloadService(storageService);
     await downloadService.init();
     debugPrint('✅ Hive & DownloadService initialized');
 
-    final storageService = StorageService(secureStorage, prefs);
     final apiClient = ApiClient(storageService);
     final authRepository = AuthRepository(apiClient);
     final homeRepository = HomeRepository(apiClient);
@@ -232,22 +233,37 @@ class MyApp extends StatelessWidget {
                 ProfileBloc(userRepository)..add(ProfileLoad()),
           ),
         ],
-        child: BlocListener<AuthBloc, AuthState>(
-          listener: (context, state) {
-            if (state is AuthAuthenticated) {
-              // Reload all user-specific data on login
-              context.read<HomeBloc>().add(const HomeLoadRequested());
-              context.read<LibraryBloc>().add(LibraryLoadAll());
-              context.read<ProfileBloc>().add(ProfileLoad());
-            } else if (state is AuthUnauthenticated) {
-              // Reset all blocs to initial states on logout
-              context.read<HomeBloc>().add(const HomeReset());
-              context.read<LibraryBloc>().add(LibraryReset());
-              context.read<ProfileBloc>().add(ProfileReset());
-              // Reset player state as well
-              context.read<PlayerBloc>().add(const PlayerReset());
-            }
-          },
+        child: MultiBlocListener(
+          listeners: [
+            BlocListener<AuthBloc, AuthState>(
+              listener: (context, state) {
+                if (state is AuthAuthenticated) {
+                  // Reload all user-specific data on login
+                  context.read<HomeBloc>().add(const HomeLoadRequested());
+                  context.read<LibraryBloc>().add(LibraryLoadAll());
+                  context.read<ProfileBloc>().add(ProfileLoad());
+                } else if (state is AuthUnauthenticated) {
+                  // Reset all blocs to initial states on logout
+                  context.read<HomeBloc>().add(const HomeReset());
+                  context.read<LibraryBloc>().add(LibraryReset());
+                  context.read<ProfileBloc>().add(ProfileReset());
+                  // Reset player state as well
+                  context.read<PlayerBloc>().add(const PlayerReset());
+                }
+              },
+            ),
+            BlocListener<ProfileBloc, ProfileState>(
+              listener: (context, state) {
+                if (state is ProfileLoaded) {
+                  final isPremium = state.subscription?.isActive ?? false;
+                  if (!isPremium) {
+                    // Wipe physical downloads if subscription expired
+                    context.read<DownloadService>().clearMyDownloads();
+                  }
+                }
+              },
+            ),
+          ],
           child: Builder(
             builder: (context) {
               final authBloc = context.read<AuthBloc>();

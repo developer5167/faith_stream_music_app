@@ -22,13 +22,14 @@ class DownloadedSongAdapter extends TypeAdapter<DownloadedSong> {
       coverImageUrl: fields[5] as String?,
       albumTitle: fields[6] as String?,
       downloadedAt: fields[7] as DateTime,
+      userId: fields[8] as String? ?? 'unknown',
     );
   }
 
   @override
   void write(BinaryWriter writer, DownloadedSong obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class DownloadedSongAdapter extends TypeAdapter<DownloadedSong> {
       ..writeByte(6)
       ..write(obj.albumTitle)
       ..writeByte(7)
-      ..write(obj.downloadedAt);
+      ..write(obj.downloadedAt)
+      ..writeByte(8)
+      ..write(obj.userId);
   }
 
   @override

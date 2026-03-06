@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/song.dart';
+import 'storage_service.dart';
 
 part 'download_service.g.dart';
 
@@ -34,6 +35,9 @@ class DownloadedSong extends HiveObject {
   @HiveField(7)
   DateTime downloadedAt;
 
+  @HiveField(8)
+  String userId;
+
   DownloadedSong({
     required this.id,
     required this.title,
@@ -43,6 +47,7 @@ class DownloadedSong extends HiveObject {
     this.coverImageUrl,
     this.albumTitle,
     required this.downloadedAt,
+    required this.userId,
   });
 
   /// Convert to a playable `Song` with a local file:// URL so the player works offline.
@@ -65,6 +70,12 @@ class DownloadService {
 
   late Box<DownloadedSong> _box;
   final _dio = Dio();
+  final StorageService _storageService;
+
+  DownloadService(this._storageService);
+
+  String get _currentUserId =>
+      _storageService.getUser()?.id.toString() ?? 'anonymous';
 
   // ── Init ──────────────────────────────────────────────────────────────────
 
@@ -77,13 +88,15 @@ class DownloadService {
 
   // ── Queries ───────────────────────────────────────────────────────────────
 
-  bool isDownloaded(String songId) => _box.values.any((s) => s.id == songId);
+  bool isDownloaded(String songId) =>
+      _box.values.any((s) => s.id == songId && s.userId == _currentUserId);
 
   List<DownloadedSong> getDownloads() =>
-      _box.values.toList()
+      _box.values.where((s) => s.userId == _currentUserId).toList()
         ..sort((a, b) => b.downloadedAt.compareTo(a.downloadedAt));
 
-  int get downloadCount => _box.length;
+  int get downloadCount =>
+      _box.values.where((s) => s.userId == _currentUserId).length;
 
   // ── Download ──────────────────────────────────────────────────────────────
 
@@ -136,6 +149,7 @@ class DownloadService {
         coverImageUrl: song.coverImageUrl,
         albumTitle: song.albumTitle,
         downloadedAt: DateTime.now(),
+        userId: _currentUserId,
       );
       await _box.put(song.id, downloaded);
       return true;
@@ -171,6 +185,28 @@ class DownloadService {
     }
 
     await _box.delete(songId);
+  }
+
+  /// Wipe physical downloads from the device for the CURRENT user only (e.g. premium expires)
+  Future<void> clearMyDownloads() async {
+    final mySongs = _box.values
+        .where((s) => s.userId == _currentUserId)
+        .toList();
+    for (var item in mySongs) {
+      try {
+        final audio = File(item.localAudioPath);
+        if (await audio.exists()) await audio.delete();
+      } catch (_) {}
+
+      if (item.localCoverPath != null) {
+        try {
+          final cover = File(item.localCoverPath!);
+          if (await cover.exists()) await cover.delete();
+        } catch (_) {}
+      }
+
+      await _box.delete(item.id);
+    }
   }
 
   // ── Dispose ───────────────────────────────────────────────────────────────
