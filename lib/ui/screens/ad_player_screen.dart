@@ -5,7 +5,10 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/ad_model.dart';
 import '../../services/ads_service.dart';
+import '../../services/audio_player_service.dart';
 import '../../config/app_theme.dart';
+import '../../blocs/player/player_bloc.dart';
+import '../../blocs/player/player_event.dart';
 
 class AdPlayerScreen extends StatefulWidget {
   final AdModel ad;
@@ -41,6 +44,12 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
               setState(() {
                 _isInitialized = true;
               });
+
+              // Force the underlying audio engine to lock and pause immediately.
+              // This prevents race conditions where PlayerBloc might finish loading a song
+              // and forcefully call `.play()` while the ad is already running.
+              context.read<AudioPlayerService>().setAdPlaying(true);
+
               _controller.play();
               _startAdTimers();
 
@@ -114,6 +123,14 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
     _hideTimer?.cancel();
     _progressTimer?.cancel();
     _controller.dispose();
+
+    // Release the ad lock so the main music player can resume normal behavior
+    if (mounted) {
+      context.read<AudioPlayerService>().setAdPlaying(false);
+
+      // Tell the player bloc we logically intend to play the music now that the ad is gone
+      context.read<PlayerBloc>().add(const PlayerPlay());
+    }
     super.dispose();
   }
 

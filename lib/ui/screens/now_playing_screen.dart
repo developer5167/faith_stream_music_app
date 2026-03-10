@@ -28,9 +28,6 @@ class NowPlayingScreen extends StatefulWidget {
 }
 
 class _NowPlayingScreenState extends State<NowPlayingScreen> {
-  bool _isDragging = false;
-  double _dragValue = 0;
-  bool _wasPlayingBeforeDrag = false;
   double? _downloadProgress; // null=idle, 0.0–1.0=in progress
   String? _downloadedSongId; // id of the downloaded song in this session
 
@@ -416,109 +413,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
           // Progress Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    trackHeight: 4,
-                    thumbShape: const RoundSliderThumbShape(
-                      enabledThumbRadius: 6,
-                    ),
-                    overlayShape: const RoundSliderOverlayShape(
-                      overlayRadius: 14,
-                    ),
-                    activeTrackColor: isPremium
-                        ? theme.colorScheme.onSurface
-                        : Colors.grey,
-                    inactiveTrackColor: theme.colorScheme.onSurface.withValues(
-                      alpha: 0.1,
-                    ),
-                    thumbColor: isPremium
-                        ? theme.colorScheme.onSurface
-                        : Colors.grey,
-                    overlayColor: theme.colorScheme.onSurface.withValues(
-                      alpha: 0.1,
-                    ),
-                  ),
-                  child: Slider(
-                    value: _isDragging
-                        ? _dragValue
-                        : position.inSeconds.toDouble().clamp(
-                            0.0,
-                            (duration.inSeconds.toDouble() > 0
-                                ? duration.inSeconds.toDouble()
-                                : 1.0),
-                          ),
-                    max: duration.inSeconds.toDouble() > 0
-                        ? duration.inSeconds.toDouble()
-                        : 1.0,
-                    onChangeStart: isPremium
-                        ? (value) {
-                            setState(() {
-                              _isDragging = true;
-                              _dragValue = value;
-                              _wasPlayingBeforeDrag = isPlaying;
-                            });
-                            if (isPlaying) {
-                              context.read<PlayerBloc>().add(
-                                const PlayerPause(),
-                              );
-                            }
-                          }
-                        : null,
-                    onChanged: isPremium
-                        ? (value) {
-                            setState(() {
-                              _dragValue = value;
-                            });
-                          }
-                        : null,
-                    onChangeEnd: isPremium
-                        ? (value) {
-                            context.read<PlayerBloc>().add(
-                              PlayerSeek(Duration(seconds: value.toInt())),
-                            );
-                            if (_wasPlayingBeforeDrag) {
-                              context.read<PlayerBloc>().add(
-                                const PlayerPlay(),
-                              );
-                            }
-                            setState(() {
-                              _isDragging = false;
-                            });
-                          }
-                        : null,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _formatDuration(
-                          _isDragging
-                              ? Duration(seconds: _dragValue.toInt())
-                              : position,
-                        ),
-                        style: const TextStyle(
-                          color: Colors.white60,
-                          fontSize: 12,
-                        ),
-                      ),
-                      Text(
-                        _formatDuration(duration),
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.6,
-                          ),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            child: _PlaybackProgressBar(
+              position: position,
+              duration: duration,
+              isPlaying: isPlaying,
+              isPremium: isPremium,
+              theme: theme,
             ),
           ),
 
@@ -795,11 +695,131 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
       ),
     );
   }
+}
 
-  String _formatDuration(Duration duration) {
+class _PlaybackProgressBar extends StatefulWidget {
+  final Duration position;
+  final Duration duration;
+  final bool isPlaying;
+  final bool isPremium;
+  final ThemeData theme;
+
+  const _PlaybackProgressBar({
+    required this.position,
+    required this.duration,
+    required this.isPlaying,
+    required this.isPremium,
+    required this.theme,
+  });
+
+  @override
+  State<_PlaybackProgressBar> createState() => _PlaybackProgressBarState();
+}
+
+class _PlaybackProgressBarState extends State<_PlaybackProgressBar> {
+  bool _isDragging = false;
+  double _dragValue = 0;
+  bool _wasPlayingBeforeDrag = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 4,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+            activeTrackColor: widget.isPremium
+                ? widget.theme.colorScheme.onSurface
+                : Colors.grey,
+            inactiveTrackColor: widget.theme.colorScheme.onSurface.withValues(
+              alpha: 0.1,
+            ),
+            thumbColor: widget.isPremium
+                ? widget.theme.colorScheme.onSurface
+                : Colors.grey,
+            overlayColor: widget.theme.colorScheme.onSurface.withValues(
+              alpha: 0.1,
+            ),
+          ),
+          child: Slider(
+            value: _isDragging
+                ? _dragValue
+                : widget.position.inSeconds.toDouble().clamp(
+                    0.0,
+                    (widget.duration.inSeconds.toDouble() > 0
+                        ? widget.duration.inSeconds.toDouble()
+                        : 1.0),
+                  ),
+            max: widget.duration.inSeconds.toDouble() > 0
+                ? widget.duration.inSeconds.toDouble()
+                : 1.0,
+            onChangeStart: widget.isPremium
+                ? (value) {
+                    setState(() {
+                      _isDragging = true;
+                      _dragValue = value;
+                      _wasPlayingBeforeDrag = widget.isPlaying;
+                    });
+                    if (widget.isPlaying) {
+                      context.read<PlayerBloc>().add(const PlayerPause());
+                    }
+                  }
+                : null,
+            onChanged: widget.isPremium
+                ? (value) {
+                    setState(() {
+                      _dragValue = value;
+                    });
+                  }
+                : null,
+            onChangeEnd: widget.isPremium
+                ? (value) {
+                    context.read<PlayerBloc>().add(
+                      PlayerSeek(Duration(seconds: value.toInt())),
+                    );
+                    if (_wasPlayingBeforeDrag) {
+                      context.read<PlayerBloc>().add(const PlayerPlay());
+                    }
+                    setState(() {
+                      _isDragging = false;
+                    });
+                  }
+                : null,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _formatDurationLocal(
+                  _isDragging
+                      ? Duration(seconds: _dragValue.toInt())
+                      : widget.position,
+                ),
+                style: const TextStyle(color: Colors.white60, fontSize: 12),
+              ),
+              Text(
+                _formatDurationLocal(widget.duration),
+                style: TextStyle(
+                  color: widget.theme.colorScheme.onSurface.withValues(
+                    alpha: 0.6,
+                  ),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDurationLocal(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = duration.inMinutes.remainder(60);
-    final seconds = duration.inSeconds.remainder(60);
-    return "$minutes:${twoDigits(seconds)}";
+    return '${twoDigits(duration.inMinutes.remainder(60))}:${twoDigits(duration.inSeconds.remainder(60))}';
   }
 }

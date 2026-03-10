@@ -61,6 +61,7 @@ class SongCard extends StatelessWidget {
         coverWidget = CachedNetworkImage(
           imageUrl: song.coverImageUrl!,
           fit: BoxFit.cover,
+          memCacheWidth: 168,
           errorWidget: (_, __, ___) => Icon(
             Icons.music_note,
             color: theme.colorScheme.onSurface.withOpacity(0.24),

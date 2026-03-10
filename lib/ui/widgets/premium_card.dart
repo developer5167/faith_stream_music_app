@@ -51,6 +51,7 @@ class PremiumCard extends StatelessWidget {
                       ? CachedNetworkImage(
                           imageUrl: imageUrl!,
                           fit: BoxFit.cover,
+                          memCacheWidth: (width * 3).toInt(),
                           placeholder: (context, url) => _buildShimmer(theme),
                           errorWidget: (context, url, error) =>
                               _buildPlaceholder(theme),

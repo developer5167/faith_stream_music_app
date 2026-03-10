@@ -57,6 +57,7 @@ class CoverImage extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
+      memCacheWidth: width != null ? (width! * 3).toInt() : null,
       errorWidget: (_, __, ___) => fallback,
     );
   }

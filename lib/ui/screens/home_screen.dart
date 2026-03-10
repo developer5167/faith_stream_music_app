@@ -1,5 +1,4 @@
 import 'package:faith_stream_music_app/blocs/auth/auth_event.dart';
-import 'package:faith_stream_music_app/blocs/player/player_state.dart';
 import 'package:faith_stream_music_app/services/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -64,489 +63,463 @@ class HomeScreen extends StatelessWidget {
                 ),
               ],
             ),
-            body: BlocListener<PlayerBloc, PlayerState>(
-              listenWhen: (previous, current) {
-                String? prevId;
-                String? currId;
+            body: BlocBuilder<HomeBloc, HomeState>(
+              builder: (context, state) {
+                if (state is HomeLoading) {
+                  return const LoadingIndicator(
+                    message: 'Loading your music...',
+                  );
+                }
 
-                if (previous is PlayerPlaying) prevId = previous.song.id;
-                if (previous is PlayerPaused) prevId = previous.song.id;
-                if (previous is PlayerLoading) prevId = previous.song?.id;
+                if (state is HomeError) {
+                  return ErrorDisplay(
+                    message: state.message,
+                    onRetry: () {
+                      context.read<HomeBloc>().add(const HomeLoadRequested());
+                    },
+                  );
+                }
 
-                if (current is PlayerPlaying) currId = current.song.id;
-                if (current is PlayerPaused) currId = current.song.id;
-                if (current is PlayerLoading) currId = current.song?.id;
+                if (state is HomeLoaded) {
+                  final feed = state.feed;
 
-                return currId != null && currId != prevId;
-              },
-              listener: (context, state) {
-                context.read<HomeBloc>().add(const HomeRefreshRequested());
-              },
-              child: BlocBuilder<HomeBloc, HomeState>(
-                builder: (context, state) {
-                  if (state is HomeLoading) {
-                    return const LoadingIndicator(
-                      message: 'Loading your music...',
-                    );
-                  }
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      context.read<HomeBloc>().add(
+                        const HomeRefreshRequested(),
+                      );
+                    },
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSizes.paddingMd,
+                      ),
+                      children: [
+                        BlocBuilder<ProfileBloc, ProfileState>(
+                              builder: (context, profileState) {
+                                final bool isPremium =
+                                    profileState is ProfileLoaded &&
+                                    profileState.subscription != null &&
+                                    profileState.subscription!.isActive;
 
-                  if (state is HomeError) {
-                    return ErrorDisplay(
-                      message: state.message,
-                      onRetry: () {
-                        context.read<HomeBloc>().add(const HomeLoadRequested());
-                      },
-                    );
-                  }
+                                final name = user?.name ?? 'Music Lover';
 
-                  if (state is HomeLoaded) {
-                    final feed = state.feed;
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSizes.paddingMd,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Shalom!,Good evening,',
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
+                                              color: theme.colorScheme.onSurface
+                                                  .withOpacity(0.7),
+                                            ),
+                                      ),
+                                      Text(
+                                        isPremium
+                                            ? '$name! you are blessed 🙌🏻'
+                                            : name,
+                                        style: theme.textTheme.headlineMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.darkPrimary,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            )
+                            .animate()
+                            .fadeIn(duration: 600.ms)
+                            .slideX(begin: -0.1),
+                        const SizedBox(height: AppSizes.paddingLg),
 
-                    return RefreshIndicator(
-                      onRefresh: () async {
-                        context.read<HomeBloc>().add(
-                          const HomeRefreshRequested(),
-                        );
-                      },
-                      child: ListView(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSizes.paddingMd,
-                        ),
-                        children: [
-                          BlocBuilder<ProfileBloc, ProfileState>(
-                                builder: (context, profileState) {
-                                  final bool isPremium =
-                                      profileState is ProfileLoaded &&
-                                      profileState.subscription != null &&
-                                      profileState.subscription!.isActive;
-
-                                  final name = user?.name ?? 'Music Lover';
-
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppSizes.paddingMd,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Shalom!,Good evening,',
-                                          style: theme.textTheme.titleMedium
-                                              ?.copyWith(
-                                                color: theme
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withOpacity(0.7),
-                                              ),
-                                        ),
-                                        Text(
-                                          isPremium
-                                              ? '$name! you are blessed 🙌🏻'
-                                              : name,
-                                          style: theme.textTheme.headlineMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                color: AppTheme.darkPrimary,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              )
-                              .animate()
-                              .fadeIn(duration: 600.ms)
-                              .slideX(begin: -0.1),
+                        // Recently Played
+                        if (feed.recentlyPlayed.isNotEmpty) ...[
+                          _buildSectionHeader(
+                            context,
+                            'Recently Played',
+                            onSeeAll: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AllSongsScreen(
+                                    title: 'Recently Played',
+                                    songs: feed.recentlyPlayed,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 230,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.recentlyPlayed.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingMd),
+                              itemBuilder: (context, index) {
+                                final song = feed.recentlyPlayed[index];
+                                return PremiumCard(
+                                  title: song.title,
+                                  subtitle: song.displayArtist,
+                                  imageUrl: song.coverImageUrl,
+                                  width: 150,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            SongDetailScreen(song: song),
+                                      ),
+                                    );
+                                  },
+                                  onPlayTap: () {
+                                    context.read<PlayerBloc>().add(
+                                      PlayerPlaySong(
+                                        song,
+                                        queue: feed.recentlyPlayed,
+                                      ),
+                                    );
+                                  },
+                                ).animate().fadeIn(delay: (index * 50).ms);
+                              },
+                            ),
+                          ),
                           const SizedBox(height: AppSizes.paddingLg),
+                        ],
 
-                          // Recently Played
-                          if (feed.recentlyPlayed.isNotEmpty) ...[
-                            _buildSectionHeader(
-                              context,
-                              'Recently Played',
-                              onSeeAll: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AllSongsScreen(
-                                      title: 'Recently Played',
-                                      songs: feed.recentlyPlayed,
-                                    ),
+                        // Trending Now (Songs)
+                        if (feed.trendingSongs.isNotEmpty) ...[
+                          _buildSectionHeader(
+                            context,
+                            'Trending Now',
+                            onSeeAll: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AllSongsScreen(
+                                    title: 'Trending Now',
+                                    songs: feed.trendingSongs,
                                   ),
-                                );
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 230,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.trendingSongs.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingMd),
+                              itemBuilder: (context, index) {
+                                final song = feed.trendingSongs[index];
+                                return PremiumCard(
+                                  title: song.title,
+                                  subtitle: song.displayArtist,
+                                  imageUrl: song.coverImageUrl,
+                                  width: 150,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            SongDetailScreen(song: song),
+                                      ),
+                                    );
+                                  },
+                                  onPlayTap: () {
+                                    context.read<PlayerBloc>().add(
+                                      PlayerPlaySong(
+                                        song,
+                                        queue: feed.trendingSongs,
+                                      ),
+                                    );
+                                  },
+                                ).animate().fadeIn(delay: (index * 50).ms);
                               },
                             ),
-                            const SizedBox(height: AppSizes.paddingSm),
-                            SizedBox(
-                              height: 230,
-                              child: ListView.separated(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSizes.paddingMd,
-                                ),
-                                scrollDirection: Axis.horizontal,
-                                itemCount: feed.recentlyPlayed.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(width: AppSizes.paddingMd),
-                                itemBuilder: (context, index) {
-                                  final song = feed.recentlyPlayed[index];
-                                  return PremiumCard(
-                                    title: song.title,
-                                    subtitle: song.displayArtist,
-                                    imageUrl: song.coverImageUrl,
-                                    width: 150,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              SongDetailScreen(song: song),
-                                        ),
-                                      );
-                                    },
-                                    onPlayTap: () {
-                                      context.read<PlayerBloc>().add(
-                                        PlayerPlaySong(
-                                          song,
-                                          queue: feed.recentlyPlayed,
-                                        ),
-                                      );
-                                    },
-                                  ).animate().fadeIn(delay: (index * 50).ms);
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: AppSizes.paddingLg),
-                          ],
+                          ),
+                          const SizedBox(height: AppSizes.paddingLg),
+                        ],
 
-                          // Trending Now (Songs)
-                          if (feed.trendingSongs.isNotEmpty) ...[
-                            _buildSectionHeader(
-                              context,
-                              'Trending Now',
-                              onSeeAll: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AllSongsScreen(
-                                      title: 'Trending Now',
-                                      songs: feed.trendingSongs,
-                                    ),
+                        // Top 10 Most Played (Songs)
+                        if (feed.topPlayedSongs.isNotEmpty) ...[
+                          _buildSectionHeader(
+                            context,
+                            'Top 10 Most Played',
+                            onSeeAll: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AllSongsScreen(
+                                    title: 'Top 10 Most Played',
+                                    songs: feed.topPlayedSongs,
                                   ),
-                                );
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 230,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.topPlayedSongs.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingMd),
+                              itemBuilder: (context, index) {
+                                final song = feed.topPlayedSongs[index];
+                                return PremiumCard(
+                                  title: song.title,
+                                  subtitle: song.displayArtist,
+                                  imageUrl: song.coverImageUrl,
+                                  width: 150,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            SongDetailScreen(song: song),
+                                      ),
+                                    );
+                                  },
+                                  onPlayTap: () {
+                                    context.read<PlayerBloc>().add(
+                                      PlayerPlaySong(
+                                        song,
+                                        queue: feed.topPlayedSongs,
+                                      ),
+                                    );
+                                  },
+                                ).animate().fadeIn(delay: (index * 50).ms);
                               },
                             ),
-                            const SizedBox(height: AppSizes.paddingSm),
-                            SizedBox(
-                              height: 230,
-                              child: ListView.separated(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSizes.paddingMd,
-                                ),
-                                scrollDirection: Axis.horizontal,
-                                itemCount: feed.trendingSongs.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(width: AppSizes.paddingMd),
-                                itemBuilder: (context, index) {
-                                  final song = feed.trendingSongs[index];
-                                  return PremiumCard(
-                                    title: song.title,
-                                    subtitle: song.displayArtist,
-                                    imageUrl: song.coverImageUrl,
-                                    width: 150,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              SongDetailScreen(song: song),
-                                        ),
-                                      );
-                                    },
-                                    onPlayTap: () {
-                                      context.read<PlayerBloc>().add(
-                                        PlayerPlaySong(
-                                          song,
-                                          queue: feed.trendingSongs,
-                                        ),
-                                      );
-                                    },
-                                  ).animate().fadeIn(delay: (index * 50).ms);
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: AppSizes.paddingLg),
-                          ],
+                          ),
+                          const SizedBox(height: AppSizes.paddingLg),
+                        ],
 
-                          // Top 10 Most Played (Songs)
-                          if (feed.topPlayedSongs.isNotEmpty) ...[
-                            _buildSectionHeader(
-                              context,
-                              'Top 10 Most Played',
-                              onSeeAll: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AllSongsScreen(
-                                      title: 'Top 10 Most Played',
-                                      songs: feed.topPlayedSongs,
-                                    ),
+                        // New Releases (Albums)
+                        if (feed.albums.isNotEmpty) ...[
+                          _buildSectionHeader(
+                            context,
+                            'New Releases',
+                            onSeeAll: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AllAlbumsScreen(
+                                    title: 'New Releases',
+                                    albums: feed.albums,
                                   ),
-                                );
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 230,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.albums.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingMd),
+                              itemBuilder: (context, index) {
+                                final album = feed.albums[index];
+                                return PremiumCard(
+                                  title: album.title,
+                                  subtitle: album.displayArtist,
+                                  imageUrl: album.coverImageUrl,
+                                  width: 150,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            AlbumDetailScreen(album: album),
+                                      ),
+                                    );
+                                  },
+                                ).animate().fadeIn(delay: (index * 50).ms);
                               },
                             ),
-                            const SizedBox(height: AppSizes.paddingSm),
-                            SizedBox(
-                              height: 230,
-                              child: ListView.separated(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSizes.paddingMd,
-                                ),
-                                scrollDirection: Axis.horizontal,
-                                itemCount: feed.topPlayedSongs.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(width: AppSizes.paddingMd),
-                                itemBuilder: (context, index) {
-                                  final song = feed.topPlayedSongs[index];
-                                  return PremiumCard(
-                                    title: song.title,
-                                    subtitle: song.displayArtist,
-                                    imageUrl: song.coverImageUrl,
-                                    width: 150,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              SongDetailScreen(song: song),
-                                        ),
-                                      );
-                                    },
-                                    onPlayTap: () {
-                                      context.read<PlayerBloc>().add(
-                                        PlayerPlaySong(
-                                          song,
-                                          queue: feed.topPlayedSongs,
-                                        ),
-                                      );
-                                    },
-                                  ).animate().fadeIn(delay: (index * 50).ms);
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: AppSizes.paddingLg),
-                          ],
+                          ),
+                          const SizedBox(height: AppSizes.paddingLg),
+                        ],
 
-                          // New Releases (Albums)
-                          if (feed.albums.isNotEmpty) ...[
-                            _buildSectionHeader(
-                              context,
-                              'New Releases',
-                              onSeeAll: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AllAlbumsScreen(
-                                      title: 'New Releases',
-                                      albums: feed.albums,
-                                    ),
-                                  ),
-                                );
+                        // Trending Artists
+                        if (feed.topArtists.isNotEmpty) ...[
+                          _buildSectionHeader(context, 'Trending Artists'),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 210,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.topArtists.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingMd),
+                              itemBuilder: (context, index) {
+                                final artist = feed.topArtists[index];
+                                return PremiumCard(
+                                  title: artist.name,
+                                  subtitle:
+                                      '${artist.totalFollowers ?? 0} Followers',
+                                  imageUrl: artist.profilePicUrl,
+                                  width: 130,
+                                  isCircle: true,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ArtistProfileScreen(artist: artist),
+                                      ),
+                                    );
+                                  },
+                                ).animate().fadeIn(delay: (index * 50).ms);
                               },
                             ),
-                            const SizedBox(height: AppSizes.paddingSm),
-                            SizedBox(
-                              height: 230,
-                              child: ListView.separated(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSizes.paddingMd,
-                                ),
-                                scrollDirection: Axis.horizontal,
-                                itemCount: feed.albums.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(width: AppSizes.paddingMd),
-                                itemBuilder: (context, index) {
-                                  final album = feed.albums[index];
-                                  return PremiumCard(
-                                    title: album.title,
-                                    subtitle: album.displayArtist,
-                                    imageUrl: album.coverImageUrl,
-                                    width: 150,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              AlbumDetailScreen(album: album),
-                                        ),
-                                      );
-                                    },
-                                  ).animate().fadeIn(delay: (index * 50).ms);
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: AppSizes.paddingLg),
-                          ],
+                          ),
+                          const SizedBox(height: AppSizes.paddingLg),
+                        ],
 
-                          // Trending Artists
-                          if (feed.topArtists.isNotEmpty) ...[
-                            _buildSectionHeader(context, 'Trending Artists'),
-                            const SizedBox(height: AppSizes.paddingSm),
-                            SizedBox(
-                              height: 210,
-                              child: ListView.separated(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSizes.paddingMd,
-                                ),
-                                scrollDirection: Axis.horizontal,
-                                itemCount: feed.topArtists.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(width: AppSizes.paddingMd),
-                                itemBuilder: (context, index) {
-                                  final artist = feed.topArtists[index];
-                                  return PremiumCard(
-                                    title: artist.name,
-                                    subtitle:
-                                        '${artist.totalFollowers ?? 0} Followers',
-                                    imageUrl: artist.profilePicUrl,
-                                    width: 130,
-                                    isCircle: true,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ArtistProfileScreen(
-                                                artist: artist,
-                                              ),
-                                        ),
-                                      );
-                                    },
-                                  ).animate().fadeIn(delay: (index * 50).ms);
-                                },
+                        // Most Played Artists
+                        if (feed.topPlayedArtists.isNotEmpty) ...[
+                          _buildSectionHeader(context, 'Most Played Artists'),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 210,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
                               ),
-                            ),
-                            const SizedBox(height: AppSizes.paddingLg),
-                          ],
-
-                          // Most Played Artists
-                          if (feed.topPlayedArtists.isNotEmpty) ...[
-                            _buildSectionHeader(context, 'Most Played Artists'),
-                            const SizedBox(height: AppSizes.paddingSm),
-                            SizedBox(
-                              height: 210,
-                              child: ListView.separated(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSizes.paddingMd,
-                                ),
-                                scrollDirection: Axis.horizontal,
-                                itemCount: feed.topPlayedArtists.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(width: AppSizes.paddingMd),
-                                itemBuilder: (context, index) {
-                                  final artist = feed.topPlayedArtists[index];
-                                  return PremiumCard(
-                                    title: artist.name,
-                                    subtitle: 'Top Played',
-                                    imageUrl: artist.profilePicUrl,
-                                    width: 130,
-                                    isCircle: true,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ArtistProfileScreen(
-                                                artist: artist,
-                                              ),
-                                        ),
-                                      );
-                                    },
-                                  ).animate().fadeIn(delay: (index * 50).ms);
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: AppSizes.paddingLg),
-                          ],
-
-                          // Artists You Follow (Followed Artists)
-                          if (feed.followedArtists.isNotEmpty) ...[
-                            _buildSectionHeader(context, 'Artists You Follow'),
-                            const SizedBox(height: AppSizes.paddingSm),
-                            SizedBox(
-                              height: 210,
-                              child: ListView.separated(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSizes.paddingMd,
-                                ),
-                                scrollDirection: Axis.horizontal,
-                                itemCount: feed.followedArtists.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(width: AppSizes.paddingMd),
-                                itemBuilder: (context, index) {
-                                  final artist = feed.followedArtists[index];
-                                  return PremiumCard(
-                                    title: artist.name,
-                                    subtitle: 'Following',
-                                    imageUrl: artist.profilePicUrl,
-                                    width: 130,
-                                    isCircle: true,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ArtistProfileScreen(
-                                                artist: artist,
-                                              ),
-                                        ),
-                                      );
-                                    },
-                                  ).animate().fadeIn(delay: (index * 50).ms);
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: AppSizes.paddingLg),
-                          ],
-
-                          // Debug button
-                          Padding(
-                            padding: const EdgeInsets.all(AppSizes.paddingMd),
-                            child: TextButton.icon(
-                              onPressed: () async {
-                                final storage = context.read<StorageService>();
-                                final authBloc = context.read<AuthBloc>();
-                                await storage.clearAll();
-                                if (context.mounted) {
-                                  context.go('/onboarding');
-                                  authBloc.add(const AuthLogoutRequested());
-                                }
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.topPlayedArtists.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingMd),
+                              itemBuilder: (context, index) {
+                                final artist = feed.topPlayedArtists[index];
+                                return PremiumCard(
+                                  title: artist.name,
+                                  subtitle: 'Top Played',
+                                  imageUrl: artist.profilePicUrl,
+                                  width: 130,
+                                  isCircle: true,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ArtistProfileScreen(artist: artist),
+                                      ),
+                                    );
+                                  },
+                                ).animate().fadeIn(delay: (index * 50).ms);
                               },
-                              icon: Icon(
-                                Icons.refresh,
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.paddingLg),
+                        ],
+
+                        // Artists You Follow (Followed Artists)
+                        if (feed.followedArtists.isNotEmpty) ...[
+                          _buildSectionHeader(context, 'Artists You Follow'),
+                          const SizedBox(height: AppSizes.paddingSm),
+                          SizedBox(
+                            height: 210,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.paddingMd,
+                              ),
+                              scrollDirection: Axis.horizontal,
+                              itemCount: feed.followedArtists.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: AppSizes.paddingMd),
+                              itemBuilder: (context, index) {
+                                final artist = feed.followedArtists[index];
+                                return PremiumCard(
+                                  title: artist.name,
+                                  subtitle: 'Following',
+                                  imageUrl: artist.profilePicUrl,
+                                  width: 130,
+                                  isCircle: true,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ArtistProfileScreen(artist: artist),
+                                      ),
+                                    );
+                                  },
+                                ).animate().fadeIn(delay: (index * 50).ms);
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.paddingLg),
+                        ],
+
+                        // Debug button
+                        Padding(
+                          padding: const EdgeInsets.all(AppSizes.paddingMd),
+                          child: TextButton.icon(
+                            onPressed: () async {
+                              final storage = context.read<StorageService>();
+                              final authBloc = context.read<AuthBloc>();
+                              await storage.clearAll();
+                              if (context.mounted) {
+                                context.go('/onboarding');
+                                authBloc.add(const AuthLogoutRequested());
+                              }
+                            },
+                            icon: Icon(
+                              Icons.refresh,
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.38,
+                              ),
+                            ),
+                            label: Text(
+                              'Reset App',
+                              style: TextStyle(
                                 color: theme.colorScheme.onSurface.withOpacity(
                                   0.38,
                                 ),
                               ),
-                              label: Text(
-                                'Reset App',
-                                style: TextStyle(
-                                  color: theme.colorScheme.onSurface
-                                      .withOpacity(0.38),
-                                ),
-                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return const Center(
-                    child: Text('Welcome! Pull down to refresh'),
+                        ),
+                      ],
+                    ),
                   );
-                },
-              ),
+                }
+
+                return const Center(
+                  child: Text('Welcome! Pull down to refresh'),
+                );
+              },
             ),
           ),
         );

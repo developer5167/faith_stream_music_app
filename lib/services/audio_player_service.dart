@@ -47,6 +47,15 @@ class AudioPlayerService {
     }
   }
 
+  bool _isAdPlaying = false;
+
+  void setAdPlaying(bool value) {
+    _isAdPlaying = value;
+    if (value) {
+      _player.pause();
+    }
+  }
+
   Future<void> playSong(Song song, {List<Song>? queue}) async {
     try {
       if (queue != null && queue.isNotEmpty) {
@@ -97,7 +106,10 @@ class AudioPlayerService {
         initialIndex: _currentIndex,
         initialPosition: Duration.zero,
       );
-      await _player.play();
+
+      if (!_isAdPlaying) {
+        await _player.play();
+      }
     } catch (e) {
       print('Error loading song: $e');
       rethrow;
@@ -105,7 +117,9 @@ class AudioPlayerService {
   }
 
   Future<void> play() async {
-    await _player.play();
+    if (!_isAdPlaying) {
+      await _player.play();
+    }
   }
 
   Future<void> pause() async {

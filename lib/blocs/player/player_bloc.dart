@@ -224,25 +224,33 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   }
 
   Future<void> _onPlay(PlayerPlay event, Emitter<PlayerState> emit) async {
-    if (state is! PlayerPaused) return;
-    final pausedState = state as PlayerPaused;
+    // If we have no active song loaded at all (Initial/Error), we can't play anything
+    if (state is PlayerInitial || state is PlayerError) return;
+
+    // Command the engine to play regardless of bloc state.
+    // If the Ad lock just released, this will resume the physical audio stream
+    // even if the Bloc theoretically thought it was already in a PlayerPlaying state.
     await _audioService.play();
 
     // Resume the listen ticker from where it was paused
     _startListenTicker();
 
-    emit(
-      PlayerPlaying(
-        song: pausedState.song,
-        queue: pausedState.queue,
-        currentIndex: pausedState.currentIndex,
-        position: pausedState.position,
-        duration: pausedState.duration,
-        repeatMode: pausedState.repeatMode,
-        isShuffleEnabled: pausedState.isShuffleEnabled,
-        volume: pausedState.volume,
-      ),
-    );
+    // If we were explicitly paused, transition the UI state to playing
+    if (state is PlayerPaused) {
+      final pausedState = state as PlayerPaused;
+      emit(
+        PlayerPlaying(
+          song: pausedState.song,
+          queue: pausedState.queue,
+          currentIndex: pausedState.currentIndex,
+          position: pausedState.position,
+          duration: pausedState.duration,
+          repeatMode: pausedState.repeatMode,
+          isShuffleEnabled: pausedState.isShuffleEnabled,
+          volume: pausedState.volume,
+        ),
+      );
+    }
   }
 
   Future<void> _onPause(PlayerPause event, Emitter<PlayerState> emit) async {

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../models/ad_model.dart';
 import '../../services/ads_service.dart';
 import '../../config/app_theme.dart';
+import '../screens/subscription_screen.dart';
 
 /// Shows a Spotify-style interstitial ad dialog.
 /// Call [AppOpenAdDialog.showIfAvailable] once per session.
@@ -128,31 +129,35 @@ class _AppOpenAdWidget extends StatelessWidget {
                     ),
                     child: Stack(
                       children: [
-                        Image.network(
-                          ad.mediaUrl,
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.45,
                           width: double.infinity,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, progress) {
-                            if (progress == null) return child;
-                            return Container(
+                          child: Image.network(
+                            ad.mediaUrl,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) return child;
+                              return Container(
+                                height: 280,
+                                color: const Color(0xFF2A2A2A),
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white30,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, _) => Container(
                               height: 280,
                               color: const Color(0xFF2A2A2A),
                               child: const Center(
-                                child: CircularProgressIndicator(
-                                  color: Colors.white30,
-                                  strokeWidth: 2,
+                                child: Icon(
+                                  Icons.broken_image_outlined,
+                                  color: Colors.white24,
+                                  size: 48,
                                 ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, _) => Container(
-                            height: 280,
-                            color: const Color(0xFF2A2A2A),
-                            child: const Center(
-                              child: Icon(
-                                Icons.broken_image_outlined,
-                                color: Colors.white24,
-                                size: 48,
                               ),
                             ),
                           ),
@@ -229,7 +234,15 @@ class _AppOpenAdWidget extends StatelessWidget {
 
           // "Upgrade to remove ads" nudge
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the ad dialog
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SubscriptionScreen(),
+                ),
+              );
+            },
             child: const Text(
               'Remove ads with Premium',
               style: TextStyle(color: Colors.white38, fontSize: 12),

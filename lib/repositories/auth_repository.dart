@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/auth_response.dart';
 import '../models/user.dart';
+import '../models/bootstrap_response.dart';
 import '../services/api_client.dart';
 import '../utils/api_response.dart';
 
@@ -96,6 +97,27 @@ class AuthRepository {
 
       return ApiResponse.error(
         message: response.data['message'] ?? 'Failed to fetch user',
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      return ApiResponse.error(message: e.toString());
+    }
+  }
+
+  Future<ApiResponse<BootstrapResponse>> bootstrap() async {
+    try {
+      final response = await _apiClient.get('/app/bootstrap');
+
+      if (response.statusCode == 200) {
+        final bootstrapData = BootstrapResponse.fromJson(response.data['data']);
+        return ApiResponse.success(
+          data: bootstrapData,
+          message: 'Bootstrap fetched successfully',
+        );
+      }
+
+      return ApiResponse.error(
+        message: response.data['message'] ?? 'Failed to fetch bootstrap data',
         statusCode: response.statusCode,
       );
     } catch (e) {

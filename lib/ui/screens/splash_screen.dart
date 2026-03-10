@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
+import '../../blocs/home/home_bloc.dart';
+import '../../blocs/home/home_event.dart';
+import '../../models/home_feed.dart';
 import '../../services/storage_service.dart';
 import '../../utils/constants.dart';
 
@@ -97,6 +100,34 @@ class _SplashScreenState extends State<SplashScreen> {
         debugPrint('Splash Screen - Auth State Changed: ${state.runtimeType}');
         if (state is AuthAuthenticated) {
           debugPrint('Navigating to /home');
+
+          // FAST-BOOTSTRAP INJECTION
+          // If the auth framework provided the unified backend payload during cold-start,
+          // instantly hydrate the downstream application Blocs so the user experiences zero load time!
+          if (state.bootstrapData != null) {
+            final bootstrap = state.bootstrapData!;
+
+            // Reconstruct the HomeFeed object from the raw arrays
+            final homeFeed = HomeFeed(
+              recentlyPlayed: bootstrap.recentlyPlayed,
+              topPlayedSongs: bootstrap.topPlayed, // mapped from topPlayed
+              trendingSongs:
+                  bootstrap.newReleases, // mapped from newReleases (trending)
+              albums: bootstrap.newAlbums, // mapped from newAlbums
+              followedArtists:
+                  const [], // Currently unused in backend bootstrap
+              topArtists: const [], // Currently unused in backend bootstrap
+              topPlayedArtists:
+                  const [], // Currently unused in backend bootstrap
+            );
+
+            // Instantly load Home
+            context.read<HomeBloc>().add(HomeBootstrapLoaded(homeFeed));
+
+            // The Ads provider logic will be implemented in the next step
+            // context.read<AdsBloc>().add(AdsBootstrapLoaded(bootstrap.ads));
+          }
+
           _navigateToHome();
         } else if (state is AuthUnauthenticated) {
           debugPrint('Navigating to /login');

@@ -54,22 +54,30 @@ void main() async {
   try {
     debugPrint('🔧 Initializing dependencies...');
 
-    // Initialize just_audio_background for lock screen controls
-    await JustAudioBackground.init(
-      androidNotificationChannelId: 'com.faithstream.audio',
-      androidNotificationChannelName: 'FaithStream Audio',
-      androidNotificationOngoing: true,
-    );
-    debugPrint('✅ Audio background service initialized');
+    // Run independent initializations concurrently to speed up startup
+    final futures = await Future.wait([
+      JustAudioBackground.init(
+        androidNotificationChannelId: 'com.faithstream.audio',
+        androidNotificationChannelName: 'FaithStream Audio',
+        androidNotificationOngoing: true,
+      ),
+      SharedPreferences.getInstance(),
+      Hive.initFlutter(),
+      Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
+      Connectivity().checkConnectivity(),
+    ]);
 
-    // Initialize dependencies
+    debugPrint('✅ Core services initialized concurrently');
+
+    // Extract results from Future.wait
+    final prefs = futures[1] as SharedPreferences;
+    final connectivityResult = futures[4] as List<ConnectivityResult>;
+
+    // Storage dependencies
     const secureStorage = FlutterSecureStorage();
-    final prefs = await SharedPreferences.getInstance();
     final storageService = StorageService(secureStorage, prefs);
-    debugPrint('✅ Storage initialized');
 
-    // Initialize Hive for local downloads
-    await Hive.initFlutter();
+    // Download Service depends on StorageService
     final downloadService = DownloadService(storageService);
     await downloadService.init();
     debugPrint('✅ Hive & DownloadService initialized');
@@ -84,17 +92,12 @@ void main() async {
     final searchService = SearchService(apiClient);
     final adsService = AdsService(apiClient);
 
-    // Initialize Firebase
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-
+    // Notification Service depends on Firebase (already initialized) and ApiClient
     final notificationService = NotificationService(apiClient);
     await notificationService.init();
-    debugPrint('✅ Firebase & Notifications initialized');
+    debugPrint('✅ Notifications initialized');
 
     // Check connectivity for offline launch routing
-    final connectivityResult = await Connectivity().checkConnectivity();
     final bool isOffline =
         connectivityResult.contains(ConnectivityResult.none) ||
         connectivityResult.isEmpty;

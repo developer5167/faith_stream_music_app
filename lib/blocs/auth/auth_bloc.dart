@@ -33,42 +33,33 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     if (kDebugMode) {
-      print('🔐 Auth Check Started');
+      print('🔐 Auth Check Started (Bootstrap Mode)');
     }
     emit(const AuthLoading());
 
     try {
       final token = await _storageService.getToken();
-      final user = _storageService.getUser();
+      final localUser = _storageService.getUser();
 
-      if (kDebugMode) {
-        print('🔐 Token: ${token != null ? "Found" : "Not found"}');
-      }
-      if (kDebugMode) {
-        print(
-          '🔐 User: ${user != null ? "Found (${user.name})" : "Not found"}',
-        );
-      }
-
-      if (token != null && user != null) {
-        // Validate token by fetching user
+      if (token != null && localUser != null) {
+        // Validate token and fetch entire app bootstrap payload concurrently
         if (kDebugMode) {
-          print('🔐 Validating token with /auth/me...');
+          print('🔐 Validating token and fetching bootstrap payload...');
         }
-        final response = await _authRepository.getMe();
-
-        if (kDebugMode) {
-          print(
-            '🔐 /auth/me response: success=${response.success}, data=${response.data != null}',
-          );
-        }
+        final response = await _authRepository.bootstrap();
 
         if (response.success && response.data != null) {
-          await _storageService.saveUser(response.data!);
-          if (kDebugMode) {
-            print('✅ Auth Authenticated - User: ${response.data!.name}');
-          }
-          emit(AuthAuthenticated(user: response.data!, token: token));
+          final bootstrap = response.data!;
+          // 1. Sync User Profile
+          await _storageService.saveUser(bootstrap.user!);
+          emit(AuthAuthenticated(user: bootstrap.user!, token: token));
+
+          // 2. Pre-Populate Home Feed
+          // We fire the event to the HomeBloc with the pre-assembled feed data
+          // so the user does not experience a loading spinner on the home screen!
+          // We will pass the data out of AuthBloc so the main provider can distribute it.
+          // Note: The UI layer (Splash Screen) will be responsible for triggering HomeBloc,
+          // but we will cache the bootstrap data inside AuthAuthenticated state soon.
 
           // Try to register token when opening app and restoring session
           _notificationService.registerToken();
@@ -76,16 +67,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           // Token invalid, clear storage
           if (kDebugMode) {
             print(
-              '❌ Token invalid, clearing storage. Error: ${response.message}',
+              '❌ Token invalid or bootstrap failed. Error: ${response.message}',
             );
           }
           await _storageService.clearAll();
           emit(const AuthUnauthenticated());
         }
       } else {
-        if (kDebugMode) {
-          print('❌ No token or user found - Unauthenticated');
-        }
         emit(const AuthUnauthenticated());
       }
     } catch (e) {
