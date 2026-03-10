@@ -41,6 +41,12 @@ import 'blocs/profile/profile_state.dart';
 void main() async {
   debugPrint('🚀 App Starting...');
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.faithstream.audio',
+    androidNotificationChannelName: 'FaithStream Audio',
+    androidNotificationOngoing: true,
+  );
 
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
@@ -53,26 +59,14 @@ void main() async {
 
   try {
     debugPrint('🔧 Initializing dependencies...');
-
+    final prefs = await SharedPreferences.getInstance();
+    await Hive.initFlutter();
+    final connectivityResult = await Connectivity().checkConnectivity();
     // Run independent initializations concurrently to speed up startup
-    final futures = await Future.wait([
-      JustAudioBackground.init(
-        androidNotificationChannelId: 'com.faithstream.audio',
-        androidNotificationChannelName: 'FaithStream Audio',
-        androidNotificationOngoing: true,
-      ),
-      SharedPreferences.getInstance(),
-      Hive.initFlutter(),
-      Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
-      Connectivity().checkConnectivity(),
-    ]);
 
     debugPrint('✅ Core services initialized concurrently');
 
     // Extract results from Future.wait
-    final prefs = futures[1] as SharedPreferences;
-    final connectivityResult = futures[4] as List<ConnectivityResult>;
-
     // Storage dependencies
     const secureStorage = FlutterSecureStorage();
     final storageService = StorageService(secureStorage, prefs);
@@ -98,9 +92,7 @@ void main() async {
     debugPrint('✅ Notifications initialized');
 
     // Check connectivity for offline launch routing
-    final bool isOffline =
-        connectivityResult.contains(ConnectivityResult.none) ||
-        connectivityResult.isEmpty;
+    final bool isOffline = connectivityResult == ConnectivityResult.none;
     final bool hasDownloads = downloadService.downloadCount > 0;
     final String initialRoute = (isOffline && hasDownloads)
         ? '/offline-downloads'

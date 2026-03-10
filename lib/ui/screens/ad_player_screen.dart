@@ -22,6 +22,8 @@ class AdPlayerScreen extends StatefulWidget {
 class _AdPlayerScreenState extends State<AdPlayerScreen>
     with WidgetsBindingObserver {
   late VideoPlayerController _controller;
+  late final AudioPlayerService _audioPlayerService;
+  late final PlayerBloc _playerBloc;
   bool _isInitialized = false;
   bool _hasTrackedView = false;
   bool _showControls = true;
@@ -37,6 +39,9 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    _audioPlayerService = context.read<AudioPlayerService>();
+    _playerBloc = context.read<PlayerBloc>();
+
     _controller =
         VideoPlayerController.networkUrl(Uri.parse(widget.ad.mediaUrl))
           ..initialize().then((_) {
@@ -48,7 +53,7 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
               // Force the underlying audio engine to lock and pause immediately.
               // This prevents race conditions where PlayerBloc might finish loading a song
               // and forcefully call `.play()` while the ad is already running.
-              context.read<AudioPlayerService>().setAdPlaying(true);
+              _audioPlayerService.setAdPlaying(true);
 
               _controller.play();
               _startAdTimers();
@@ -125,12 +130,11 @@ class _AdPlayerScreenState extends State<AdPlayerScreen>
     _controller.dispose();
 
     // Release the ad lock so the main music player can resume normal behavior
-    if (mounted) {
-      context.read<AudioPlayerService>().setAdPlaying(false);
+    _audioPlayerService.setAdPlaying(false);
 
-      // Tell the player bloc we logically intend to play the music now that the ad is gone
-      context.read<PlayerBloc>().add(const PlayerPlay());
-    }
+    // Tell the player bloc we logically intend to play the music now that the ad is gone
+    _playerBloc.add(const PlayerPlay());
+
     super.dispose();
   }
 

@@ -64,24 +64,38 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           // Try to register token when opening app and restoring session
           _notificationService.registerToken();
         } else {
-          // Token invalid, clear storage
+          // Instead of wiping the user out on network failure (500, timeout, offline)
+          // we should trust the local token and user cache for immediate entry.
+          // The API might just be down for 5 seconds.
           if (kDebugMode) {
             print(
-              '❌ Token invalid or bootstrap failed. Error: ${response.message}',
+              '⚠️ Bootstrap API failed / offline. Falling back to cached user model.',
             );
           }
-          await _storageService.clearAll();
-          emit(const AuthUnauthenticated());
+
+          emit(AuthAuthenticated(user: localUser, token: token));
+          _notificationService.registerToken();
         }
       } else {
+        // Only completely unauthenticated if there is genuinely no cached data
         emit(const AuthUnauthenticated());
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Auth Check Error: $e');
+        print('⚠️ Auth Check Network Error: $e');
+        print('⚠️ Yielding to cached profile data...');
       }
-      await _storageService.clearAll();
-      emit(const AuthUnauthenticated());
+
+      // If the entire API call crashes, check if we have offline credentials
+      final token = await _storageService.getToken();
+      final localUser = _storageService.getUser();
+
+      if (token != null && localUser != null) {
+        emit(AuthAuthenticated(user: localUser, token: token));
+      } else {
+        await _storageService.clearAll();
+        emit(const AuthUnauthenticated());
+      }
     }
   }
 

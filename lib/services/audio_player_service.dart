@@ -85,6 +85,21 @@ class AudioPlayerService {
     try {
       // Create a playlist of audio sources for lock screen skip controls
       final List<AudioSource> audioSources = _playlist.map((s) {
+        // Offline downloaded song check
+        if (s.audioUrl != null && s.audioUrl!.startsWith('file://')) {
+          return AudioSource.uri(
+            Uri.parse(s.audioUrl!),
+            tag: MediaItem(
+              id: s.id,
+              title: s.title,
+              artist: s.displayArtist,
+              artUri: s.coverImageUrl != null
+                  ? Uri.parse(s.coverImageUrl!)
+                  : null,
+            ),
+          );
+        }
+
         return AudioSource.uri(
           Uri.parse(s.audioUrl ?? ''),
           tag: MediaItem(

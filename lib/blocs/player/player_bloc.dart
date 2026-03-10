@@ -539,6 +539,32 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     final bool songChanged = (_currentSongId != currentSong.id);
 
     if (songChanged) {
+      // Intercept background gapless play and dynamically enforce the 2-play daily limit
+      final limitResponse = await _streamRepository.checkPlayLimit(
+        currentSong.id,
+      );
+      if (!limitResponse.success) {
+        // User exceeded limits, instantly halt the native engine
+        await _audioService.pause();
+
+        // Trigger the limit dialog UI by flashing Error state
+        emit(PlayerError(limitResponse.message));
+
+        // Halt and update the UI so the queue cursor shows the blocked song gracefully
+        emit(
+          PlayerPaused(
+            song: currentSong,
+            queue: _audioService.playlist,
+            currentIndex: event.index,
+            position: Duration.zero,
+            duration: _audioService.player.duration ?? Duration.zero,
+            repeatMode: _audioService.repeatMode,
+            isShuffleEnabled: _audioService.isShuffleEnabled,
+          ),
+        );
+        return;
+      }
+
       _resetListenTicker();
       _currentSongId = currentSong.id;
       await _streamRepository.logRecentlyPlayed(songId: _currentSongId!);
