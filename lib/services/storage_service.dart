@@ -23,6 +23,18 @@ class StorageService {
     await _secureStorage.delete(key: AppConfig.tokenKey);
   }
 
+  Future<void> saveRefreshToken(String token) async {
+    await _secureStorage.write(key: AppConfig.refreshTokenKey, value: token);
+  }
+
+  Future<String?> getRefreshToken() async {
+    return await _secureStorage.read(key: AppConfig.refreshTokenKey);
+  }
+
+  Future<void> deleteRefreshToken() async {
+    await _secureStorage.delete(key: AppConfig.refreshTokenKey);
+  }
+
   // User Management
   Future<void> saveUser(User user) async {
     final userJson = jsonEncode(user.toJson());

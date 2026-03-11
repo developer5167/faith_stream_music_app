@@ -33,8 +33,47 @@ class ApiClient {
           }
           return handler.next(options);
         },
-        onError: (error, handler) {
-          return handler.next(_handleError(error));
+        onError: (error, handler) async {
+          // Phase 6: Silent Refresh Token Interceptor
+          if (error.response?.statusCode == 401) {
+            final refreshToken = await _storageService.getRefreshToken();
+            
+            // If we have a refresh token, attempt to silently refresh the session
+            if (refreshToken != null) {
+              try {
+                // Use a SEPARATE blank Dio instance to avoid infinite 401 loops
+                final refreshDio = Dio(BaseOptions(baseUrl: AppConfig.baseUrl));
+                final refreshResponse = await refreshDio.post(
+                  '/auth/refresh',
+                   data: {'refreshToken': refreshToken},
+                );
+                
+                if (refreshResponse.statusCode == 200) {
+                   final newAuthToken = refreshResponse.data['token'];
+                   final newRefreshToken = refreshResponse.data['refreshToken'];
+                   
+                   // Save the new tokens securely
+                   await _storageService.saveToken(newAuthToken);
+                   await _storageService.saveRefreshToken(newRefreshToken);
+                   
+                   // Replay the failed request with the brand new token
+                   final opts = error.requestOptions;
+                   opts.headers['Authorization'] = 'Bearer $newAuthToken';
+                   
+                   // Retrying...
+                   final retryResponse = await _dio.fetch(opts);
+                   return handler.resolve(retryResponse);
+                }
+              } catch (e) {
+                // If the refresh token ITSELF is dead (e.g. 30 days old, or blocklisted due to Device Limits)
+                // wipe storage and throw 401 to kick them back to login screen
+                await _storageService.clearAll();
+                return handler.next(error);
+              }
+            }
+          }
+           
+          return handler.next(error);
         },
       ),
     );

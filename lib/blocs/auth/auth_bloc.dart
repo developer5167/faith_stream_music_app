@@ -124,6 +124,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           print('🔑 Saving token and user...');
         }
         await _storageService.saveToken(authResponse.token);
+        await _storageService.saveRefreshToken(authResponse.refreshToken);
         await _storageService.saveUser(authResponse.user);
 
         if (kDebugMode) {
@@ -171,6 +172,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (response.success && response.data != null) {
         final authResponse = response.data!;
         await _storageService.saveToken(authResponse.token);
+        await _storageService.saveRefreshToken(authResponse.refreshToken);
         await _storageService.saveUser(authResponse.user);
 
         emit(

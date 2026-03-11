@@ -4,9 +4,14 @@ import 'user.dart';
 
 class AuthResponse extends Equatable {
   final String token;
+  final String refreshToken;
   final User user;
 
-  const AuthResponse({required this.token, required this.user});
+  const AuthResponse({
+    required this.token, 
+    required this.refreshToken, 
+    required this.user
+  });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     if (kDebugMode) {
@@ -17,14 +22,15 @@ class AuthResponse extends Equatable {
 
     return AuthResponse(
       token: json['token'] as String,
+      refreshToken: json['refreshToken'] as String,
       user: User.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'token': token, 'user': user.toJson()};
+    return {'token': token, 'refreshToken': refreshToken, 'user': user.toJson()};
   }
 
   @override
-  List<Object?> get props => [token, user];
+  List<Object?> get props => [token, refreshToken, user];
 }
