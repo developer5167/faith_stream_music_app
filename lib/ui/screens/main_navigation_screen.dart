@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:go_router/go_router.dart';
-import '../../utils/constants.dart';
 import '../../blocs/profile/profile_bloc.dart';
 import '../../blocs/profile/profile_state.dart';
 import '../../blocs/player/player_bloc.dart';
@@ -228,7 +227,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           ),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.darkPrimary,
+                              backgroundColor: AppTheme.brandMagenta,
                               foregroundColor: Colors.white,
                             ),
                             onPressed: () {
@@ -267,10 +266,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       _currentIndex = index;
                     });
                   },
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  selectedItemColor: AppColors.primaryBrown,
-                  unselectedItemColor: Colors.grey,
                   type: BottomNavigationBarType.fixed,
                   items: navItems,
                 ),

@@ -2,24 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Premium Dark Theme Colors
-  static const Color darkPrimary = Color(0xFFD4A76A); // Gold
-  static const Color darkSecondary = Color(0xFF1DB954); // Spotify Green
-  static const Color darkBackground = Color(0xFF121212);
-  static const Color darkSurface = Color(0xFF1E1E1E);
-  static const Color darkError = Color(0xFFCF6679);
+  // --- THE DEFINITIVE FAITHSTREAM PALETTE ---
+  static const Color brandIndigo = Color(0xFF040B1F);     // Base Background
+  static const Color brandMagenta = Color(0xFFD946EF);    // Accent Highlights
+  static const Color brandPurple = Color(0xFF8B5CF6);     // Gradient Depth
+  static const Color brandSurface = Color(0xFF0F172A);    // Input Surfaces
+  
+  static const Color darkPrimary = Colors.white;          // High Clarity Interaction
+  static const Color darkSecondary = brandMagenta;
+  static const Color darkBackground = brandIndigo;
+  static const Color darkSurface = brandSurface;
+  static const Color darkError = Color(0xFFF43F5E);
 
-  // Smooth Gradients
+  // Smooth, Cinematic Gradients
   static const LinearGradient premiumDarkGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color.fromARGB(255, 122, 67, 0), Colors.black],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF2E1065), // Deep Royal Purple
+      Color(0xFF040B1F), // Deep Indigo
+      Color(0xFF040B1F),
+    ],
+    stops: [0.0, 0.4, 1.0],
   );
 
   static const LinearGradient freeDarkGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color.fromARGB(255, 1, 45, 17), Colors.black],
+    colors: [
+      Color(0xFF0F172A),
+      Color(0xFF040B1F),
+    ],
   );
 
   static const LinearGradient cardGradient = LinearGradient(
@@ -38,8 +51,7 @@ class AppTheme {
   // Premium Dark Theme
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
-    brightness: Brightness.dark,
-    scaffoldBackgroundColor: Colors.black,
+    scaffoldBackgroundColor: darkBackground,
     colorScheme: const ColorScheme.dark(
       primary: darkPrimary,
       secondary: darkSecondary,
@@ -117,30 +129,35 @@ class AppTheme {
     // Input Decoration Theme
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: const Color(0xFF2A2A2A),
+      fillColor: Colors.white.withOpacity(0.04),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8), // Slightly sharper
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: darkPrimary, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withOpacity(0.4), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      hintStyle: TextStyle(color: Colors.white38),
+      labelStyle: const TextStyle(color: Colors.white70),
+      hintStyle: const TextStyle(color: Colors.white24),
     ),
 
-    // Elevated Button Theme - Rounded & Bold
+    // Elevated Button Theme - Premium "Apple Dark" style
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: darkPrimary,
-        foregroundColor: Colors.black, // High contrast text on Gold
+        backgroundColor: Colors.white,
+        foregroundColor: brandIndigo, // Clean contrast
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ), // Pill shape
-        textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800),
       ),
     ),
 
@@ -149,9 +166,7 @@ class AppTheme {
 
     // Bottom Navigation Bar
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
-      backgroundColor: const Color(
-        0xFF121212,
-      ).withOpacity(0.95), // Nearly opaque
+      backgroundColor: brandIndigo,
       selectedItemColor: Colors.white,
       unselectedItemColor: Colors.white54,
       type: BottomNavigationBarType.fixed,
@@ -159,7 +174,8 @@ class AppTheme {
       showUnselectedLabels: true,
       selectedLabelStyle: GoogleFonts.inter(
         fontSize: 10,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
+        color: Colors.white,
       ),
       unselectedLabelStyle: GoogleFonts.inter(
         fontSize: 10,

@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio_background/just_audio_background.dart';
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'config/app_theme.dart';
@@ -272,21 +271,12 @@ class MyApp extends StatelessWidget {
               // Initialize DeepLinkService
               DeepLinkService(router).init();
 
-              return DynamicColorBuilder(
-                builder: (lightDynamic, darkDynamic) {
-                  // Use darkDynamic to customize our dark theme if available
-                  final theme = AppTheme.darkTheme.copyWith(
-                    colorScheme: darkDynamic ?? AppTheme.darkTheme.colorScheme,
-                  );
-
-                  return MaterialApp.router(
-                    title: 'FaithStream',
-                    debugShowCheckedModeBanner: false,
-                    theme: theme,
-                    themeMode: ThemeMode.dark,
-                    routerConfig: router,
-                  );
-                },
+              return MaterialApp.router(
+                title: 'FaithStream',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.darkTheme,
+                themeMode: ThemeMode.dark,
+                routerConfig: router,
               );
             },
           ),

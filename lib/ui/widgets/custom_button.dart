@@ -50,11 +50,11 @@ class CustomButton extends StatelessWidget {
               onPressed: isLoading ? null : onPressed,
               style: ElevatedButton.styleFrom(
                 backgroundColor: backgroundColor ?? theme.colorScheme.primary,
-                foregroundColor: textColor ?? Colors.white,
+                foregroundColor: textColor ?? theme.colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppSizes.borderRadiusMd),
                 ),
-                elevation: 2,
+                elevation: 0,
               ),
               child: _buildChild(context),
             ),
@@ -62,13 +62,16 @@ class CustomButton extends StatelessWidget {
   }
 
   Widget _buildChild(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = textColor ?? (isOutlined ? theme.colorScheme.primary : theme.colorScheme.onPrimary);
+
     if (isLoading) {
       return SizedBox(
         height: AppSizes.iconMd,
         width: AppSizes.iconMd,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(textColor ?? Colors.white),
+          valueColor: AlwaysStoppedAnimation<Color>(color),
         ),
       );
     }
@@ -77,12 +80,12 @@ class CustomButton extends StatelessWidget {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: AppSizes.iconSm),
+          Icon(icon, size: AppSizes.iconSm, color: color),
           const SizedBox(width: AppSizes.paddingSm),
           Text(
             text,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: textColor ?? Colors.white,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: color,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -92,8 +95,8 @@ class CustomButton extends StatelessWidget {
 
     return Text(
       text,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        color: textColor ?? Colors.white,
+      style: theme.textTheme.labelLarge?.copyWith(
+        color: color,
         fontWeight: FontWeight.w600,
       ),
     );

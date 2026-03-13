@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
@@ -9,7 +9,7 @@ import '../../blocs/home/home_bloc.dart';
 import '../../blocs/home/home_event.dart';
 import '../../models/home_feed.dart';
 import '../../services/storage_service.dart';
-import '../../utils/constants.dart';
+import '../../config/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,46 +18,41 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
   bool _hasNavigated = false;
+  bool _isExpanded = false;
   DateTime? _splashStartTime;
 
   @override
   void initState() {
     super.initState();
     _splashStartTime = DateTime.now();
-    debugPrint('=== Splash Screen initState ===');
 
-    // Check auth status with error handling
+    // Start expansion almost immediately
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) setState(() => _isExpanded = true);
+    });
+
+    // Check auth status
     try {
       context.read<AuthBloc>().add(const AuthCheckRequested());
-      debugPrint('Auth check requested successfully');
     } catch (e) {
-      debugPrint('Error in splash screen initState: $e');
-      // Navigate to login on error
       _navigateToLogin();
     }
 
-    // Fallback: Navigate to login after 3 seconds if nothing happens
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted && !_hasNavigated) {
-        debugPrint('Timeout reached - navigating to login as fallback');
-        _navigateToLogin();
-      }
+    // Fallback navigation
+    Future.delayed(const Duration(seconds: 7), () {
+      if (mounted && !_hasNavigated) _navigateToLogin();
     });
   }
 
   Future<void> _ensureMinimumSplashDuration() async {
     if (_splashStartTime != null) {
       final elapsed = DateTime.now().difference(_splashStartTime!);
-      const minDuration = Duration(milliseconds: 500);
-
+      const minDuration = Duration(milliseconds: 3500);
       if (elapsed < minDuration) {
-        final remaining = minDuration - elapsed;
-        debugPrint(
-          '⏱️ Waiting ${remaining.inMilliseconds}ms to meet minimum splash duration',
-        );
-        await Future.delayed(remaining);
+        await Future.delayed(minDuration - elapsed);
       }
     }
   }
@@ -67,11 +62,8 @@ class _SplashScreenState extends State<SplashScreen> {
       _hasNavigated = true;
       await _ensureMinimumSplashDuration();
       if (mounted) {
-        // Check if onboarding is completed
         final storageService = context.read<StorageService>();
-        final onboardingCompleted = storageService.isOnboardingCompleted();
-
-        if (onboardingCompleted) {
+        if (storageService.isOnboardingCompleted()) {
           context.go('/login');
         } else {
           context.go('/onboarding');
@@ -84,104 +76,188 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!_hasNavigated && mounted) {
       _hasNavigated = true;
       await _ensureMinimumSplashDuration();
-      if (mounted) {
-        context.go('/home');
-      }
+      if (mounted) context.go('/home');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    debugPrint('=== Splash Screen build called ===');
+    final textStyle = theme.textTheme.displayLarge?.copyWith(
+      fontSize: 50,
+      fontWeight: FontWeight.w900,
+      letterSpacing: -1,
+      height: 1.0,
+    );
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        debugPrint('Splash Screen - Auth State Changed: ${state.runtimeType}');
         if (state is AuthAuthenticated) {
-          debugPrint('Navigating to /home');
-
-          // FAST-BOOTSTRAP INJECTION
-          // If the auth framework provided the unified backend payload during cold-start,
-          // instantly hydrate the downstream application Blocs so the user experiences zero load time!
           if (state.bootstrapData != null) {
             final bootstrap = state.bootstrapData!;
-
-            // Reconstruct the HomeFeed object from the raw arrays
             final homeFeed = HomeFeed(
               recentlyPlayed: bootstrap.recentlyPlayed,
-              topPlayedSongs: bootstrap.topPlayed, // mapped from topPlayed
-              trendingSongs:
-                  bootstrap.newReleases, // mapped from newReleases (trending)
-              albums: bootstrap.newAlbums, // mapped from newAlbums
-              followedArtists:
-                  const [], // Currently unused in backend bootstrap
-              topArtists: const [], // Currently unused in backend bootstrap
-              topPlayedArtists:
-                  const [], // Currently unused in backend bootstrap
+              topPlayedSongs: bootstrap.topPlayed,
+              trendingSongs: bootstrap.newReleases,
+              albums: bootstrap.newAlbums,
+              followedArtists: const [],
+              topArtists: const [],
+              topPlayedArtists: const [],
             );
-
-            // Instantly load Home
             context.read<HomeBloc>().add(HomeBootstrapLoaded(homeFeed));
-
-            // The Ads provider logic will be implemented in the next step
-            // context.read<AdsBloc>().add(AdsBootstrapLoaded(bootstrap.ads));
           }
-
           _navigateToHome();
-        } else if (state is AuthUnauthenticated) {
-          debugPrint('Navigating to /login');
-          _navigateToLogin();
-        } else if (state is AuthError) {
-          debugPrint('Auth Error: ${state.message}');
+        } else if (state is AuthUnauthenticated || state is AuthError) {
           _navigateToLogin();
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF8B4513), // Fallback color
         body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: theme.brightness == Brightness.light
-                  ? [AppColors.primaryBrown, AppColors.primaryGold]
-                  : [AppColors.primaryGold, AppColors.primaryBrown],
-            ),
+          decoration: const BoxDecoration(
+            gradient: AppTheme.premiumDarkGradient,
           ),
-          child: SafeArea(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // App Logo/Icon
-                  const Icon(Icons.music_note, size: 120, color: Colors.white),
-                  const SizedBox(height: 24),
-                  Text(
-                    AppStrings.appName,
-                    style: theme.textTheme.displayLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Worship Through Music',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w300,
-                    ),
-                  ),
-                  const SizedBox(height: 64),
-                  const CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                ],
+          child: Stack(
+            children: [
+              Center(
+                child:
+                    Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // 'F' Anchor
+                            Text(
+                                  'F',
+                                  style: textStyle?.copyWith(
+                                    color: Colors.white,
+                                  ),
+                                )
+                                .animate()
+                                .fadeIn(duration: 400.ms)
+                                .scale(
+                                  begin: const Offset(0.5, 0.5),
+                                  curve: Curves.easeOutBack,
+                                  duration: 400.ms,
+                                ),
+
+                            // 'aith' Expansion
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 1000),
+                              curve: Curves.easeOutQuart,
+                              width: _isExpanded ? 100 : 0,
+                              child: ClipRect(
+                                child: OverflowBox(
+                                  alignment: Alignment.centerLeft,
+                                  maxWidth: 200,
+                                  child:
+                                      Text(
+                                            'aith',
+                                            style: textStyle?.copyWith(
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                          .animate(target: _isExpanded ? 1 : 0)
+                                          .fadeIn(
+                                            duration: 500.ms,
+                                            delay: 200.ms,
+                                          ),
+                                ),
+                              ),
+                            ),
+
+                            // 'S' Anchor
+                            ShaderMask(
+                                  shaderCallback: (bounds) => const LinearGradient(
+                                    colors: [
+                                      Color(0xFF8B5CF6), // Royal Purple
+                                      Color(0xFFD946EF), // Electric Magenta
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ).createShader(bounds),
+                                  child: Text(
+                                    'S',
+                                    style: textStyle?.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                )
+                                .animate()
+                                .fadeIn(duration: 400.ms, delay: 100.ms)
+                                .scale(
+                                  begin: const Offset(0.5, 0.5),
+                                  curve: Curves.easeOutBack,
+                                  duration: 400.ms,
+                                  delay: 100.ms,
+                                ),
+
+                            // 'tream' Expansion
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 1000),
+                              curve: Curves.easeOutQuart,
+                              width: _isExpanded ? 150 : 0,
+                              child: ClipRect(
+                                child: OverflowBox(
+                                  alignment: Alignment.centerLeft,
+                                  maxWidth: 400,
+                                  child:
+                                      ShaderMask(
+                                            shaderCallback: (bounds) =>
+                                                const LinearGradient(
+                                              colors: [
+                                                Color(0xFF8B5CF6), // Royal Purple
+                                                Color(0xFFD946EF), // Electric Magenta
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ).createShader(bounds),
+                                            child: Text(
+                                              'tream',
+                                              style: textStyle?.copyWith(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          )
+                                          .animate(target: _isExpanded ? 1 : 0)
+                                          .fadeIn(
+                                            duration: 500.ms,
+                                            delay: 400.ms,
+                                          ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                        .animate(delay: 1800.ms)
+                        .shimmer(
+                          duration: 1500.ms,
+                          color: Colors.white.withOpacity(0.9),
+                          size: 1.5,
+                        ),
               ),
-            ),
+
+              // Subtle Subtitle / Tagline reveal after expansion
+              Positioned(
+                bottom: 80,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 1000),
+                    opacity: _isExpanded ? 0.6 : 0.0,
+                    child: Text(
+                      'Grace in Every Stream',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white,
+                        letterSpacing: 2,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
+        ).animate().fadeOut(delay: 3800.ms, duration: 600.ms),
       ),
     );
   }

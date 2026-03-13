@@ -20,6 +20,12 @@ class AppColors {
   static const Color warning = Color(0xFFFFA726);
   static const Color info = Color(0xFF29B6F6);
 
+  // Premium Brand Colors (from icon)
+  static const Color deepIndigo = Color(0xFF040B1F);
+  static const Color deepBlueLight = Color(0xFF0A1F44);
+  static const Color magentaStream = Color(0xFFD946EF);
+  static const Color purpleStream = Color(0xFF8B5CF6);
+
   // Text Colors
   static const Color textPrimary = Color(0xFF212121);
   static const Color textSecondary = Color(0xFF757575);
@@ -40,6 +46,18 @@ class AppColors {
 
   static const LinearGradient darkGradient = LinearGradient(
     colors: [Colors.black, Colors.black],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient premiumBackgroundGradient = LinearGradient(
+    colors: [deepBlueLight, deepIndigo],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const LinearGradient streamGradient = LinearGradient(
+    colors: [purpleStream, magentaStream],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
