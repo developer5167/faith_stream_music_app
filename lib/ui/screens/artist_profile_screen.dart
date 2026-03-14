@@ -282,6 +282,12 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                           const SizedBox(width: 8),
                           _buildStatBadge(
                             context,
+                            Icons.play_circle_outline,
+                            '${_artist!.totalStreams ?? 0} Streams',
+                          ),
+                          const SizedBox(width: 8),
+                          _buildStatBadge(
+                            context,
                             Icons.people_rounded,
                             '${_artist!.totalFollowers ?? 0} Followers',
                           ),

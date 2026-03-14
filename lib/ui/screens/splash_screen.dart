@@ -50,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _ensureMinimumSplashDuration() async {
     if (_splashStartTime != null) {
       final elapsed = DateTime.now().difference(_splashStartTime!);
-      const minDuration = Duration(milliseconds: 3500);
+      const minDuration = Duration(milliseconds: 4500);
       if (elapsed < minDuration) {
         await Future.delayed(minDuration - elapsed);
       }

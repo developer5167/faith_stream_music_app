@@ -116,9 +116,11 @@ class SongCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        song.displayArtist,
+                        song.singer != null && song.singer!.isNotEmpty
+                            ? '${song.singer} • ${song.displayArtist}'
+                            : song.displayArtist,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
                           fontWeight: FontWeight.w500,
                         ),
                         maxLines: 1,
@@ -137,24 +139,6 @@ class SongCard extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.play_circle_outline,
-                            size: 14,
-                            color: theme.colorScheme.onSurface.withOpacity(0.5),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${song.streamCount ?? "0"} plays',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.5,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),

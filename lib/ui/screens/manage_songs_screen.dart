@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../services/storage_service.dart';
 import '../../services/api_client.dart';
 import '../../services/song_service.dart';
+import '../../services/album_service.dart';
 
 class ManageSongsScreen extends StatefulWidget {
   const ManageSongsScreen({super.key});
@@ -13,20 +14,41 @@ class ManageSongsScreen extends StatefulWidget {
   State<ManageSongsScreen> createState() => _ManageSongsScreenState();
 }
 
-class _ManageSongsScreenState extends State<ManageSongsScreen> {
+class _ManageSongsScreenState extends State<ManageSongsScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   List<dynamic> _songs = [];
+  List<dynamic> _albums = [];
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _loadSongs();
+    _tabController = TabController(length: 2, vsync: this);
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      await Future.wait([
+        _loadSongs(),
+        _loadAlbums(),
+      ]);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   Future<void> _loadSongs() async {
     try {
-      setState(() => _isLoading = true);
-
       final storageService = context.read<StorageService>();
       final apiClient = ApiClient(storageService);
       final songService = SongService(apiClient);
@@ -39,31 +61,35 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
         });
       }
     } catch (e) {
+      debugPrint('Failed to load songs: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Failed to load songs: $e')));
       }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
     }
   }
 
-  // ignore: unused_element
-  String _getStatusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'APPROVED':
-        return 'green';
-      case 'PENDING':
-        return 'orange';
-      case 'REJECTED':
-        return 'red';
-      case 'DRAFT':
-        return 'blue';
-      default:
-        return 'grey';
+  Future<void> _loadAlbums() async {
+    try {
+      final storageService = context.read<StorageService>();
+      final apiClient = ApiClient(storageService);
+      final albumService = AlbumService(apiClient);
+
+      final albums = await albumService.getMyAlbums();
+
+      if (mounted) {
+        setState(() {
+          _albums = albums;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to load albums: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load albums: $e')));
+      }
     }
   }
 
@@ -103,146 +129,298 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Songs'),
+        title: const Text('Manage Library'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: theme.colorScheme.primary,
+          labelColor: theme.colorScheme.primary,
+          unselectedLabelColor: Colors.grey,
+          tabs: const [
+            Tab(text: 'Songs'),
+            Tab(text: 'Albums'),
+          ],
+        ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _songs.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.music_off, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: AppSizes.paddingMd),
-                  Text(
-                    'No songs found',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                  ),
-                  const SizedBox(height: AppSizes.paddingSm),
-                  Text(
-                    'Upload your first song to get started',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _loadSongs,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(AppSizes.paddingMd),
-                itemCount: _songs.length,
-                itemBuilder: (context, index) {
-                  final song = _songs[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: AppSizes.paddingMd),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(AppSizes.paddingMd),
-                      leading: Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.grey[300],
-                          image: song['cover_image_url'] != null
-                              ? DecorationImage(
-                                  image: NetworkImage(song['cover_image_url']),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        child: song['cover_image_url'] == null
-                            ? Icon(
-                                Icons.music_note,
-                                color: theme.colorScheme.onSurface.withOpacity(
-                                  0.3,
-                                ),
-                              )
-                            : null,
-                      ),
-                      title: Text(
-                        song['title'] ?? 'Untitled',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          Text('${song['genre']} • ${song['language']}'),
-                          const SizedBox(height: 4),
-                          if (song['album_title'] != null)
-                            Text(
-                              'Album: ${song['album_title']}',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getStatusBackgroundColor(
-                                song['status'] ?? 'DRAFT',
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              _getStatusText(song['status'] ?? 'DRAFT'),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            song['created_at'] != null
-                                ? _formatDate(song['created_at'])
-                                : '',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Icon(Icons.chevron_right, color: Colors.grey[400]),
-                        ],
-                      ),
-                      onTap: () {
-                        _showSongDetails(song);
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildSongsList(theme),
+          _buildAlbumsList(theme),
+        ],
+      ),
     );
   }
 
-  String _formatDate(String dateString) {
+  Widget _buildSongsList(ThemeData theme) {
+    if (_isLoading && _songs.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_songs.isEmpty) {
+      return _buildEmptyState(theme, 'No songs found', 'Upload your first song to get started');
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadSongs,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(AppSizes.paddingMd),
+        itemCount: _songs.length,
+        itemBuilder: (context, index) {
+          final song = _songs[index];
+          return Card(
+            margin: const EdgeInsets.only(bottom: AppSizes.paddingMd),
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(AppSizes.paddingMd),
+              leading: _buildThumbnail(song['cover_image_url'], theme),
+              title: Text(
+                song['title'] ?? 'Untitled',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  Text('${song['genre']} • ${song['language']}'),
+                  const SizedBox(height: 8),
+                  _buildStatusBadge(song['status'] ?? 'DRAFT'),
+                ],
+              ),
+              onTap: () => _showSongDetails(song),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAlbumsList(ThemeData theme) {
+    if (_isLoading && _albums.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_albums.isEmpty) {
+      return _buildEmptyState(theme, 'No albums found', 'Create your first album to organize songs');
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadAlbums,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(AppSizes.paddingMd),
+        itemCount: _albums.length,
+        itemBuilder: (context, index) {
+          final album = _albums[index];
+          final String status = album['status'] ?? 'DRAFT';
+
+          return Card(
+            margin: const EdgeInsets.only(bottom: AppSizes.paddingMd),
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(AppSizes.paddingMd),
+              leading: _buildThumbnail(album['cover_image_url'], theme, isAlbum: true),
+              title: Text(
+                album['title'] ?? 'Untitled',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  Text(album['release_type'] ?? 'ALBUM'),
+                  const SizedBox(height: 8),
+                  _buildStatusBadge(status),
+                ],
+              ),
+              trailing: status == 'DRAFT'
+                  ? ElevatedButton(
+                      onPressed: () => _confirmAlbumSubmission(album),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                      child: const Text('Submit'),
+                    )
+                  : const Icon(Icons.chevron_right),
+              onTap: () => _showAlbumDetails(album),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildThumbnail(String? url, ThemeData theme, {bool isAlbum = false}) {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.grey[300],
+        image: url != null
+            ? DecorationImage(
+                image: NetworkImage(url),
+                fit: BoxFit.cover,
+              )
+            : null,
+      ),
+      child: url == null
+          ? Icon(
+              isAlbum ? Icons.album : Icons.music_note,
+              color: theme.colorScheme.onSurface.withOpacity(0.3),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: _getStatusBackgroundColor(status),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        _getStatusText(status),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(ThemeData theme, String title, String subtitle) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.library_music, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: AppSizes.paddingMd),
+          Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.6),
+            ),
+          ),
+          const SizedBox(height: AppSizes.paddingSm),
+          Text(
+            subtitle,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmAlbumSubmission(Map<String, dynamic> album) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Submit Album'),
+        content: Text('Submit "${album['title']}" for review? Once submitted, you cannot edit it until the review is complete.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Submit Now', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _submitAlbum(album['id'].toString());
+    }
+  }
+
+  Future<void> _submitAlbum(String albumId) async {
+    setState(() => _isLoading = true);
     try {
-      final date = DateTime.parse(dateString);
-      return '${date.day}/${date.month}/${date.year}';
+      final storageService = context.read<StorageService>();
+      final apiClient = ApiClient(storageService);
+      final albumService = AlbumService(apiClient);
+
+      await albumService.submitAlbum(albumId: albumId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Album submitted for review!'), backgroundColor: Colors.green),
+        );
+        _loadData();
+      }
     } catch (e) {
-      return '';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit album: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _showSongDetails(Map<String, dynamic> song) {
+    _showDetailsSheet(
+      title: song['title'] ?? 'Untitled',
+      imageUrl: song['cover_image_url'],
+      details: [
+        _buildDetailRow('Genre', song['genre']),
+        _buildDetailRow('Language', song['language']),
+        if (song['album_title'] != null) _buildDetailRow('Album', song['album_title']),
+        _buildDetailRow('Status', _getStatusText(song['status'] ?? 'DRAFT')),
+      ],
+      description: song['description'],
+      lyrics: song['lyrics'],
+    );
+  }
+
+  void _showAlbumDetails(Map<String, dynamic> album) {
+    _showDetailsSheet(
+      title: album['title'] ?? 'Untitled',
+      imageUrl: album['cover_image_url'],
+      details: [
+        _buildDetailRow('Type', album['release_type']),
+        _buildDetailRow('Language', album['language']),
+        _buildDetailRow('Status', _getStatusText(album['status'] ?? 'DRAFT')),
+      ],
+      description: album['description'],
+    );
+  }
+
+  Widget _buildDetailRow(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          Expanded(child: Text(value ?? 'N/A')),
+        ],
+      ),
+    );
+  }
+
+  void _showDetailsSheet({
+    required String title,
+    String? imageUrl,
+    required List<Widget> details,
+    String? description,
+    String? lyrics,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -271,7 +449,7 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
                     controller: scrollController,
                     children: [
                       Text(
-                        song['title'] ?? 'Untitled',
+                        title,
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
@@ -279,7 +457,7 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
                       const SizedBox(height: AppSizes.paddingMd),
 
                       // Cover Image
-                      if (song['cover_image_url'] != null) ...[
+                      if (imageUrl != null) ...[
                         Center(
                           child: Container(
                             width: 150,
@@ -287,7 +465,7 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12),
                               image: DecorationImage(
-                                image: NetworkImage(song['cover_image_url']),
+                                image: NetworkImage(imageUrl),
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -297,28 +475,10 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
                       ],
 
                       // Details
-                      _buildDetailItem('Genre', song['genre']),
-                      _buildDetailItem('Language', song['language']),
-                      if (song['album_title'] != null)
-                        _buildDetailItem('Album', song['album_title']),
-                      if (song['track_number'] != null)
-                        _buildDetailItem(
-                          'Track Number',
-                          song['track_number'].toString(),
-                        ),
-                      _buildDetailItem(
-                        'Status',
-                        _getStatusText(song['status'] ?? 'DRAFT'),
-                      ),
-                      if (song['created_at'] != null)
-                        _buildDetailItem(
-                          'Created',
-                          _formatDate(song['created_at']),
-                        ),
+                      ...details,
 
                       // Description
-                      if (song['description'] != null &&
-                          song['description'].isNotEmpty) ...[
+                      if (description != null && description.isNotEmpty) ...[
                         const SizedBox(height: AppSizes.paddingMd),
                         Text(
                           'Description',
@@ -326,12 +486,11 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: AppSizes.paddingSm),
-                        Text(song['description']),
+                        Text(description),
                       ],
 
                       // Lyrics
-                      if (song['lyrics'] != null &&
-                          song['lyrics'].isNotEmpty) ...[
+                      if (lyrics != null && lyrics.isNotEmpty) ...[
                         const SizedBox(height: AppSizes.paddingMd),
                         Text(
                           'Lyrics',
@@ -348,7 +507,7 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            song['lyrics'],
+                            lyrics,
                             style: TextStyle(
                               height: 1.5,
                               color: theme.colorScheme.onSurface.withOpacity(
@@ -365,28 +524,6 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildDetailItem(String label, String? value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.paddingSm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              '$label:',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-          Expanded(child: Text(value ?? 'N/A')),
-        ],
       ),
     );
   }

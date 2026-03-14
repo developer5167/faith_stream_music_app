@@ -646,8 +646,6 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
           _buildInfoRow(theme, 'Genre', _song!.genre ?? 'Christian'),
           const Divider(height: 24),
           _buildInfoRow(theme, 'Language', _song!.language ?? 'English'),
-          const Divider(height: 24),
-          _buildInfoRow(theme, 'Streams', '${_song!.streamCount} plays'),
         ],
       ),
     );

@@ -2,8 +2,8 @@ import 'package:faith_stream_music_app/models/song.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/sharing_service.dart';
 import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_event.dart';
 import '../../blocs/player/player_state.dart';
@@ -366,12 +366,28 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
+                      // Singer
+                      if (song.singer != null && song.singer!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            song.singer!,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: AppTheme.darkPrimary,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      // Artist • Album
                       Text(
-                        song.displayArtist,
-                        style: theme.textTheme.titleMedium?.copyWith(
+                        '${song.displayArtist}${song.albumTitle != null && song.albumTitle!.isNotEmpty ? ' • ${song.albumTitle}' : ''}',
+                        style: theme.textTheme.titleSmall?.copyWith(
                           color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.6,
+                            alpha: 0.5,
                           ),
                         ),
                         maxLines: 1,
@@ -549,8 +565,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                   onPressed: () {
-                    Share.share(
-                      'Check out ${song.title} by ${song.displayArtist} on FaithStream!',
+                    SharingService().shareSong(
+                      id: song.id,
+                      title: song.title,
+                      artist: song.displayArtist,
                     );
                   },
                 ),

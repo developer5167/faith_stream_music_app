@@ -232,7 +232,7 @@ class UserProfileScreen extends StatelessWidget {
                         icon: Icons.notifications,
                         title: 'Notifications',
                         onTap: () {
-                          // TODO: Navigate to notifications settings
+                          context.push('/notifications');
                         },
                       ),
                       _buildActionCard(
@@ -433,7 +433,6 @@ class UserProfileScreen extends StatelessWidget {
     final theme = Theme.of(context);
     if (user.isArtist) {
       return Card(
-        color: theme.colorScheme.primary,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(

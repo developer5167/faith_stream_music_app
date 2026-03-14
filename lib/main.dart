@@ -24,6 +24,7 @@ import 'services/ads_service.dart';
 import 'repositories/stream_repository.dart';
 import 'repositories/library_repository.dart';
 import 'repositories/user_repository.dart';
+import 'repositories/notification_repository.dart';
 import 'blocs/auth/auth_bloc.dart';
 import 'blocs/auth/auth_state.dart';
 import 'blocs/home/home_bloc.dart';
@@ -36,6 +37,7 @@ import 'blocs/library/library_event.dart';
 import 'blocs/profile/profile_bloc.dart';
 import 'blocs/profile/profile_event.dart';
 import 'blocs/profile/profile_state.dart';
+import 'blocs/notification/notification_bloc.dart';
 
 void main() async {
   debugPrint('🚀 App Starting...');
@@ -84,6 +86,7 @@ void main() async {
     final audioPlayerService = AudioPlayerService();
     final searchService = SearchService(apiClient);
     final adsService = AdsService(apiClient);
+    final notificationRepository = NotificationRepository(apiClient);
 
     // Notification Service depends on Firebase (already initialized) and ApiClient
     final notificationService = NotificationService(apiClient);
@@ -114,6 +117,7 @@ void main() async {
         notificationService: notificationService,
         searchService: searchService,
         adsService: adsService,
+        notificationRepository: notificationRepository,
         downloadService: downloadService,
         initialRoute: initialRoute,
       ),
@@ -163,6 +167,7 @@ class MyApp extends StatelessWidget {
   final NotificationService notificationService;
   final SearchService searchService;
   final AdsService adsService;
+  final NotificationRepository notificationRepository;
   final DownloadService downloadService;
   final String initialRoute;
 
@@ -178,6 +183,7 @@ class MyApp extends StatelessWidget {
     required this.notificationService,
     required this.searchService,
     required this.adsService,
+    required this.notificationRepository,
     required this.downloadService,
     required this.initialRoute,
   });
@@ -193,6 +199,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<AudioPlayerService>.value(value: audioPlayerService),
         RepositoryProvider<SearchService>.value(value: searchService),
         RepositoryProvider<AdsService>.value(value: adsService),
+        RepositoryProvider<NotificationRepository>.value(value: notificationRepository),
         RepositoryProvider<DownloadService>.value(value: downloadService),
       ],
       child: MultiBlocProvider(
@@ -226,6 +233,9 @@ class MyApp extends StatelessWidget {
             create: (context) =>
                 ProfileBloc(userRepository)..add(ProfileLoad()),
           ),
+          BlocProvider(
+            create: (context) => NotificationBloc(notificationRepository),
+          ),
         ],
         child: MultiBlocListener(
           listeners: [
@@ -236,6 +246,7 @@ class MyApp extends StatelessWidget {
                   context.read<HomeBloc>().add(const HomeLoadRequested());
                   context.read<LibraryBloc>().add(LibraryLoadAll());
                   context.read<ProfileBloc>().add(ProfileLoad());
+                  context.read<NotificationBloc>().add(const NotificationLoad(refresh: true));
                 } else if (state is AuthUnauthenticated) {
                   // Reset all blocs to initial states on logout
                   context.read<HomeBloc>().add(const HomeReset());

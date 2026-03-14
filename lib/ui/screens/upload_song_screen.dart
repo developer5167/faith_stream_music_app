@@ -26,6 +26,7 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _lyricsController = TextEditingController();
+  final _singerController = TextEditingController();
 
   String _selectedLanguage = 'English';
   String _selectedGenre = 'Gospel';
@@ -81,6 +82,7 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _lyricsController.dispose();
+    _singerController.dispose();
     super.dispose();
   }
 
@@ -295,6 +297,7 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
         trackNumber: _trackNumber,
         audioUrl: audioUrl, // Include S3 URL
         coverImageUrl: coverUrl, // Include cover S3 URL if exists
+        singer: _singerController.text.trim(),
       );
 
       setState(() {
@@ -406,6 +409,21 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Please enter a song title';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppSizes.paddingMd),
+
+                    // Singer field
+                    CustomTextField(
+                      controller: _singerController,
+                      label: 'Singer(s) *',
+                      hint: 'Enter singer name(s)',
+                      enabled: !_isUploading,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter singer name(s)';
                         }
                         return null;
                       },

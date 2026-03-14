@@ -34,19 +34,14 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     emit(LibraryLoading());
 
     try {
-      final favoritesResponse = await _libraryRepository.getFavorites();
-      final playlistsResponse = await _libraryRepository.getPlaylists();
-      final artistsResponse = await _libraryRepository.getFavoriteArtists();
-      final albumsResponse = await _libraryRepository.getFavoriteAlbums();
+      final response = await _libraryRepository.getLibraryBootstrap();
 
-      if (favoritesResponse.success &&
-          playlistsResponse.success &&
-          artistsResponse.success &&
-          albumsResponse.success) {
-        final favorites = favoritesResponse.data ?? [];
-        final playlists = playlistsResponse.data ?? [];
-        final artists = artistsResponse.data ?? [];
-        final albums = albumsResponse.data ?? [];
+      if (response.success && response.data != null) {
+        final data = response.data!;
+        final favorites = data.favorites;
+        final playlists = data.playlists;
+        final artists = data.favoriteArtists;
+        final albums = data.favoriteAlbums;
         final favoriteSongIds = favorites.map((song) => song.id).toSet();
 
         emit(
@@ -59,19 +54,7 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
           ),
         );
       } else {
-        // Find first error
-        String errorMessage = 'Failed to load library';
-        if (!favoritesResponse.success) {
-          errorMessage = favoritesResponse.message;
-        } else if (!playlistsResponse.success) {
-          errorMessage = playlistsResponse.message;
-        } else if (!artistsResponse.success) {
-          errorMessage = artistsResponse.message;
-        } else if (!albumsResponse.success) {
-          errorMessage = albumsResponse.message;
-        }
-
-        emit(LibraryError(errorMessage));
+        emit(LibraryError(response.message));
       }
     } catch (e) {
       emit(LibraryError('Failed to load library: $e'));
@@ -90,19 +73,14 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     }
 
     try {
-      final favoritesResponse = await _libraryRepository.getFavorites();
-      final playlistsResponse = await _libraryRepository.getPlaylists();
-      final artistsResponse = await _libraryRepository.getFavoriteArtists();
-      final albumsResponse = await _libraryRepository.getFavoriteAlbums();
+      final response = await _libraryRepository.getLibraryBootstrap();
 
-      if (favoritesResponse.success &&
-          playlistsResponse.success &&
-          artistsResponse.success &&
-          albumsResponse.success) {
-        final favorites = favoritesResponse.data ?? [];
-        final playlists = playlistsResponse.data ?? [];
-        final artists = artistsResponse.data ?? [];
-        final albums = albumsResponse.data ?? [];
+      if (response.success && response.data != null) {
+        final data = response.data!;
+        final favorites = data.favorites;
+        final playlists = data.playlists;
+        final artists = data.favoriteArtists;
+        final albums = data.favoriteAlbums;
         final favoriteSongIds = favorites.map((song) => song.id).toSet();
 
         emit(

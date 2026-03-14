@@ -16,6 +16,7 @@ class SongService {
     int? trackNumber,
     String? audioUrl,
     String? coverImageUrl,
+    String? singer,
   }) async {
     final response = await apiClient.post(
       '/songs',
@@ -32,6 +33,7 @@ class SongService {
           'audio_original_url': audioUrl,
         if (coverImageUrl != null && coverImageUrl.isNotEmpty)
           'cover_image_url': coverImageUrl,
+        if (singer != null && singer.isNotEmpty) 'singer': singer,
       },
     );
 

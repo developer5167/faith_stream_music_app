@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../blocs/profile/profile_bloc.dart';
 import '../../blocs/profile/profile_event.dart';
@@ -23,9 +26,14 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _artistNameController = TextEditingController();
   final _bioController = TextEditingController();
-  final _govtIdUrlController = TextEditingController();
-  final _addressProofUrlController = TextEditingController();
-  final _selfieVideoUrlController = TextEditingController();
+  
+  // Local file references
+  XFile? _govtIdFile;
+  String? _selfieVideoPath;
+  
+  bool _isUploading = false;
+  String _uploadStatus = '';
+
   final List<TextEditingController> _supportingLinkControllers = [
     TextEditingController(),
   ];
@@ -34,50 +42,77 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
   void dispose() {
     _artistNameController.dispose();
     _bioController.dispose();
-    _govtIdUrlController.dispose();
-    _addressProofUrlController.dispose();
-    _selfieVideoUrlController.dispose();
     for (final c in _supportingLinkControllers) {
       c.dispose();
     }
     super.dispose();
   }
 
-  void _submitRequest() {
-    if (_formKey.currentState!.validate()) {
-      // Check if selfie video is uploaded
-      if (_selfieVideoUrlController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please record your selfie video'),
-            backgroundColor: Colors.red,
+  Future<void> _submitRequest() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    // Validation
+    if (_govtIdFile == null) {
+      _showError('Please upload Government ID');
+      return;
+    }
+    if (_selfieVideoPath == null) {
+      _showError('Please record your selfie video');
+      return;
+    }
+
+    setState(() {
+      _isUploading = true;
+      _uploadStatus = 'Starting application...';
+    });
+
+    try {
+      final userRepository = context.read<UserRepository>();
+      final uploadService = UploadService(userRepository.apiClient);
+
+      // 1. Upload Govt ID
+      setState(() => _uploadStatus = 'Uploading Government ID...');
+      final govtIdUrl = await uploadService.uploadFile(
+        filePath: _govtIdFile!.path,
+        uploadType: UploadService.artistProfile,
+      );
+
+      // 2. Upload Selfie Video
+      setState(() => _uploadStatus = 'Uploading Selfie Video...');
+      final selfieVideoUrl = await uploadService.uploadArtistSelfieVideo(
+        filePath: _selfieVideoPath!,
+      );
+
+      // 3. Submit to DB
+      if (mounted) {
+        setState(() => _uploadStatus = 'Submitting application...');
+        context.read<ProfileBloc>().add(
+          ProfileRequestArtist(
+            artistName: _artistNameController.text.trim(),
+            bio: _bioController.text.trim().isEmpty
+                ? null
+                : _bioController.text.trim(),
+            govtIdUrl: govtIdUrl,
+            selfieVideoUrl: selfieVideoUrl,
+            supportingLinks: _supportingLinkControllers
+                .map((c) => c.text.trim())
+                .where((link) => link.isNotEmpty)
+                .toList(),
           ),
         );
-        return;
       }
-
-      context.read<ProfileBloc>().add(
-        ProfileRequestArtist(
-          artistName: _artistNameController.text.trim(),
-          bio: _bioController.text.trim().isEmpty
-              ? null
-              : _bioController.text.trim(),
-          govtIdUrl: _govtIdUrlController.text.trim().isEmpty
-              ? null
-              : _govtIdUrlController.text.trim(),
-          addressProofUrl: _addressProofUrlController.text.trim().isEmpty
-              ? null
-              : _addressProofUrlController.text.trim(),
-          selfieVideoUrl: _selfieVideoUrlController.text.trim().isEmpty
-              ? null
-              : _selfieVideoUrlController.text.trim(),
-          supportingLinks: _supportingLinkControllers
-              .map((c) => c.text.trim())
-              .where((link) => link.isNotEmpty)
-              .toList(),
-        ),
-      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploading = false);
+        _showError('Upload failed: $e');
+      }
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 
   @override
@@ -87,6 +122,7 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
     return BlocListener<ProfileBloc, ProfileState>(
       listener: (context, state) {
         if (state is ProfileOperationSuccess) {
+          setState(() => _isUploading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -95,511 +131,403 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
           );
           Navigator.pop(context);
         } else if (state is ProfileError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-          );
+          setState(() => _isUploading = false);
+          _showError(state.message);
         }
       },
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Become an Artist')),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSizes.paddingMd),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Card(
-                  color: theme.colorScheme.secondary.withOpacity(0.1),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSizes.paddingMd),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.star,
-                          color: theme.colorScheme.secondary,
-                          size: 40,
-                        ),
-                        const SizedBox(width: AppSizes.paddingMd),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Share Your Music',
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+      child: Stack(
+        children: [
+          Scaffold(
+            appBar: AppBar(title: const Text('Become an Artist')),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSizes.paddingMd),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Card(
+                      color: theme.colorScheme.secondary.withOpacity(0.1),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSizes.paddingMd),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.star,
+                              color: theme.colorScheme.secondary,
+                              size: 40,
+                            ),
+                            const SizedBox(width: AppSizes.paddingMd),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Share Your Music',
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Join our platform as an artist and reach thousands of listeners',
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Join our platform as an artist and reach thousands of listeners',
-                                style: theme.textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingXl),
-
-                // Instructions
-                Text(
-                  'Required Information',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingSm),
-                Text(
-                  'Please provide the following details to complete your artist registration. All fields marked with * are mandatory.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingLg),
-
-                // Artist Name
-                TextFormField(
-                  controller: _artistNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Artist Name *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person_outline),
-                    hintText: 'Your stage/artist name',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Artist name is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppSizes.paddingMd),
-
-                // Bio
-                TextFormField(
-                  controller: _bioController,
-                  decoration: const InputDecoration(
-                    labelText: 'Artist Bio',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.info_outline),
-                    hintText: 'Tell us about your music and style...',
-                  ),
-                  maxLines: 4,
-                  maxLength: 500,
-                ),
-                const SizedBox(height: AppSizes.paddingMd),
-
-                // Documents Section
-                Text(
-                  'Verification Documents',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingSm),
-                Text(
-                  'Upload documents for identity verification. This helps us maintain platform security.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingMd),
-
-                // Government ID
-                TextFormField(
-                  controller: _govtIdUrlController,
-                  readOnly: _govtIdUrlController.text.isNotEmpty,
-                  decoration: InputDecoration(
-                    labelText: 'Government ID (URL)',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: Icon(
-                      Icons.badge,
-                      color: _govtIdUrlController.text.isNotEmpty
-                          ? Colors.green
-                          : null,
-                    ),
-                    hintText: _govtIdUrlController.text.isEmpty
-                        ? 'https://example.com/govt-id.jpg'
-                        : null,
-                    suffixIcon: _govtIdUrlController.text.isNotEmpty
-                        ? const Icon(Icons.lock, color: Colors.green)
-                        : null,
-                    filled: _govtIdUrlController.text.isNotEmpty,
-                    fillColor: _govtIdUrlController.text.isNotEmpty
-                        ? Colors.green.withOpacity(0.1)
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingSm),
-                if (_govtIdUrlController.text.isEmpty)
-                  _buildDocumentUploadCard(
-                    context,
-                    icon: Icons.upload_file,
-                    title: 'Upload Government ID',
-                    description: 'Passport, Driver\'s License, or National ID',
-                    onTap: () async {
-                      final publicUrl =
-                          await ImageUploadHelper.pickAndUploadImage(
-                            context: context,
-                            uploadType: UploadService.artistProfile,
-                          );
-
-                      if (publicUrl != null) {
-                        setState(() {
-                          _govtIdUrlController.text = publicUrl;
-                        });
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Government ID uploaded!'),
-                              backgroundColor: Colors.green,
                             ),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                const SizedBox(height: AppSizes.paddingMd),
-
-                // Address Proof
-                TextFormField(
-                  controller: _addressProofUrlController,
-                  readOnly: _addressProofUrlController.text.isNotEmpty,
-                  decoration: InputDecoration(
-                    labelText: 'Address Proof (URL)',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: Icon(
-                      Icons.home,
-                      color: _addressProofUrlController.text.isNotEmpty
-                          ? Colors.green
-                          : null,
-                    ),
-                    hintText: _addressProofUrlController.text.isEmpty
-                        ? 'https://example.com/address-proof.jpg'
-                        : null,
-                    suffixIcon: _addressProofUrlController.text.isNotEmpty
-                        ? const Icon(Icons.lock, color: Colors.green)
-                        : null,
-                    filled: _addressProofUrlController.text.isNotEmpty,
-                    fillColor: _addressProofUrlController.text.isNotEmpty
-                        ? Colors.green.withOpacity(0.1)
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingSm),
-                if (_addressProofUrlController.text.isEmpty)
-                  _buildDocumentUploadCard(
-                    context,
-                    icon: Icons.upload_file,
-                    title: 'Upload Address Proof',
-                    description:
-                        'Utility bill, Bank statement, or Lease agreement',
-                    onTap: () async {
-                      final publicUrl =
-                          await ImageUploadHelper.pickAndUploadImage(
-                            context: context,
-                            uploadType: UploadService.artistProfile,
-                          );
-
-                      if (publicUrl != null) {
-                        setState(() {
-                          _addressProofUrlController.text = publicUrl;
-                        });
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Address proof uploaded!'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                const SizedBox(height: AppSizes.paddingXl),
-
-                // Selfie Video Section
-                Text(
-                  'Selfie Video *',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingSm),
-                Text(
-                  'Record a short video (3-30 seconds) introducing yourself. Say "Hi" and your name clearly.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingMd),
-
-                // Selfie Video URL (hidden from user)
-                if (_selfieVideoUrlController.text.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(AppSizes.paddingMd),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
-                      border: Border.all(color: Colors.green.withOpacity(0.3)),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.check_circle, color: Colors.green),
-                        const SizedBox(width: AppSizes.paddingMd),
-                        const Expanded(
-                          child: Text(
-                            'Selfie video uploaded successfully!',
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-
-                if (_selfieVideoUrlController.text.isEmpty) ...[
-                  _buildDocumentUploadCard(
-                    context,
-                    icon: Icons.videocam,
-                    title: 'Record Selfie Video',
-                    description:
-                        'Tap to start recording your introduction video',
-                    onTap: () async {
-                      try {
-                        // ✅ Request Camera + Microphone Permission
-                        final cameraStatus = await Permission.camera.request();
-                        final micStatus = await Permission.microphone.request();
-
-                        // ✅ Handle denial
-                        if (!cameraStatus.isGranted || !micStatus.isGranted) {
-                          if (cameraStatus.isPermanentlyDenied ||
-                              micStatus.isPermanentlyDenied) {
-                            await openAppSettings();
-                          }
-
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  "Camera and Microphone permissions are required",
-                                ),
-                              ),
-                            );
-                          }
-                          return;
-                        }
-
-                        // ✅ Continue only if granted
-                        final userRepository = context.read<UserRepository>();
-                        final uploadService = UploadService(
-                          userRepository.apiClient,
-                        );
-
-                        final videoUrl =
-                            await VideoRecordingHelper.recordAndUploadSelfieVideo(
-                              context: context,
-                              uploadService: uploadService,
-                            );
-
-                        if (videoUrl != null) {
-                          setState(() {
-                            _selfieVideoUrlController.text = videoUrl;
-                          });
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(
-                            context,
-                          ).showSnackBar(SnackBar(content: Text('Failed: $e')));
-                        }
-                      }
-                    },
-                  ),
-                ],
-                const SizedBox(height: AppSizes.paddingXl),
-
-                // Info Card
-                Card(
-                  color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSizes.paddingMd),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: AppSizes.paddingMd),
-                        Expanded(
-                          child: Text(
-                            'Your application will be reviewed within 24-48 hours. You\'ll be notified once approved.',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingXl),
-
-                // Supporting Links Section
-                Text(
-                  'Supporting Links',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingSm),
-
-                // Note card for supporting links
-                Card(
-                  color: theme.colorScheme.secondaryContainer.withOpacity(0.3),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(
-                      color: theme.colorScheme.secondary.withOpacity(0.2),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSizes.paddingMd),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.lightbulb_outline,
-                          color: theme.colorScheme.secondary,
-                          size: 22,
-                        ),
-                        const SizedBox(width: AppSizes.paddingSm),
-                        Expanded(
-                          child: Text(
-                            'Providing links to your public social media profiles '
-                            '(Facebook, Instagram, X, YouTube, Spotify, Google, etc.) '
-                            'helps us verify your identity as a real artist and speeds up '
-                            'the approval process significantly.',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSecondaryContainer,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingMd),
-
-                // Dynamic supporting link fields
-                ..._supportingLinkControllers.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final controller = entry.value;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: controller,
-                            decoration: InputDecoration(
-                              labelText: 'Profile Link ${index + 1}',
-                              border: const OutlineInputBorder(),
-                              prefixIcon: const Icon(Icons.link),
-                              hintText: 'https://instagram.com/yourprofile',
-                            ),
-                            keyboardType: TextInputType.url,
-                          ),
-                        ),
-                        if (_supportingLinkControllers.length > 1)
-                          IconButton(
-                            icon: const Icon(
-                              Icons.remove_circle_outline,
-                              color: Colors.red,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _supportingLinkControllers
-                                    .removeAt(index)
-                                    .dispose();
-                              });
-                            },
-                          ),
-                      ],
-                    ),
-                  );
-                }),
-
-                // Add more link button
-                if (_supportingLinkControllers.length < 6)
-                  TextButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _supportingLinkControllers.add(TextEditingController());
-                      });
-                    },
-                    icon: const Icon(Icons.add_circle_outline),
-                    label: const Text('Add another link'),
-                  ),
-                const SizedBox(height: AppSizes.paddingLg),
-
-                // Submit Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _submitRequest,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.brightness == Brightness.dark
-                          ? AppTheme.darkPrimary
-                          : AppTheme.lightPrimary,
-                      foregroundColor: theme.brightness == Brightness.dark
-                          ? Colors.black
-                          : Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'Submit Application',
-                      style: TextStyle(
-                        fontSize: 16,
+                    const SizedBox(height: AppSizes.paddingXl),
+
+                    // Instructions
+                    Text(
+                      'Required Information',
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: AppSizes.paddingSm),
+                    Text(
+                      'Please provide the following details to complete your artist registration. All fields marked with * are mandatory.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.paddingLg),
+
+                    // Artist Name
+                    TextFormField(
+                      controller: _artistNameController,
+                      enabled: !_isUploading,
+                      decoration: const InputDecoration(
+                        labelText: 'Artist Name *',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person_outline),
+                        hintText: 'Your stage/artist name',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Artist name is required';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppSizes.paddingMd),
+
+                    // Bio
+                    TextFormField(
+                      controller: _bioController,
+                      enabled: !_isUploading,
+                      decoration: const InputDecoration(
+                        labelText: 'Artist Bio',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.info_outline),
+                        hintText: 'Tell us about your music and style...',
+                      ),
+                      maxLines: 4,
+                      maxLength: 500,
+                    ),
+                    const SizedBox(height: AppSizes.paddingMd),
+
+                    // Documents Section
+                    Text(
+                      'Verification Documents',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.paddingSm),
+                    Text(
+                      'Provide identity verification documents. Files will be uploaded when you submit the application.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.paddingMd),
+
+                    // Government ID
+                    _buildFileSelectionCard(
+                      context,
+                      icon: Icons.badge,
+                      title: 'Government ID *',
+                      description: _govtIdFile == null 
+                          ? 'Upload Passport, Driver\'s License, or National ID'
+                          : 'File selected: ${File(_govtIdFile!.path).uri.pathSegments.last}',
+                      isSelected: _govtIdFile != null,
+                      onTap: _isUploading ? null : () async {
+                        final File? file = await ImageUploadHelper.pickImage();
+                        if (file != null) {
+                          setState(() {
+                            _govtIdFile = XFile(file.path);
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: AppSizes.paddingXl),
+
+                    // Selfie Video Section
+                    Text(
+                      'Selfie Video *',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.paddingSm),
+                    Text(
+                      'Record a short video (3-30 seconds) introducing yourself. Say "Hi" and your name clearly.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.paddingMd),
+
+                    _buildFileSelectionCard(
+                      context,
+                      icon: Icons.videocam,
+                      title: 'Selfie Video *',
+                      description: _selfieVideoPath == null
+                          ? 'Record your introduction video'
+                          : 'Video recorded and ready for upload',
+                      isSelected: _selfieVideoPath != null,
+                      onTap: _isUploading ? null : () async {
+                        try {
+                          final cameraStatus = await Permission.camera.request();
+                          final micStatus = await Permission.microphone.request();
+
+                          if (!cameraStatus.isGranted || !micStatus.isGranted) {
+                            if (cameraStatus.isPermanentlyDenied || micStatus.isPermanentlyDenied) {
+                              await openAppSettings();
+                            }
+                            _showError("Camera and Microphone permissions are required");
+                            return;
+                          }
+
+                          final cameras = await availableCameras();
+                          if (cameras.isEmpty) throw Exception('No cameras available');
+                          
+                          final frontCamera = cameras.firstWhere(
+                            (c) => c.lensDirection == CameraLensDirection.front,
+                            orElse: () => cameras.first,
+                          );
+
+                          if (context.mounted) {
+                            final path = await Navigator.of(context).push<String>(
+                              MaterialPageRoute(
+                                builder: (context) => SelfieVideoRecordingScreen(camera: frontCamera),
+                                fullscreenDialog: true,
+                              ),
+                            );
+
+                            if (path != null) {
+                              setState(() {
+                                _selfieVideoPath = path;
+                              });
+                            }
+                          }
+                        } catch (e) {
+                          _showError('Failed to record video: $e');
+                        }
+                      },
+                    ),
+                    const SizedBox(height: AppSizes.paddingXl),
+
+                    // Info Card
+                    Card(
+                      color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSizes.paddingMd),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: AppSizes.paddingMd),
+                            Expanded(
+                              child: Text(
+                                'Your application will be reviewed within 24-48 hours. You\'ll be notified once approved.',
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.paddingSm),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMd),
+                      child: Text(
+                        'Note: If your application is rejected, you will need to wait 30 days before you can submit a new request.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.red.shade400,
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.paddingXl),
+
+                    // Supporting Links
+                    Text(
+                      'Supporting Links',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.paddingSm),
+                    ..._supportingLinkControllers.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final controller = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: controller,
+                                enabled: !_isUploading,
+                                decoration: InputDecoration(
+                                  labelText: 'Profile Link ${index + 1}',
+                                  border: const OutlineInputBorder(),
+                                  prefixIcon: const Icon(Icons.link),
+                                  hintText: 'https://instagram.com/yourprofile',
+                                ),
+                                keyboardType: TextInputType.url,
+                              ),
+                            ),
+                            if (_supportingLinkControllers.length > 1)
+                              IconButton(
+                                icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                                onPressed: _isUploading ? null : () {
+                                  setState(() {
+                                    _supportingLinkControllers.removeAt(index).dispose();
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                      );
+                    }),
+
+                    if (_supportingLinkControllers.length < 6)
+                      TextButton.icon(
+                        onPressed: _isUploading ? null : () {
+                          setState(() {
+                            _supportingLinkControllers.add(TextEditingController());
+                          });
+                        },
+                        icon: const Icon(Icons.add_circle_outline),
+                        label: const Text('Add another link'),
+                      ),
+                    const SizedBox(height: AppSizes.paddingXl),
+
+                    // Submit Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isUploading ? null : _submitRequest,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.brightness == Brightness.dark
+                              ? AppTheme.darkPrimary
+                              : AppTheme.lightPrimary,
+                          foregroundColor: theme.brightness == Brightness.dark
+                              ? Colors.black
+                              : Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          _isUploading ? 'Submitting...' : 'Submit Application',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.paddingMd),
+                  ],
                 ),
-                const SizedBox(height: AppSizes.paddingMd),
-              ],
+              ),
             ),
           ),
-        ),
+          if (_isUploading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: Center(
+                child: Card(
+                  margin: const EdgeInsets.all(32),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 24),
+                        Text(
+                          _uploadStatus,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Please do not close the app while we process your request.',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
 
-  Widget _buildDocumentUploadCard(
+  Widget _buildFileSelectionCard(
     BuildContext context, {
     required IconData icon,
     required String title,
     required String description,
-    required VoidCallback onTap,
+    required bool isSelected,
+    required VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
     return Card(
+      elevation: isSelected ? 4 : 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: isSelected 
+            ? BorderSide(color: theme.colorScheme.primary, width: 2)
+            : BorderSide.none,
+      ),
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.paddingMd),
           child: Row(
             children: [
-              Icon(icon, color: theme.colorScheme.primary),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: (isSelected ? theme.colorScheme.primary : theme.colorScheme.surfaceVariant).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isSelected ? Icons.check_circle : icon,
+                  color: isSelected ? Colors.green : theme.colorScheme.primary,
+                ),
+              ),
               const SizedBox(width: AppSizes.paddingMd),
               Expanded(
                 child: Column(
@@ -614,13 +542,13 @@ class _ArtistRegistrationScreenState extends State<ArtistRegistrationScreen> {
                       description,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: isSelected ? Colors.green.shade700 : Colors.grey.shade600,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios, size: 16),
+              if (onTap != null) const Icon(Icons.arrow_forward_ios, size: 16),
             ],
           ),
         ),

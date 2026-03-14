@@ -2,6 +2,7 @@ import '../models/song.dart';
 import '../models/artist.dart';
 import '../models/album.dart';
 import '../models/playlist.dart';
+import '../models/library_bootstrap_response.dart';
 import '../services/api_client.dart';
 import '../utils/api_response.dart';
 
@@ -380,6 +381,29 @@ class LibraryRepository {
       return ApiResponse.error(
         message:
             response.data['message'] ?? 'Failed to remove song from playlist',
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      return ApiResponse.error(message: e.toString());
+    }
+  }
+
+  /// Get consolidated library data (Favorites, Artists, Albums, Playlists)
+  Future<ApiResponse<LibraryBootstrapResponse>> getLibraryBootstrap() async {
+    try {
+      final response = await _apiClient.get('/library/bootstrap');
+
+      if (response.statusCode == 200) {
+        final data = LibraryBootstrapResponse.fromJson(response.data);
+        return ApiResponse.success(
+          data: data,
+          message: 'Library bootstrap loaded successfully',
+        );
+      }
+
+      return ApiResponse.error(
+        message:
+            response.data['message'] ?? 'Failed to load library bootstrap',
         statusCode: response.statusCode,
       );
     } catch (e) {

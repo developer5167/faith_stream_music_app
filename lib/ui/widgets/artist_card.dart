@@ -54,15 +54,34 @@ class ArtistCard extends StatelessWidget {
 
                 // Counts
                 if ((artist.totalSongs ?? 0) > 0 ||
-                    (artist.totalAlbums ?? 0) > 0) ...[
+                    (artist.totalAlbums ?? 0) > 0 ||
+                    (artist.totalStreams ?? 0) > 0) ...[
                   const SizedBox(height: 4),
-                  Text(
-                    '${artist.totalSongs ?? 0} songs • ${artist.totalAlbums ?? 0} albums',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if ((artist.totalStreams ?? 0) > 0) ...[
+                        Icon(
+                          Icons.play_circle_outline,
+                          size: 12,
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${artist.totalStreams} streams',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Text(
+                        '${artist.totalSongs ?? 0} songs',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ],

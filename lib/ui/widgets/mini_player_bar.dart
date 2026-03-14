@@ -120,10 +120,12 @@ class MiniPlayerBar extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
-                                  song.displayArtist,
+                                  song.singer != null && song.singer!.isNotEmpty
+                                      ? '${song.singer} • ${song.displayArtist}'
+                                      : song.displayArtist,
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.onSurface
-                                        .withOpacity(0.6),
+                                        .withValues(alpha: 0.6),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,

@@ -95,9 +95,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                         user.profilePicUrl == null ||
                                             user.profilePicUrl!.isEmpty
                                         ? Text(
-                                            user.name
-                                                .substring(0, 1)
-                                                .toUpperCase(),
+                                            user.name.isNotEmpty
+                                                ? user.name
+                                                      .substring(0, 1)
+                                                      .toUpperCase()
+                                                : 'U',
                                             style: TextStyle(
                                               color: AppTheme.darkPrimary,
                                               fontWeight: FontWeight.bold,
@@ -150,7 +152,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                         ),
                                       ),
                                       child: const Text(
-                                        'PRO',
+                                        'Premium',
                                         style: TextStyle(
                                           color: Colors.amber,
                                           fontSize: 12,

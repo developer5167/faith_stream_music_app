@@ -1,9 +1,9 @@
 class AppConfig {
   // API Configuration
   // static const String baseUrl = 'http://KCSs-MacBook-Pro.local:9000/api';
-  // static const String baseUrl = 'http://192.168.15.165:9000/api';
-  static const String baseUrl =
-      'https://faithstream-backend.onrender.com/api'; //live
+  static const String baseUrl = 'http://192.168.31.196:9000/api';
+  // static const String baseUrl =
+  // 'https://faithstream-backend.onrender.com/api'; //live
 
   // Endpoints (without /api prefix since it's in baseUrl)
   static const String authEndpoint = '/auth';

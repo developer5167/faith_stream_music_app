@@ -20,6 +20,7 @@ import '../ui/screens/song_detail_screen.dart';
 import '../ui/screens/album_detail_screen.dart';
 import '../ui/screens/artist_profile_screen.dart';
 import '../ui/screens/offline_downloads_screen.dart';
+import '../ui/screens/notifications_screen.dart';
 
 class AppRouter {
   final AuthBloc authBloc;
@@ -53,7 +54,7 @@ class AppRouter {
 
       // If authenticated, redirect to home unless already there
       if (authState is AuthAuthenticated) {
-        if (isOnAuth || isOnSplash || isOnOnboarding) {
+        if (isOnAuth || isOnOnboarding) {
           return '/home';
         }
         return null;
@@ -145,6 +146,10 @@ class AppRouter {
           final id = state.pathParameters['id'];
           return ArtistProfileScreen(artistId: id);
         },
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

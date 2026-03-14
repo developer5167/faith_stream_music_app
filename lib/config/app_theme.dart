@@ -3,12 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // --- THE DEFINITIVE FAITHSTREAM PALETTE ---
-  static const Color brandIndigo = Color(0xFF040B1F);     // Base Background
-  static const Color brandMagenta = Color(0xFFD946EF);    // Accent Highlights
-  static const Color brandPurple = Color(0xFF8B5CF6);     // Gradient Depth
-  static const Color brandSurface = Color(0xFF0F172A);    // Input Surfaces
-  
-  static const Color darkPrimary = Colors.white;          // High Clarity Interaction
+  static const Color brandIndigo = Color(0xFF040B1F); // Base Background
+  static const Color brandMagenta = Color(0xFFD946EF); // Accent Highlights
+  static const Color brandPurple = Color(0xFF8B5CF6); // Gradient Depth
+  static const Color brandSurface = Color(0xFF0F172A); // Input Surfaces
+
+  static const Color darkPrimary = Colors.white; // High Clarity Interaction
   static const Color darkSecondary = brandMagenta;
   static const Color darkBackground = brandIndigo;
   static const Color darkSurface = brandSurface;
@@ -29,10 +29,7 @@ class AppTheme {
   static const LinearGradient freeDarkGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [
-      Color(0xFF0F172A),
-      Color(0xFF040B1F),
-    ],
+    colors: [Color(0xFF0F172A), Color(0xFF040B1F)],
   );
 
   static const LinearGradient cardGradient = LinearGradient(
@@ -63,56 +60,15 @@ class AppTheme {
       onError: Colors.black,
     ),
 
-    // Typography - Clean & Modern
-    textTheme: GoogleFonts.interTextTheme(
-      const TextTheme(
-        displayLarge: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
-          letterSpacing: -1.0,
-        ),
-        displayMedium: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          letterSpacing: -0.5,
-        ),
-        displaySmall: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          letterSpacing: -0.5,
-        ),
-        headlineLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-        headlineMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-        headlineSmall: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        titleLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        titleMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-        titleSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-        bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
-        bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-        bodySmall: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.normal,
-          color: Colors.white70,
-        ),
-        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-        labelSmall: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
-        ),
-      ),
-    ),
-
     // AppBar Theme - Transparent/Glass effect usually handled in widget, but defaults here
     appBarTheme: AppBarTheme(
       elevation: 0,
       centerTitle: false,
       backgroundColor: Colors.black,
       foregroundColor: Colors.white,
-      titleTextStyle: GoogleFonts.inter(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
+      titleTextStyle: GoogleFonts.figtree(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
         color: Colors.white,
       ),
       iconTheme: const IconThemeData(color: Colors.white),
@@ -124,6 +80,48 @@ class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
       color: Colors.white.withValues(alpha: 0.05),
       margin: EdgeInsets.zero,
+    ),
+
+    // Base Typography - Unified Spotify-style Figtree
+    textTheme: GoogleFonts.figtreeTextTheme(ThemeData.dark().textTheme).copyWith(
+      displayLarge: GoogleFonts.figtree(
+        color: Colors.white,
+        fontSize: 28,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.5,
+      ),
+      displayMedium: GoogleFonts.figtree(
+        color: Colors.white,
+        fontSize: 24,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.4,
+      ),
+      headlineMedium: GoogleFonts.figtree(
+        color: Colors.white,
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.2,
+      ),
+      titleLarge: GoogleFonts.figtree(
+        color: Colors.white,
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+      ),
+      bodyLarge: GoogleFonts.figtree(
+        color: Colors.white70,
+        fontSize: 15,
+        height: 1.4,
+      ),
+      bodyMedium: GoogleFonts.figtree(
+        color: Colors.white60,
+        fontSize: 13,
+        height: 1.4,
+      ),
+      labelLarge: GoogleFonts.figtree(
+        color: Colors.white,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
     ),
 
     // Input Decoration Theme
@@ -140,11 +138,14 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.4), width: 1.5),
+        borderSide: BorderSide(
+          color: Colors.white.withOpacity(0.4),
+          width: 1.5,
+        ),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      labelStyle: const TextStyle(color: Colors.white70),
-      hintStyle: const TextStyle(color: Colors.white24),
+      labelStyle: GoogleFonts.figtree(color: Colors.white70),
+      hintStyle: GoogleFonts.figtree(color: Colors.white24),
     ),
 
     // Elevated Button Theme - Premium "Apple Dark" style
@@ -154,10 +155,12 @@ class AppTheme {
         foregroundColor: brandIndigo, // Clean contrast
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: GoogleFonts.figtree(
+          fontSize: 15,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0,
         ),
-        textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800),
       ),
     ),
 
@@ -172,14 +175,16 @@ class AppTheme {
       type: BottomNavigationBarType.fixed,
       showSelectedLabels: true,
       showUnselectedLabels: true,
-      selectedLabelStyle: GoogleFonts.inter(
+      selectedLabelStyle: GoogleFonts.figtree(
         fontSize: 10,
         fontWeight: FontWeight.w700,
         color: Colors.white,
+        letterSpacing: 0.1,
       ),
-      unselectedLabelStyle: GoogleFonts.inter(
+      unselectedLabelStyle: GoogleFonts.figtree(
         fontSize: 10,
         fontWeight: FontWeight.normal,
+        letterSpacing: 0.1,
       ),
       elevation: 0,
     ),

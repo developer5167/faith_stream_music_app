@@ -17,6 +17,8 @@ class Song extends Equatable {
   final String? streamCount;
   final DateTime? createdAt;
   final String? lyrics;
+  final String? singer;
+  final String? audioProcessedUrl;
 
   const Song({
     required this.id,
@@ -34,6 +36,8 @@ class Song extends Equatable {
     this.streamCount,
     this.createdAt,
     this.lyrics,
+    this.singer,
+    this.audioProcessedUrl,
   });
 
   factory Song.fromJson(Map<String, dynamic> json) {
@@ -64,6 +68,8 @@ class Song extends Equatable {
           ? DateTime.parse(json['created_at'] as String)
           : null,
       lyrics: json['lyrics'] as String?,
+      singer: json['singer'] as String?,
+      audioProcessedUrl: json['audio_processed_url'] as String?,
     );
   }
 
@@ -85,6 +91,8 @@ class Song extends Equatable {
       'stream_count': streamCount,
       'created_at': createdAt?.toIso8601String(),
       'lyrics': lyrics,
+      'singer': singer,
+      'audio_processed_url': audioProcessedUrl,
     };
   }
 
@@ -113,6 +121,8 @@ class Song extends Equatable {
     streamCount,
     createdAt,
     lyrics,
+    singer,
+    audioProcessedUrl,
   ];
 
   Song copyWith({
@@ -131,6 +141,8 @@ class Song extends Equatable {
     String? streamCount,
     DateTime? createdAt,
     String? lyrics,
+    String? singer,
+    String? audioProcessedUrl,
   }) {
     return Song(
       id: id ?? this.id,
@@ -148,6 +160,8 @@ class Song extends Equatable {
       streamCount: streamCount ?? this.streamCount,
       createdAt: createdAt ?? this.createdAt,
       lyrics: lyrics ?? this.lyrics,
+      singer: singer ?? this.singer,
+      audioProcessedUrl: audioProcessedUrl ?? this.audioProcessedUrl,
     );
   }
 }

@@ -361,9 +361,25 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     PlayerUpdatePosition event,
     Emitter<PlayerState> emit,
   ) {
-    // Ignore position updates while a new song is loading to avoid
-    // the stale end-of-last-song position filling the seek bar
-    if (state is PlayerLoading) return;
+    // If we are currently loading, but the native player report it's playing,
+    // we should transition out of loading immediately.
+    if (state is PlayerLoading) {
+      final loadingState = state as PlayerLoading;
+      if (loadingState.song != null && _audioService.player.playing) {
+        emit(
+          PlayerPlaying(
+            song: loadingState.song!,
+            queue: loadingState.queue ?? [loadingState.song!],
+            currentIndex: _audioService.currentIndex,
+            position: event.position,
+            duration: _audioService.player.duration ?? Duration.zero,
+            repeatMode: _audioService.repeatMode,
+            isShuffleEnabled: _audioService.isShuffleEnabled,
+          ),
+        );
+      }
+      return;
+    }
 
     if (state is PlayerPlaying) {
       emit((state as PlayerPlaying).copyWith(position: event.position));
@@ -427,18 +443,24 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
     final bool currentlyPlaying = event.isPlaying;
 
-    // PlayerLoading → PlayerPlaying: audio just started for a new song
-    if (currentlyPlaying && state is PlayerLoading) {
-      final loadingState = state as PlayerLoading;
-      if (loadingState.song != null) {
-        final currentDuration = _audioService.player.duration ?? Duration.zero;
+    if (currentlyPlaying && (state is PlayerLoading || state is PlayerPaused)) {
+      final song = state is PlayerLoading 
+          ? (state as PlayerLoading).song 
+          : (state as PlayerPaused).song;
+      final queue = state is PlayerLoading 
+          ? (state as PlayerLoading).queue ?? (song != null ? [song] : <Song>[]) 
+          : (state as PlayerPaused).queue;
+
+      if (song != null) {
+        // Resume ticker if not already running
+        _startListenTicker();
         emit(
           PlayerPlaying(
-            song: loadingState.song!,
-            queue: loadingState.queue ?? [loadingState.song!],
+            song: song,
+            queue: queue,
             currentIndex: _audioService.currentIndex,
-            position: Duration.zero,
-            duration: currentDuration,
+            position: _audioService.player.position,
+            duration: _audioService.player.duration ?? Duration.zero,
             repeatMode: _audioService.repeatMode,
             isShuffleEnabled: _audioService.isShuffleEnabled,
           ),
@@ -446,29 +468,9 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       }
       return;
     }
-
-    // PlayerPaused → PlayerPlaying: system resume (headphones, lock screen, etc.)
-    if (currentlyPlaying && state is PlayerPaused) {
-      final pausedState = state as PlayerPaused;
-      // Resume ticker if not already running (e.g., system-initiated resume)
-      _startListenTicker();
-      emit(
-        PlayerPlaying(
-          song: pausedState.song,
-          queue: pausedState.queue,
-          currentIndex: pausedState.currentIndex,
-          position: pausedState.position,
-          duration: pausedState.duration,
-          repeatMode: pausedState.repeatMode,
-          isShuffleEnabled: pausedState.isShuffleEnabled,
-          volume: pausedState.volume,
-        ),
-      );
-    }
-    // PlayerPlaying → PlayerPaused: system pause (headphones disconnect, etc.)
+    // PlayerPlaying → PlayerPaused: system pause
     else if (!currentlyPlaying && state is PlayerPlaying) {
       final playingState = state as PlayerPlaying;
-      // Stop ticker — counter preserved for when we resume
       _stopListenTicker();
       emit(
         PlayerPaused(

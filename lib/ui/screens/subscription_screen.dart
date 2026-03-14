@@ -254,7 +254,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          isActive ? 'You\'re on Premium!' : 'Go Premium',
+                          isActive ? 'You\'re Blessed!' : 'Go Blessed!',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 28,
@@ -533,12 +533,12 @@ class _PlanCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
         color: isHighlighted
-            ? const Color.fromARGB(255, 1, 45, 17)
+            ? const Color(0xFF1A0B2E) // Very dark purple background
             : const Color(0xFF111111),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isHighlighted
-              ? Color.fromARGB(255, 1, 45, 17)
+              ? const Color(0xFF6A0DAD) // Primary purple border
               : Colors.white12,
           width: isHighlighted ? 2 : 1,
         ),
@@ -638,7 +638,7 @@ class _PlanCard extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onSelect,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color.fromARGB(255, 1, 69, 26),
+                    backgroundColor: const Color(0xFF6A0DAD), // Primary purple
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
