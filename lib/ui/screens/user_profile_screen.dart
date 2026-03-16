@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../blocs/profile/profile_bloc.dart';
 import '../../blocs/profile/profile_event.dart';
 import '../../blocs/profile/profile_state.dart';
@@ -237,10 +238,36 @@ class UserProfileScreen extends StatelessWidget {
                       ),
                       _buildActionCard(
                         context,
-                        icon: Icons.security,
-                        title: 'Privacy & Security',
-                        onTap: () {
-                          // TODO: Navigate to privacy settings
+                        icon: Icons.privacy_tip_outlined,
+                        title: 'Privacy Policy',
+                        onTap: () async {
+                          final url = Uri.parse(
+                            'https://faith-stream-notifications.web.app/legal/privacy-policy.html',
+                          );
+                          try {
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(
+                                url,
+                                mode: LaunchMode.externalApplication,
+                              );
+                            } else {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Could not launch Privacy Policy'),
+                                  ),
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error: $e'),
+                                ),
+                              );
+                            }
+                          }
                         },
                       ),
                       _buildActionCard(

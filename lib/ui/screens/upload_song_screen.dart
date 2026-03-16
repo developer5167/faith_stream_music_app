@@ -39,6 +39,7 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
   List<dynamic> _albums = [];
   bool _isLoading = false;
   bool _isUploading = false;
+  bool _rightsConfirmed = false;
   double _uploadProgress = 0.0;
   String _currentUploadStep = '';
 
@@ -196,6 +197,17 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
 
   Future<void> _uploadSong() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Validate rights confirmation
+    if (!_rightsConfirmed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please confirm that you own the rights to this music'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     // Validate audio file
     if (_selectedAudioFile == null) {
@@ -627,6 +639,24 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
                     ],
 
                     const SizedBox(height: AppSizes.paddingXl),
+
+                    // Rights Confirmation Checkbox
+                    CheckboxListTile(
+                      value: _rightsConfirmed,
+                      onChanged: _isUploading
+                          ? null
+                          : (value) =>
+                                setState(() => _rightsConfirmed = value!),
+                      title: const Text(
+                        'By uploading this song, I confirm I own all rights to this music and give FaithStream permission to stream it to users.',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      activeColor: theme.colorScheme.primary,
+                    ),
+
+                    const SizedBox(height: AppSizes.paddingMd),
 
                     // Upload button
                     SizedBox(

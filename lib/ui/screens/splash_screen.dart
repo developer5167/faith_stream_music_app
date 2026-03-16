@@ -166,14 +166,15 @@ class _SplashScreenState extends State<SplashScreen>
 
                             // 'S' Anchor
                             ShaderMask(
-                                  shaderCallback: (bounds) => const LinearGradient(
-                                    colors: [
-                                      Color(0xFF8B5CF6), // Royal Purple
-                                      Color(0xFFD946EF), // Electric Magenta
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ).createShader(bounds),
+                                  shaderCallback: (bounds) =>
+                                      const LinearGradient(
+                                        colors: [
+                                          Color(0xFF8B5CF6), // Royal Purple
+                                          Color(0xFFD946EF), // Electric Magenta
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ).createShader(bounds),
                                   child: Text(
                                     'S',
                                     style: textStyle?.copyWith(
@@ -203,13 +204,17 @@ class _SplashScreenState extends State<SplashScreen>
                                       ShaderMask(
                                             shaderCallback: (bounds) =>
                                                 const LinearGradient(
-                                              colors: [
-                                                Color(0xFF8B5CF6), // Royal Purple
-                                                Color(0xFFD946EF), // Electric Magenta
-                                              ],
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                            ).createShader(bounds),
+                                                  colors: [
+                                                    Color(
+                                                      0xFF8B5CF6,
+                                                    ), // Royal Purple
+                                                    Color(
+                                                      0xFFD946EF,
+                                                    ), // Electric Magenta
+                                                  ],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ).createShader(bounds),
                                             child: Text(
                                               'tream',
                                               style: textStyle?.copyWith(
