@@ -13,6 +13,7 @@ import '../../ui/widgets/custom_text_field.dart';
 import '../../ui/widgets/custom_button.dart';
 import '../../ui/widgets/custom_dropdown.dart';
 import '../../config/app_theme.dart';
+import '../../utils/image_upload_helper.dart';
 
 class UploadSongScreen extends StatefulWidget {
   const UploadSongScreen({super.key});
@@ -128,8 +129,25 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
       );
 
       if (image != null) {
+        final file = File(image.path);
+        final isSquare = await ImageUploadHelper.isSquareImage(file);
+
+        if (!isSquare) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Error: Cover photo must be a 1:1 square image.',
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
         setState(() {
-          _selectedCoverImage = File(image.path);
+          _selectedCoverImage = file;
         });
       }
     } catch (e) {
@@ -225,6 +243,17 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter song lyrics'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validate cover image (Mandatory for Single songs)
+    if (_selectedAlbumId == null && _selectedCoverImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a cover photo for your single song.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -613,11 +642,17 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
                         title: Text(
                           _selectedCoverImage != null
                               ? _selectedCoverImage!.path.split('/').last
-                              : 'Cover Image (Optional)',
+                              : _selectedAlbumId == null
+                                  ? 'Cover Image * (Strictly 1:1)'
+                                  : 'Cover Image (Optional)',
                         ),
                         subtitle: _selectedCoverImage != null
                             ? const Text('Cover image selected')
-                            : const Text('JPG, PNG, WebP'),
+                            : Text(
+                                _selectedAlbumId == null
+                                    ? 'Required for single songs'
+                                    : 'JPG, PNG, WebP',
+                              ),
                         trailing: const Icon(Icons.folder_open),
                         onTap: _isUploading ? null : _pickCoverImage,
                       ),

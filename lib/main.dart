@@ -193,6 +193,7 @@ class MyApp extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<StorageService>.value(value: storageService),
+        RepositoryProvider<AuthRepository>.value(value: authRepository),
         RepositoryProvider<HomeRepository>.value(value: homeRepository),
         RepositoryProvider<StreamRepository>.value(value: streamRepository),
         RepositoryProvider<UserRepository>.value(value: userRepository),

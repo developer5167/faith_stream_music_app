@@ -481,36 +481,6 @@ class HomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: AppSizes.paddingLg),
                         ],
-
-                        // Debug button
-                        Padding(
-                          padding: const EdgeInsets.all(AppSizes.paddingMd),
-                          child: TextButton.icon(
-                            onPressed: () async {
-                              final storage = context.read<StorageService>();
-                              final authBloc = context.read<AuthBloc>();
-                              await storage.clearAll();
-                              if (context.mounted) {
-                                context.go('/onboarding');
-                                authBloc.add(const AuthLogoutRequested());
-                              }
-                            },
-                            icon: Icon(
-                              Icons.refresh,
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.38,
-                              ),
-                            ),
-                            label: Text(
-                              'Reset App',
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface.withOpacity(
-                                  0.38,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   );

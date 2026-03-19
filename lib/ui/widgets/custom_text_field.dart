@@ -60,7 +60,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
       enabled: widget.enabled,
       onChanged: widget.onChanged,
       inputFormatters: widget.inputFormatters,
-      style: theme.textTheme.bodyMedium,
+      style: theme.textTheme.bodyLarge?.copyWith(fontSize: 16.0),
       decoration: InputDecoration(
         labelText: widget.label,
         hintText: widget.hint,

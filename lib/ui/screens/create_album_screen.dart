@@ -7,7 +7,7 @@ import '../../services/api_client.dart';
 import '../../services/storage_service.dart';
 import '../../utils/constants.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../config/app_theme.dart';
+import '../../utils/image_upload_helper.dart';
 
 class CreateAlbumScreen extends StatefulWidget {
   const CreateAlbumScreen({super.key});
@@ -57,8 +57,25 @@ class _CreateAlbumScreenState extends State<CreateAlbumScreen> {
       );
 
       if (image != null) {
+        final file = File(image.path);
+        final isSquare = await ImageUploadHelper.isSquareImage(file);
+
+        if (!isSquare) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Error: Cover photo must be a 1:1 square image.',
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
         setState(() {
-          _selectedCoverImage = File(image.path);
+          _selectedCoverImage = file;
         });
       }
     } catch (e) {
@@ -72,6 +89,16 @@ class _CreateAlbumScreenState extends State<CreateAlbumScreen> {
 
   Future<void> _submitAlbum() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_selectedCoverImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a cover photo for your album.'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -226,14 +253,14 @@ class _CreateAlbumScreenState extends State<CreateAlbumScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Add Cover',
+                              'Add Cover *',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.primary,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '(Optional)',
+                              '(Strictly 1:1)',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: Colors.grey[600],
                               ),
@@ -363,12 +390,8 @@ class _CreateAlbumScreenState extends State<CreateAlbumScreen> {
             ElevatedButton(
               onPressed: _isSubmitting ? null : _submitAlbum,
               style: ElevatedButton.styleFrom(
-                backgroundColor: theme.brightness == Brightness.dark
-                    ? AppTheme.darkPrimary
-                    : AppTheme.lightPrimary,
-                foregroundColor: theme.brightness == Brightness.dark
-                    ? Colors.black
-                    : Colors.white,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppSizes.borderRadiusSm),

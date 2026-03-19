@@ -53,34 +53,12 @@ class ArtistDashboardScreen extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 200,
             pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
-                'Artist Dashboard',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
-                ),
-              ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      theme.colorScheme.primary,
-                      theme.colorScheme.secondary,
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.mic,
-                    size: 80,
-                    color: Colors.white.withOpacity(0.3),
-                  ),
-                ),
+            title: Text(
+              'Artist Dashboard',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
           ),
@@ -226,45 +204,6 @@ class ArtistDashboardScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (_) => const EarningsScreen()),
                     );
                   },
-                ),
-
-                const SizedBox(height: AppSizes.paddingXl),
-
-                // Recent Activity Section
-                Text(
-                  'Recent Activity',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.paddingMd),
-
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSizes.paddingLg),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.music_note,
-                          size: 60,
-                          color: theme.colorScheme.onSurface.withOpacity(0.3),
-                        ),
-                        const SizedBox(height: AppSizes.paddingMd),
-                        Text(
-                          'No Recent Activity',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: AppSizes.paddingSm),
-                        Text(
-                          'Upload your first song to see activity here',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
               ]),
             ),

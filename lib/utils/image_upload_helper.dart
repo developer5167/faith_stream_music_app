@@ -149,4 +149,17 @@ class ImageUploadHelper {
       ),
     );
   }
+
+  /// Check if an image is square (1:1 aspect ratio)
+  static Future<bool> isSquareImage(File file, {double tolerance = 0.05}) async {
+    try {
+      final bytes = await file.readAsBytes();
+      final image = await decodeImageFromList(bytes);
+      final ratio = image.width / image.height;
+      return (ratio - 1.0).abs() < tolerance;
+    } catch (e) {
+      debugPrint('Error validating image aspect ratio: $e');
+      return false;
+    }
+  }
 }

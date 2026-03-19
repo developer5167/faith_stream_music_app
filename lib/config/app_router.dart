@@ -8,6 +8,9 @@ import '../ui/screens/splash_screen.dart';
 import '../ui/screens/onboarding_screen.dart';
 import '../ui/screens/auth/login_screen.dart';
 import '../ui/screens/auth/register_screen.dart';
+import '../ui/screens/auth/forgot_password_screen.dart';
+import '../ui/screens/auth/verify_reset_otp_screen.dart';
+import '../ui/screens/auth/reset_password_screen.dart';
 import '../ui/screens/main_navigation_screen.dart';
 import '../ui/screens/support/support_hub_screen.dart';
 import '../ui/screens/support/file_complaint_screen.dart';
@@ -41,7 +44,9 @@ class AppRouter {
       final loc = state.matchedLocation;
       final isOnSplash = loc == '/splash';
       final isOnOnboarding = loc == '/onboarding';
-      final isOnAuth = loc == '/login' || loc == '/register';
+      final isOnAuth = loc.startsWith('/login') || 
+                       loc.startsWith('/register') || 
+                       loc.startsWith('/forgot-password');
       final isOnOffline = loc == '/offline-downloads';
 
       // Never redirect away from the offline downloads screen on launch
@@ -84,6 +89,24 @@ class AppRouter {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password/verify',
+        builder: (context, state) {
+          final email = state.extra as String? ?? '';
+          return VerifyResetOtpScreen(email: email);
+        },
+      ),
+      GoRoute(
+        path: '/forgot-password/reset',
+        builder: (context, state) {
+          final resetToken = state.extra as String? ?? '';
+          return ResetPasswordScreen(resetToken: resetToken);
+        },
       ),
       GoRoute(
         path: '/home',

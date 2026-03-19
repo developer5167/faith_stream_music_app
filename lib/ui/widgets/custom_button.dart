@@ -66,12 +66,14 @@ class CustomButton extends StatelessWidget {
     final color = textColor ?? (isOutlined ? theme.colorScheme.primary : theme.colorScheme.onPrimary);
 
     if (isLoading) {
-      return SizedBox(
-        height: AppSizes.iconMd,
-        width: AppSizes.iconMd,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(color),
+      return Center(
+        child: SizedBox(
+          height: AppSizes.iconMd,
+          width: AppSizes.iconMd,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
         ),
       );
     }
@@ -87,6 +89,7 @@ class CustomButton extends StatelessWidget {
             style: theme.textTheme.labelLarge?.copyWith(
               color: color,
               fontWeight: FontWeight.w600,
+              fontSize: 16.0,
             ),
           ),
         ],
@@ -98,6 +101,7 @@ class CustomButton extends StatelessWidget {
       style: theme.textTheme.labelLarge?.copyWith(
         color: color,
         fontWeight: FontWeight.w600,
+        fontSize: 16.0,
       ),
     );
   }

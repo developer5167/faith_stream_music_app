@@ -14,7 +14,8 @@ class ManageSongsScreen extends StatefulWidget {
   State<ManageSongsScreen> createState() => _ManageSongsScreenState();
 }
 
-class _ManageSongsScreenState extends State<ManageSongsScreen> with SingleTickerProviderStateMixin {
+class _ManageSongsScreenState extends State<ManageSongsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<dynamic> _songs = [];
   List<dynamic> _albums = [];
@@ -36,10 +37,7 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> with SingleTicker
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      await Future.wait([
-        _loadSongs(),
-        _loadAlbums(),
-      ]);
+      await Future.wait([_loadSongs(), _loadAlbums()]);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -145,10 +143,7 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> with SingleTicker
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildSongsList(theme),
-          _buildAlbumsList(theme),
-        ],
+        children: [_buildSongsList(theme), _buildAlbumsList(theme)],
       ),
     );
   }
@@ -159,7 +154,11 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> with SingleTicker
     }
 
     if (_songs.isEmpty) {
-      return _buildEmptyState(theme, 'No songs found', 'Upload your first song to get started');
+      return _buildEmptyState(
+        theme,
+        'No songs found',
+        'Upload your first song to get started',
+      );
     }
 
     return RefreshIndicator(
@@ -201,23 +200,34 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> with SingleTicker
     }
 
     if (_albums.isEmpty) {
-      return _buildEmptyState(theme, 'No albums found', 'Create your first album to organize songs');
+      return _buildEmptyState(
+        theme,
+        'No albums found',
+        'Create your first album to organize songs',
+      );
     }
 
     return RefreshIndicator(
       onRefresh: _loadAlbums,
       child: ListView.builder(
         padding: const EdgeInsets.all(AppSizes.paddingMd),
-        itemCount: _albums.length,
+        itemCount: _albums.length + 1, // +1 for the header note
         itemBuilder: (context, index) {
-          final album = _albums[index];
+          if (index == 0) {
+            return _buildAutoDeleteNote(theme);
+          }
+          final album = _albums[index - 1];
           final String status = album['status'] ?? 'DRAFT';
 
           return Card(
             margin: const EdgeInsets.only(bottom: AppSizes.paddingMd),
             child: ListTile(
               contentPadding: const EdgeInsets.all(AppSizes.paddingMd),
-              leading: _buildThumbnail(album['cover_image_url'], theme, isAlbum: true),
+              leading: _buildThumbnail(
+                album['cover_image_url'],
+                theme,
+                isAlbum: true,
+              ),
               title: Text(
                 album['title'] ?? 'Untitled',
                 style: const TextStyle(fontWeight: FontWeight.bold),
@@ -236,7 +246,7 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> with SingleTicker
                       onPressed: () => _confirmAlbumSubmission(album),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: theme.colorScheme.onPrimary,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                       ),
                       child: const Text('Submit'),
@@ -250,6 +260,33 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> with SingleTicker
     );
   }
 
+  Widget _buildAutoDeleteNote(ThemeData theme) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSizes.paddingMd),
+      padding: const EdgeInsets.all(AppSizes.paddingMd),
+      decoration: BoxDecoration(
+        color: Colors.amber.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber.withOpacity(0.5)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: Colors.amber[800], size: 24),
+          const SizedBox(width: AppSizes.paddingMd),
+          const Expanded(
+            child: Text(
+              'Draft albums older than 7 days will be automatically deleted. Please submit your albums for review in time.',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildThumbnail(String? url, ThemeData theme, {bool isAlbum = false}) {
     return Container(
       width: 60,
@@ -258,10 +295,7 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> with SingleTicker
         borderRadius: BorderRadius.circular(8),
         color: Colors.grey[300],
         image: url != null
-            ? DecorationImage(
-                image: NetworkImage(url),
-                fit: BoxFit.cover,
-              )
+            ? DecorationImage(image: NetworkImage(url), fit: BoxFit.cover)
             : null,
       ),
       child: url == null
@@ -322,12 +356,20 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> with SingleTicker
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Submit Album'),
-        content: Text('Submit "${album['title']}" for review? Once submitted, you cannot edit it until the review is complete.'),
+        content: Text(
+          'Submit "${album['title']}" for review? Once submitted, you cannot edit it until the review is complete.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Submit Now', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Submit Now',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -349,14 +391,20 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> with SingleTicker
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Album submitted for review!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Album submitted for review!'),
+            backgroundColor: Colors.green,
+          ),
         );
         _loadData();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit album: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Failed to submit album: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -371,7 +419,8 @@ class _ManageSongsScreenState extends State<ManageSongsScreen> with SingleTicker
       details: [
         _buildDetailRow('Genre', song['genre']),
         _buildDetailRow('Language', song['language']),
-        if (song['album_title'] != null) _buildDetailRow('Album', song['album_title']),
+        if (song['album_title'] != null)
+          _buildDetailRow('Album', song['album_title']),
         _buildDetailRow('Status', _getStatusText(song['status'] ?? 'DRAFT')),
       ],
       description: song['description'],

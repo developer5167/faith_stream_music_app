@@ -165,7 +165,22 @@ class _LoginScreenState extends State<LoginScreen> {
                         .animate()
                         .fadeIn(delay: 600.ms)
                         .scale(begin: const Offset(0.95, 0.95)),
-                    const SizedBox(height: AppSizes.paddingMd),
+                    
+                    // Forgot Password Link
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: isLoading ? null : () => context.push('/forgot-password'),
+                        child: Text(
+                          'Forgot Password?',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ).animate().fadeIn(delay: 650.ms),
+                    ),
+                    const SizedBox(height: AppSizes.paddingSm),
                     // Register Link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,

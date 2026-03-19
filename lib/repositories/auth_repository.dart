@@ -59,11 +59,17 @@ class AuthRepository {
     required String name,
     required String email,
     required String password,
+    required String verifiedEmailToken,
   }) async {
     try {
       final response = await _apiClient.post(
         '/auth/register',
-        data: {'name': name, 'email': email, 'password': password},
+        data: {
+          'name': name,
+          'email': email,
+          'password': password,
+          'verified_email_token': verifiedEmailToken,
+        },
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
@@ -136,6 +142,64 @@ class AuthRepository {
       );
     } catch (e) {
       return ApiResponse<bool>.error(message: e.toString());
+    }
+  }
+
+  // ==========================================
+  // OTP AUTHENTICATION FLOWS
+  // ==========================================
+
+  Future<ApiResponse<String>> sendRegistrationOtp(String email) async {
+    try {
+      final response = await _apiClient.post('/auth/register/send-otp', data: {'email': email});
+      return ApiResponse.success(data: response.data['message'], message: 'Success');
+    } catch (e) {
+      return ApiResponse.error(message: e.toString());
+    }
+  }
+
+  Future<ApiResponse<String>> verifyRegistrationOtp(String email, String otp) async {
+    try {
+      final response = await _apiClient.post(
+        '/auth/register/verify-otp',
+        data: {'email': email, 'otp': otp},
+      );
+      return ApiResponse.success(data: response.data['verified_email_token'], message: 'Success');
+    } catch (e) {
+      return ApiResponse.error(message: e.toString());
+    }
+  }
+
+  Future<ApiResponse<String>> sendPasswordResetOtp(String email) async {
+    try {
+      final response = await _apiClient.post('/auth/forgot-password/send-otp', data: {'email': email});
+      return ApiResponse.success(data: response.data['message'], message: 'Success');
+    } catch (e) {
+      return ApiResponse.error(message: e.toString());
+    }
+  }
+
+  Future<ApiResponse<String>> verifyPasswordResetOtp(String email, String otp) async {
+    try {
+      final response = await _apiClient.post(
+        '/auth/forgot-password/verify-otp',
+        data: {'email': email, 'otp': otp},
+      );
+      return ApiResponse.success(data: response.data['reset_token'], message: 'Success');
+    } catch (e) {
+      return ApiResponse.error(message: e.toString());
+    }
+  }
+
+  Future<ApiResponse<String>> resetPassword(String resetToken, String newPassword) async {
+    try {
+      final response = await _apiClient.post(
+        '/auth/forgot-password/reset',
+        data: {'reset_token': resetToken, 'new_password': newPassword},
+      );
+      return ApiResponse.success(data: response.data['message'], message: 'Success');
+    } catch (e) {
+      return ApiResponse.error(message: e.toString());
     }
   }
 }
