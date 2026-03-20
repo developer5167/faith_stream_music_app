@@ -16,6 +16,7 @@ import '../widgets/premium_card.dart';
 import '../widgets/loading_indicator.dart';
 import '../widgets/error_display.dart';
 import '../widgets/gradient_background.dart';
+import '../widgets/app_logo.dart';
 import '../../blocs/profile/profile_bloc.dart';
 import '../../blocs/profile/profile_state.dart';
 import 'song_detail_screen.dart';
@@ -42,12 +43,9 @@ class HomeScreen extends StatelessWidget {
             appBar: AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              title: Text(
-                AppStrings.appName,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
+              title: const AppLogo(
+                fontSize: 22,
+                textAlign: TextAlign.start,
               ),
               actions: [
                 IconButton(

@@ -9,6 +9,7 @@ import '../../../repositories/auth_repository.dart';
 import '../../../utils/constants.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/app_logo.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -77,9 +78,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_emailFormKey.currentState!.validate()) return;
     setState(() => _isSendingOtp = true);
 
-    final response = await context
-        .read<AuthRepository>()
-        .sendRegistrationOtp(_emailController.text.trim());
+    final response = await context.read<AuthRepository>().sendRegistrationOtp(
+      _emailController.text.trim(),
+    );
 
     if (!mounted) return;
     setState(() => _isSendingOtp = false);
@@ -96,9 +97,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isVerifyingOtp = true);
 
     final response = await context.read<AuthRepository>().verifyRegistrationOtp(
-          _emailController.text.trim(),
-          _otpController.text.trim(),
-        );
+      _emailController.text.trim(),
+      _otpController.text.trim(),
+    );
 
     if (!mounted) return;
     setState(() => _isVerifyingOtp = false);
@@ -114,13 +115,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _register() {
     if (_passwordFormKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
-            AuthRegisterRequested(
-              name: _nameController.text.trim(),
-              email: _emailController.text.trim(),
-              password: _passwordController.text,
-              verifiedEmailToken: _verifiedEmailToken,
-            ),
-          );
+        AuthRegisterRequested(
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          verifiedEmailToken: _verifiedEmailToken,
+        ),
+      );
     }
   }
 
@@ -160,6 +161,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         final isAuthLoading = state is AuthLoading;
 
         return Scaffold(
+          bottomNavigationBar: SafeArea(
+            child: const AppLogo(
+              fontSize: 20,
+              showTagline: true,
+            ).animate().fadeIn(delay: 500.ms),
+          ),
           appBar: AppBar(
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
@@ -202,14 +209,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 20),
-            Icon(Icons.person_add_alt_1, size: 70, color: theme.colorScheme.primary)
-                .animate()
-                .fadeIn(duration: 400.ms)
-                .scale(),
-            const SizedBox(height: AppSizes.paddingMd),
+            // const AppLogo(fontSize: 40).animate().fadeIn(duration: 400.ms).scale(),
+            // const SizedBox(height: AppSizes.paddingMd),
             Text(
               'Create Account',
-              style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.displaySmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSizes.paddingSm),
@@ -226,7 +232,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               label: AppStrings.name,
               hint: 'Enter your name',
               validator: _validateName,
-              prefixIcon: Icon(Icons.person_outline, color: theme.colorScheme.primary),
+              prefixIcon: Icon(
+                Icons.person_outline,
+                color: theme.colorScheme.primary,
+              ),
               enabled: !_isSendingOtp,
             ),
             const SizedBox(height: AppSizes.paddingMd),
@@ -236,7 +245,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               hint: 'Enter your email',
               keyboardType: TextInputType.emailAddress,
               validator: _validateEmail,
-              prefixIcon: Icon(Icons.email_outlined, color: theme.colorScheme.primary),
+              prefixIcon: Icon(
+                Icons.email_outlined,
+                color: theme.colorScheme.primary,
+              ),
               enabled: !_isSendingOtp,
             ),
             const SizedBox(height: AppSizes.paddingXl),
@@ -249,7 +261,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Already have an account? ', style: theme.textTheme.bodyMedium),
+                Text(
+                  'Already have an account? ',
+                  style: theme.textTheme.bodyMedium,
+                ),
                 TextButton(
                   onPressed: _isSendingOtp ? null : () => context.go('/login'),
                   child: Text(
@@ -278,14 +293,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 20),
-            Icon(Icons.mark_email_read, size: 70, color: theme.colorScheme.primary)
-                .animate()
-                .fadeIn(duration: 400.ms)
-                .scale(),
+            const AppLogo(
+              fontSize: 40,
+            ).animate().fadeIn(duration: 400.ms).scale(),
             const SizedBox(height: AppSizes.paddingMd),
             Text(
               'Verify Email',
-              style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.displaySmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSizes.paddingSm),
@@ -303,8 +319,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               hint: 'Enter verification code',
               keyboardType: TextInputType.number,
               maxLength: 6,
-              validator: (v) => v == null || v.trim().length != 6 ? 'Enter a 6-digit code' : null,
-              prefixIcon: Icon(Icons.pin_outlined, color: theme.colorScheme.primary),
+              validator: (v) => v == null || v.trim().length != 6
+                  ? 'Enter a 6-digit code'
+                  : null,
+              prefixIcon: Icon(
+                Icons.pin_outlined,
+                color: theme.colorScheme.primary,
+              ),
               enabled: !_isVerifyingOtp,
             ),
             const SizedBox(height: AppSizes.paddingXl),
@@ -313,6 +334,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               onPressed: _verifyOtp,
               isLoading: _isVerifyingOtp,
             ),
+            const SizedBox(height: AppSizes.paddingXl),
+            const AppLogo(
+              fontSize: 20,
+              showTagline: true,
+            ).animate().fadeIn(delay: 500.ms),
+            const SizedBox(height: AppSizes.paddingMd),
           ],
         ),
       ),
@@ -329,14 +356,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 20),
-            Icon(Icons.lock_person, size: 70, color: theme.colorScheme.primary)
-                .animate()
-                .fadeIn(duration: 400.ms)
-                .scale(),
+            const AppLogo(
+              fontSize: 40,
+            ).animate().fadeIn(duration: 400.ms).scale(),
             const SizedBox(height: AppSizes.paddingMd),
             Text(
               'Create Password',
-              style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.displaySmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSizes.paddingSm),
@@ -354,7 +382,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               hint: 'Enter your password',
               obscureText: true,
               validator: _validatePassword,
-              prefixIcon: Icon(Icons.lock_outline, color: theme.colorScheme.primary),
+              prefixIcon: Icon(
+                Icons.lock_outline,
+                color: theme.colorScheme.primary,
+              ),
               enabled: !isAuthLoading,
             ),
             const SizedBox(height: AppSizes.paddingMd),
@@ -364,11 +395,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               hint: 'Re-enter your password',
               obscureText: true,
               validator: (v) {
-                if (v == null || v.isEmpty) return 'Please confirm your password';
-                if (v != _passwordController.text) return 'Passwords do not match';
+                if (v == null || v.isEmpty)
+                  return 'Please confirm your password';
+                if (v != _passwordController.text)
+                  return 'Passwords do not match';
                 return null;
               },
-              prefixIcon: Icon(Icons.lock_outline, color: theme.colorScheme.primary),
+              prefixIcon: Icon(
+                Icons.lock_outline,
+                color: theme.colorScheme.primary,
+              ),
               enabled: !isAuthLoading,
             ),
             const SizedBox(height: AppSizes.paddingXl),
@@ -377,6 +413,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               onPressed: _register,
               isLoading: isAuthLoading,
             ),
+            const SizedBox(height: AppSizes.paddingXl),
+            const AppLogo(
+              fontSize: 20,
+              showTagline: true,
+            ).animate().fadeIn(delay: 500.ms),
+            const SizedBox(height: AppSizes.paddingMd),
           ],
         ),
       ),

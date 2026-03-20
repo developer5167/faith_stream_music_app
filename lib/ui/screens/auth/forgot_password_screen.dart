@@ -6,6 +6,7 @@ import '../../../repositories/auth_repository.dart';
 import '../../../utils/constants.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/app_logo.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -32,7 +33,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     final email = _emailController.text.trim();
     final authRepo = context.read<AuthRepository>();
-    
+
     final response = await authRepo.sendPasswordResetOtp(email);
 
     if (!mounted) return;
@@ -65,6 +66,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      bottomNavigationBar: SafeArea(
+        child: const AppLogo(
+          fontSize: 24,
+          showTagline: true,
+        ).animate().fadeIn(delay: 600.ms),
+      ),
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -74,58 +81,54 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         backgroundColor: Colors.transparent,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSizes.paddingLg),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(height: size.height * 0.05),
-                Icon(
-                  Icons.lock_reset,
-                  size: 80,
-                  color: theme.colorScheme.primary,
-                ).animate().fadeIn(duration: AppAnimations.durationNormal.ms).scale(
-                      begin: const Offset(0.8, 0.8),
-                      end: const Offset(1, 1),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSizes.paddingLg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Forgot Password',
+                    style: theme.textTheme.displaySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                const SizedBox(height: AppSizes.paddingMd),
-                Text(
-                  'Forgot Password',
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
-                const SizedBox(height: AppSizes.paddingSm),
-                Text(
-                  'Enter your email address to receive a 6-digit verification code.',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                  textAlign: TextAlign.center,
-                ).animate().fadeIn(delay: 300.ms),
-                const SizedBox(height: AppSizes.paddingXl),
-                CustomTextField(
-                  controller: _emailController,
-                  label: AppStrings.email,
-                  hint: 'Enter your email',
-                  keyboardType: TextInputType.emailAddress,
-                  validator: _validateEmail,
-                  prefixIcon: Icon(
-                    Icons.email_outlined,
-                    color: theme.colorScheme.primary,
-                  ),
-                  enabled: !_isLoading,
-                ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.2, end: 0),
-                const SizedBox(height: AppSizes.paddingXl),
-                CustomButton(
-                  text: 'Send Code',
-                  onPressed: _sendOtp,
-                  isLoading: _isLoading,
-                ).animate().fadeIn(delay: 500.ms).scale(begin: const Offset(0.95, 0.95)),
-              ],
+                    textAlign: TextAlign.center,
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
+                  const SizedBox(height: AppSizes.paddingSm),
+                  Text(
+                    'Enter your email address to receive a 6-digit verification code.',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                    textAlign: TextAlign.center,
+                  ).animate().fadeIn(delay: 300.ms),
+                  const SizedBox(height: AppSizes.paddingXl),
+                  CustomTextField(
+                    controller: _emailController,
+                    label: AppStrings.email,
+                    hint: 'Enter your email',
+                    keyboardType: TextInputType.emailAddress,
+                    validator: _validateEmail,
+                    prefixIcon: Icon(
+                      Icons.email_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
+                    enabled: !_isLoading,
+                  ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.2, end: 0),
+                  const SizedBox(height: AppSizes.paddingXl),
+                  CustomButton(
+                        text: 'Send Code',
+                        onPressed: _sendOtp,
+                        isLoading: _isLoading,
+                      )
+                      .animate()
+                      .fadeIn(delay: 500.ms)
+                      .scale(begin: const Offset(0.95, 0.95)),
+                ],
+              ),
             ),
           ),
         ),

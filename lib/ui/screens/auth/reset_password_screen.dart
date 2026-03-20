@@ -6,6 +6,7 @@ import '../../../repositories/auth_repository.dart';
 import '../../../utils/constants.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/app_logo.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String resetToken;
@@ -36,7 +37,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
     final password = _passwordController.text;
     final authRepo = context.read<AuthRepository>();
-    
+
     final response = await authRepo.resetPassword(widget.resetToken, password);
 
     if (!mounted) return;
@@ -94,15 +95,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(height: size.height * 0.05),
-                Icon(
-                  Icons.vpn_key,
-                  size: 80,
-                  color: theme.colorScheme.primary,
-                ).animate().fadeIn(duration: AppAnimations.durationNormal.ms).scale(
-                      begin: const Offset(0.8, 0.8),
-                      end: const Offset(1, 1),
-                    ),
-                const SizedBox(height: AppSizes.paddingMd),
+                // const AppLogo(fontSize: 48).animate().fadeIn(duration: 400.ms).scale(),
+                // const SizedBox(height: AppSizes.paddingMd),
                 Text(
                   'New Password',
                   style: theme.textTheme.displaySmall?.copyWith(
@@ -146,10 +140,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ).animate().fadeIn(delay: 500.ms).slideX(begin: -0.2, end: 0),
                 const SizedBox(height: AppSizes.paddingXl),
                 CustomButton(
-                  text: 'Save Password',
-                  onPressed: _resetPassword,
-                  isLoading: _isLoading,
-                ).animate().fadeIn(delay: 600.ms).scale(begin: const Offset(0.95, 0.95)),
+                      text: 'Save Password',
+                      onPressed: _resetPassword,
+                      isLoading: _isLoading,
+                    )
+                    .animate()
+                    .fadeIn(delay: 600.ms)
+                    .scale(begin: const Offset(0.95, 0.95)),
+                const SizedBox(height: AppSizes.paddingXl),
+                const AppLogo(
+                  fontSize: 24,
+                  showTagline: true,
+                ).animate().fadeIn(delay: 700.ms),
+                const SizedBox(height: AppSizes.paddingMd),
               ],
             ),
           ),

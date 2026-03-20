@@ -20,6 +20,7 @@ import 'services/notification_service.dart';
 import 'services/search_service.dart';
 import 'services/deep_link_service.dart';
 import 'services/ads_service.dart';
+import 'services/song_suggestion_service.dart';
 
 import 'repositories/stream_repository.dart';
 import 'repositories/library_repository.dart';
@@ -86,6 +87,7 @@ void main() async {
     final audioPlayerService = AudioPlayerService();
     final searchService = SearchService(apiClient);
     final adsService = AdsService(apiClient);
+    final songSuggestionService = SongSuggestionService(apiClient);
     final notificationRepository = NotificationRepository(apiClient);
 
     // Notification Service depends on Firebase (already initialized) and ApiClient
@@ -117,6 +119,7 @@ void main() async {
         notificationService: notificationService,
         searchService: searchService,
         adsService: adsService,
+        songSuggestionService: songSuggestionService,
         notificationRepository: notificationRepository,
         downloadService: downloadService,
         initialRoute: initialRoute,
@@ -167,6 +170,7 @@ class MyApp extends StatelessWidget {
   final NotificationService notificationService;
   final SearchService searchService;
   final AdsService adsService;
+  final SongSuggestionService songSuggestionService;
   final NotificationRepository notificationRepository;
   final DownloadService downloadService;
   final String initialRoute;
@@ -183,6 +187,7 @@ class MyApp extends StatelessWidget {
     required this.notificationService,
     required this.searchService,
     required this.adsService,
+    required this.songSuggestionService,
     required this.notificationRepository,
     required this.downloadService,
     required this.initialRoute,
@@ -200,6 +205,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<AudioPlayerService>.value(value: audioPlayerService),
         RepositoryProvider<SearchService>.value(value: searchService),
         RepositoryProvider<AdsService>.value(value: adsService),
+        RepositoryProvider<SongSuggestionService>.value(value: songSuggestionService),
         RepositoryProvider<NotificationRepository>.value(value: notificationRepository),
         RepositoryProvider<DownloadService>.value(value: downloadService),
       ],

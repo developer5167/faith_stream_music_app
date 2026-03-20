@@ -91,11 +91,12 @@ class UploadService {
       final dio = Dio();
       await dio.put(
         uploadUrl,
-        data: Stream.fromIterable(fileBytes.map((e) => [e])),
+        data: fileBytes,
         options: Options(
           headers: {
             'Content-Type': contentType,
             'Content-Length': fileLength.toString(),
+            'Content-Disposition': 'inline',
           },
           // Don't follow redirects for S3 presigned URLs
           followRedirects: false,

@@ -119,7 +119,9 @@ class _SplashScreenState extends State<SplashScreen>
           child: Stack(
             children: [
               Center(
-                child:
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                     Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
@@ -140,28 +142,23 @@ class _SplashScreenState extends State<SplashScreen>
                                 ),
 
                             // 'aith' Expansion
-                            AnimatedContainer(
+                            AnimatedSize(
                               duration: const Duration(milliseconds: 1000),
                               curve: Curves.easeOutQuart,
-                              width: _isExpanded ? 100 : 0,
-                              child: ClipRect(
-                                child: OverflowBox(
-                                  alignment: Alignment.centerLeft,
-                                  maxWidth: 200,
-                                  child:
-                                      Text(
+                              child: _isExpanded
+                                  ? ClipRect(
+                                      child:
+                                          Text(
                                             'aith',
                                             style: textStyle?.copyWith(
                                               color: Colors.white,
                                             ),
-                                          )
-                                          .animate(target: _isExpanded ? 1 : 0)
-                                          .fadeIn(
+                                          ).animate().fadeIn(
                                             duration: 500.ms,
                                             delay: 200.ms,
                                           ),
-                                ),
-                              ),
+                                    )
+                                  : const SizedBox(width: 0),
                             ),
 
                             // 'S' Anchor
@@ -192,16 +189,13 @@ class _SplashScreenState extends State<SplashScreen>
                                 ),
 
                             // 'tream' Expansion
-                            AnimatedContainer(
+                            AnimatedSize(
                               duration: const Duration(milliseconds: 1000),
                               curve: Curves.easeOutQuart,
-                              width: _isExpanded ? 150 : 0,
-                              child: ClipRect(
-                                child: OverflowBox(
-                                  alignment: Alignment.centerLeft,
-                                  maxWidth: 400,
-                                  child:
-                                      ShaderMask(
+                              child: _isExpanded
+                                  ? ClipRect(
+                                      child:
+                                          ShaderMask(
                                             shaderCallback: (bounds) =>
                                                 const LinearGradient(
                                                   colors: [
@@ -221,14 +215,12 @@ class _SplashScreenState extends State<SplashScreen>
                                                 color: Colors.white,
                                               ),
                                             ),
-                                          )
-                                          .animate(target: _isExpanded ? 1 : 0)
-                                          .fadeIn(
+                                          ).animate().fadeIn(
                                             duration: 500.ms,
                                             delay: 400.ms,
                                           ),
-                                ),
-                              ),
+                                    )
+                                  : const SizedBox(width: 0),
                             ),
                           ],
                         )
@@ -238,6 +230,18 @@ class _SplashScreenState extends State<SplashScreen>
                           color: Colors.white.withOpacity(0.9),
                           size: 1.5,
                         ),
+                    Text(
+                      'by SOTER SYSTEMS',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white,
+                        fontSize: 12,
+                        letterSpacing: 2,
+                        fontWeight: FontWeight.w300,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ],
+                ),
               ),
 
               // Subtle Subtitle / Tagline reveal after expansion
@@ -249,13 +253,18 @@ class _SplashScreenState extends State<SplashScreen>
                   child: AnimatedOpacity(
                     duration: const Duration(milliseconds: 1000),
                     opacity: _isExpanded ? 0.6 : 0.0,
-                    child: Text(
-                      'Grace in Every Stream',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white,
-                        letterSpacing: 2,
-                        fontWeight: FontWeight.w300,
-                      ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Grace in Every Stream',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.white,
+                            letterSpacing: 2,
+                            fontWeight: FontWeight.w300,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
                 ),

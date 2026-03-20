@@ -19,6 +19,7 @@ import '../widgets/artist_card.dart';
 import 'album_detail_screen.dart';
 import 'artist_profile_screen.dart';
 import '../widgets/gradient_background.dart';
+import 'suggest_song_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -464,6 +465,30 @@ class _SearchScreenState extends State<SearchScreen>
               color: theme.colorScheme.onSurface.withOpacity(0.38),
             ),
           ),
+          if (message == 'No songs found') ...[
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SuggestSongScreen(
+                      initialSongName: _searchController.text,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.add_comment_rounded),
+              label: const Text('Suggest us a song'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.darkPrimary,
+                side: const BorderSide(color: AppTheme.darkPrimary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

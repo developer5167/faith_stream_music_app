@@ -28,6 +28,30 @@ class ImageUploadHelper {
 
       if (image == null) return null;
 
+      // Validate aspect ratio for profile and cover pictures (1:1 only)
+      if (uploadType == UploadService.userProfile ||
+          uploadType == UploadService.artistProfile ||
+          uploadType == UploadService.albumCover ||
+          uploadType == UploadService.songCover) {
+        final isSquare = await isSquareImage(File(image.path));
+        if (!isSquare) {
+          if (context.mounted) {
+            String typeName = 'profile picture';
+            if (uploadType == UploadService.albumCover || uploadType == UploadService.songCover) {
+              typeName = 'cover image';
+            }
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Please select a square (1:1) image for your $typeName.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+          return null;
+        }
+      }
+
       // Show loading
       if (context.mounted) {
         showDialog(

@@ -8,6 +8,7 @@ import '../../../blocs/auth/auth_state.dart';
 import '../../../utils/constants.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/app_logo.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -81,6 +82,12 @@ class _LoginScreenState extends State<LoginScreen> {
         final isLoading = state is AuthLoading;
 
         return Scaffold(
+          bottomNavigationBar: SafeArea(
+            child: const AppLogo(
+              fontSize: 24,
+              showTagline: true,
+            ).animate().fadeIn(delay: 800.ms),
+          ),
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(AppSizes.paddingLg),
@@ -90,19 +97,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SizedBox(height: size.height * 0.08),
-                    // Logo
-                    Icon(
-                          Icons.music_note,
-                          size: 80,
-                          color: theme.colorScheme.primary,
-                        )
-                        .animate()
-                        .fadeIn(duration: AppAnimations.durationNormal.ms)
-                        .scale(
-                          begin: const Offset(0.8, 0.8),
-                          end: const Offset(1, 1),
-                        ),
-                    const SizedBox(height: AppSizes.paddingMd),
                     Text(
                           AppStrings.welcomeBack,
                           style: theme.textTheme.displaySmall?.copyWith(
@@ -165,12 +159,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         .animate()
                         .fadeIn(delay: 600.ms)
                         .scale(begin: const Offset(0.95, 0.95)),
-                    
+
                     // Forgot Password Link
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: isLoading ? null : () => context.push('/forgot-password'),
+                        onPressed: isLoading
+                            ? null
+                            : () => context.push('/forgot-password'),
                         child: Text(
                           'Forgot Password?',
                           style: theme.textTheme.bodyMedium?.copyWith(

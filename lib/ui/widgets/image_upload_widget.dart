@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:faith_stream_music_app/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../utils/image_upload_helper.dart';
+import '../../services/upload_service.dart';
 
 class ImageUploadWidget extends StatefulWidget {
   final String? currentImageUrl;
@@ -42,8 +44,36 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
 
       if (image == null) return;
 
+      final file = File(image.path);
+
+      // Validate aspect ratio for profile and cover pictures (1:1 only)
+      if (widget.uploadType == UploadService.userProfile ||
+          widget.uploadType == UploadService.artistProfile ||
+          widget.uploadType == UploadService.albumCover ||
+          widget.uploadType == UploadService.songCover) {
+        final isSquare = await ImageUploadHelper.isSquareImage(file);
+        if (!isSquare) {
+          if (mounted) {
+            String typeName = 'profile picture';
+            if (widget.uploadType == UploadService.albumCover ||
+                widget.uploadType == UploadService.songCover) {
+              typeName = 'cover image';
+            }
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content:
+                    Text('Please select a square (1:1) image for your $typeName.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+          return;
+        }
+      }
+
       setState(() {
-        _selectedImage = File(image.path);
+        _selectedImage = file;
       });
 
       // Auto-upload after selection

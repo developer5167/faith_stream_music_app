@@ -6,6 +6,7 @@ import '../../../repositories/auth_repository.dart';
 import '../../../utils/constants.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/app_logo.dart';
 
 class VerifyResetOtpScreen extends StatefulWidget {
   final String email;
@@ -34,7 +35,7 @@ class _VerifyResetOtpScreenState extends State<VerifyResetOtpScreen> {
 
     final otp = _otpController.text.trim();
     final authRepo = context.read<AuthRepository>();
-    
+
     final response = await authRepo.verifyPasswordResetOtp(widget.email, otp);
 
     if (!mounted) return;
@@ -55,7 +56,8 @@ class _VerifyResetOtpScreenState extends State<VerifyResetOtpScreen> {
   }
 
   String? _validateOtp(String? value) {
-    if (value == null || value.trim().length != 6) return 'Enter a valid 6-digit code';
+    if (value == null || value.trim().length != 6)
+      return 'Enter a valid 6-digit code';
     return null;
   }
 
@@ -65,6 +67,12 @@ class _VerifyResetOtpScreenState extends State<VerifyResetOtpScreen> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      bottomNavigationBar: SafeArea(
+        child: const AppLogo(
+          fontSize: 24,
+          showTagline: true,
+        ).animate().fadeIn(delay: 600.ms),
+      ),
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -82,15 +90,8 @@ class _VerifyResetOtpScreenState extends State<VerifyResetOtpScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(height: size.height * 0.05),
-                Icon(
-                  Icons.mark_email_read,
-                  size: 80,
-                  color: theme.colorScheme.primary,
-                ).animate().fadeIn(duration: AppAnimations.durationNormal.ms).scale(
-                      begin: const Offset(0.8, 0.8),
-                      end: const Offset(1, 1),
-                    ),
-                const SizedBox(height: AppSizes.paddingMd),
+                // const AppLogo(fontSize: 48).animate().fadeIn(duration: 400.ms).scale(),
+                // const SizedBox(height: AppSizes.paddingMd),
                 Text(
                   'Check Your Email',
                   style: theme.textTheme.displaySmall?.copyWith(
@@ -122,10 +123,13 @@ class _VerifyResetOtpScreenState extends State<VerifyResetOtpScreen> {
                 ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.2, end: 0),
                 const SizedBox(height: AppSizes.paddingXl),
                 CustomButton(
-                  text: 'Verify Code',
-                  onPressed: _verifyOtp,
-                  isLoading: _isLoading,
-                ).animate().fadeIn(delay: 500.ms).scale(begin: const Offset(0.95, 0.95)),
+                      text: 'Verify Code',
+                      onPressed: _verifyOtp,
+                      isLoading: _isLoading,
+                    )
+                    .animate()
+                    .fadeIn(delay: 500.ms)
+                    .scale(begin: const Offset(0.95, 0.95)),
               ],
             ),
           ),
