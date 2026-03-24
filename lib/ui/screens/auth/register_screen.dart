@@ -293,10 +293,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 20),
-            const AppLogo(
-              fontSize: 40,
-            ).animate().fadeIn(duration: 400.ms).scale(),
-            const SizedBox(height: AppSizes.paddingMd),
             Text(
               'Verify Email',
               style: theme.textTheme.displaySmall?.copyWith(
@@ -335,11 +331,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               isLoading: _isVerifyingOtp,
             ),
             const SizedBox(height: AppSizes.paddingXl),
-            const AppLogo(
-              fontSize: 20,
-              showTagline: true,
-            ).animate().fadeIn(delay: 500.ms),
-            const SizedBox(height: AppSizes.paddingMd),
           ],
         ),
       ),
@@ -356,10 +347,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 20),
-            const AppLogo(
-              fontSize: 40,
-            ).animate().fadeIn(duration: 400.ms).scale(),
-            const SizedBox(height: AppSizes.paddingMd),
             Text(
               'Create Password',
               style: theme.textTheme.displaySmall?.copyWith(
@@ -414,11 +401,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               isLoading: isAuthLoading,
             ),
             const SizedBox(height: AppSizes.paddingXl),
-            const AppLogo(
-              fontSize: 20,
-              showTagline: true,
-            ).animate().fadeIn(delay: 500.ms),
-            const SizedBox(height: AppSizes.paddingMd),
           ],
         ),
       ),

@@ -90,8 +90,6 @@ class _VerifyResetOtpScreenState extends State<VerifyResetOtpScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(height: size.height * 0.05),
-                // const AppLogo(fontSize: 48).animate().fadeIn(duration: 400.ms).scale(),
-                // const SizedBox(height: AppSizes.paddingMd),
                 Text(
                   'Check Your Email',
                   style: theme.textTheme.displaySmall?.copyWith(

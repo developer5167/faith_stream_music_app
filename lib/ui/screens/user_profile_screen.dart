@@ -242,7 +242,7 @@ class UserProfileScreen extends StatelessWidget {
                         title: 'Privacy Policy',
                         onTap: () async {
                           final url = Uri.parse(
-                            'https://faith-stream-notifications.web.app/legal/privacy-policy.html',
+                            'https://faithstream.sotersystems.in/legal/privacy-policy.html',
                           );
                           try {
                             if (await canLaunchUrl(url)) {
@@ -254,7 +254,9 @@ class UserProfileScreen extends StatelessWidget {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Could not launch Privacy Policy'),
+                                    content: Text(
+                                      'Could not launch Privacy Policy',
+                                    ),
                                   ),
                                 );
                               }
@@ -262,9 +264,7 @@ class UserProfileScreen extends StatelessWidget {
                           } catch (e) {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error: $e'),
-                                ),
+                                SnackBar(content: Text('Error: $e')),
                               );
                             }
                           }
