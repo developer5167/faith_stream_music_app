@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../blocs/profile/profile_bloc.dart';
 import '../../blocs/profile/profile_state.dart';
 import '../../utils/constants.dart';
-import 'create_album_screen.dart';
-import 'upload_song_screen.dart';
-import 'manage_songs_screen.dart';
-import 'earnings_screen.dart';
 
 class ArtistDashboardScreen extends StatelessWidget {
   const ArtistDashboardScreen({super.key});
@@ -119,12 +116,7 @@ class ArtistDashboardScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const EarningsScreen(),
-                          ),
-                        ),
+                        onTap: () => context.push('/earnings'),
                         child: _buildStatCard(
                           context,
                           icon: Icons.currency_rupee,
@@ -156,13 +148,7 @@ class ArtistDashboardScreen extends StatelessWidget {
                   title: 'Upload New Song',
                   subtitle: 'Share your latest music',
                   color: theme.colorScheme.primary,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const UploadSongScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () => context.push('/upload-song'),
                 ),
                 _buildActionTile(
                   context,
@@ -170,13 +156,7 @@ class ArtistDashboardScreen extends StatelessWidget {
                   title: 'Manage Songs',
                   subtitle: 'View and edit your uploaded songs',
                   color: Colors.blue,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const ManageSongsScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () => context.push('/manage-songs'),
                 ),
                 _buildActionTile(
                   context,
@@ -184,13 +164,7 @@ class ArtistDashboardScreen extends StatelessWidget {
                   title: 'Create Album',
                   subtitle: 'Organize your songs into albums',
                   color: Colors.orange,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const CreateAlbumScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () => context.push('/create-album'),
                 ),
                 _buildActionTile(
                   context,
@@ -198,12 +172,7 @@ class ArtistDashboardScreen extends StatelessWidget {
                   title: 'Earnings & Payouts',
                   subtitle: 'View earnings, request payout',
                   color: Colors.green,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const EarningsScreen()),
-                    );
-                  },
+                  onTap: () => context.push('/earnings'),
                 ),
               ]),
             ),

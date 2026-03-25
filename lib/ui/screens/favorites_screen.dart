@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../blocs/library/library_bloc.dart';
 import '../../blocs/library/library_state.dart';
 import '../../blocs/library/library_event.dart';
 import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_event.dart';
 import '../../utils/constants.dart';
-import '../widgets/mini_player_bar.dart';
 import '../widgets/loading_indicator.dart';
 import '../widgets/song_card.dart';
 import '../widgets/song_download_handler.dart';
-import 'song_detail_screen.dart';
 
 import '../widgets/gradient_background.dart';
 
@@ -29,7 +28,6 @@ class FavoritesScreen extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
-        bottomNavigationBar: const MiniPlayerBar(),
         body: BlocBuilder<LibraryBloc, LibraryState>(
           builder: (context, state) {
             if (state is LibraryFavoritesLoading) {
@@ -106,15 +104,10 @@ class FavoritesScreen extends StatelessWidget {
                                   isDownloaded: isDownloaded,
                                   downloadProgress: progress,
                                   onDownloadTap: onDownloadTap,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            SongDetailScreen(song: song),
-                                      ),
-                                    );
-                                  },
+                                  onTap: () => context.push(
+                                    '/song/${song.id}',
+                                    extra: song,
+                                  ),
                                   onPlayTap: () {
                                     context.read<PlayerBloc>().add(
                                       PlayerPlaySong(

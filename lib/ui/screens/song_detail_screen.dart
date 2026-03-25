@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/song.dart';
@@ -17,7 +18,6 @@ import '../../services/api_client.dart';
 import '../../services/storage_service.dart';
 import '../../services/artist_service.dart';
 import '../../services/download_service.dart';
-import 'artist_profile_screen.dart';
 import '../widgets/gradient_background.dart';
 
 import '../../services/sharing_service.dart';
@@ -45,6 +45,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
   void initState() {
     super.initState();
     _song = widget.song;
+    _isLoadingSong = _song == null && widget.songId != null;
     _initData();
   }
 
@@ -285,12 +286,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
 
     void _openArtistProfile() {
       if (artist == null) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (ctx) => ArtistProfileScreen(artist: artist),
-        ),
-      );
+      context.push('/artist/${artist.id}', extra: artist);
     }
 
     return InkWell(

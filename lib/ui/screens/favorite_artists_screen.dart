@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/library/library_bloc.dart';
 import '../../blocs/library/library_state.dart';
 import '../../blocs/library/library_event.dart';
 import '../../utils/constants.dart';
 import '../widgets/loading_indicator.dart';
-import '../widgets/mini_player_bar.dart';
 import '../widgets/gradient_background.dart';
 import '../widgets/premium_card.dart';
-import 'artist_profile_screen.dart';
 
 class FavoriteArtistsScreen extends StatelessWidget {
   const FavoriteArtistsScreen({super.key});
@@ -31,7 +30,6 @@ class FavoriteArtistsScreen extends StatelessWidget {
             ),
           ),
         ),
-        bottomNavigationBar: const MiniPlayerBar(),
         body: BlocBuilder<LibraryBloc, LibraryState>(
           builder: (context, state) {
             if (state is LibraryArtistsLoading) {
@@ -82,15 +80,10 @@ class FavoriteArtistsScreen extends StatelessWidget {
                             subtitle: 'Artist',
                             imageUrl:
                                 artist.profilePicUrl ?? artist.bannerImageUrl,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      ArtistProfileScreen(artist: artist),
-                                ),
-                              );
-                            },
+                            onTap: () => context.push(
+                              '/artist/${artist.id}',
+                              extra: artist,
+                            ),
                           );
                         }, childCount: artists.length),
                       ),

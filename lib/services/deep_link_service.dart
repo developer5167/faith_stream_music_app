@@ -39,13 +39,29 @@ class DeepLinkService {
 
   void _handleUri(Uri uri) {
     debugPrint('[DeepLinkService] Handling URI: $uri');
-    final path = uri.path;
+    String path = uri.path;
+    final host = uri.host;
+
+    // Handle case where entity type is in the host (e.g., faithstream://song/123)
+    if (host == 'song' || host == 'album' || host == 'artist') {
+      path = '/$host$path';
+    } else if (host == 'subscription' || host == 'premium') {
+      path = '/premium';
+    }
 
     // Check if the link follows our expected patterns
-    // e.g., /song/uuid, /album/uuid, /artist/uuid
     if (path.startsWith('/song/') ||
         path.startsWith('/album/') ||
-        path.startsWith('/artist/')) {
+        path.startsWith('/artist/') ||
+        path == '/premium') {
+      debugPrint('[DeepLinkService] Navigating to: $path');
+      
+      // Attempt to establish a background stack if we are currenty at the root.
+      final currentLoc = _router.routerDelegate.currentConfiguration.uri.toString();
+      if (currentLoc == '/' || currentLoc == '/splash') {
+        _router.go('/home');
+      }
+      
       _router.push(path);
     }
   }

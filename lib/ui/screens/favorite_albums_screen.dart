@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/library/library_bloc.dart';
 import '../../blocs/library/library_state.dart';
 import '../../blocs/library/library_event.dart';
 import '../../utils/constants.dart';
 import '../widgets/loading_indicator.dart';
-import '../widgets/mini_player_bar.dart';
 import '../widgets/gradient_background.dart';
 import '../widgets/premium_card.dart';
-import 'album_detail_screen.dart';
 
 class FavoriteAlbumsScreen extends StatelessWidget {
   const FavoriteAlbumsScreen({super.key});
@@ -31,7 +30,6 @@ class FavoriteAlbumsScreen extends StatelessWidget {
             ),
           ),
         ),
-        bottomNavigationBar: const MiniPlayerBar(),
         body: BlocBuilder<LibraryBloc, LibraryState>(
           builder: (context, state) {
             if (state is LibraryAlbumsLoading) {
@@ -81,15 +79,10 @@ class FavoriteAlbumsScreen extends StatelessWidget {
                             title: album.title,
                             subtitle: album.displayArtist,
                             imageUrl: album.coverImageUrl,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      AlbumDetailScreen(album: album),
-                                ),
-                              );
-                            },
+                            onTap: () => context.push(
+                              '/album/${album.id}',
+                              extra: album,
+                            ),
                           );
                         }, childCount: albums.length),
                       ),

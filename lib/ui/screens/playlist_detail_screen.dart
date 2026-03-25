@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../models/playlist.dart';
 import '../../blocs/library/library_bloc.dart';
 import '../../blocs/library/library_event.dart';
@@ -8,8 +9,6 @@ import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_event.dart';
 import '../../utils/constants.dart';
 import '../widgets/song_card.dart';
-import '../widgets/mini_player_bar.dart';
-import 'song_detail_screen.dart';
 
 import '../../config/app_theme.dart';
 
@@ -43,7 +42,6 @@ class PlaylistDetailScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      bottomNavigationBar: const MiniPlayerBar(),
       body: CustomScrollView(
         slivers: [
           // App bar with gradient
@@ -263,14 +261,10 @@ class PlaylistDetailScreen extends StatelessWidget {
                     child: SongCard(
                       song: song,
                       showRemoveButton: true,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SongDetailScreen(song: song),
-                          ),
-                        );
-                      },
+                      onTap: () => context.push(
+                        '/song/${song.id}',
+                        extra: song,
+                      ),
                       onPlayTap: () {
                         context.read<PlayerBloc>().add(
                           PlayerPlaySong(song, queue: currentPlaylist.songs),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:share_plus/share_plus.dart';
 import '../../models/song.dart';
+import '../../services/sharing_service.dart';
 import '../../blocs/library/library_bloc.dart';
 import '../../blocs/library/library_event.dart';
 import '../../blocs/library/library_state.dart';
@@ -168,9 +168,14 @@ class SongActionSheet extends StatelessWidget {
                   context,
                   icon: Icons.share,
                   title: 'Share',
-                  onTap: () {
+                  onTap: () async {
+                    final box = context.findRenderObject() as RenderBox?;
+                    final rect = box != null ? box.localToGlobal(Offset.zero) & box.size : null;
+                    
                     Navigator.pop(context);
-                    _shareSong(song);
+                    // Add delay to prevent iOS UIActivityViewController presentation failure
+                    await Future.delayed(const Duration(milliseconds: 300));
+                    _shareSong(song, rect);
                   },
                 ),
 
@@ -200,12 +205,12 @@ class SongActionSheet extends StatelessWidget {
     );
   }
 
-  void _shareSong(Song song) {
-    final String shareText =
-        '🎵 ${song.title}\n'
-        '🎤 ${song.displayArtist}\n'
-        '\nListen on FaithStream!';
-
-    Share.share(shareText, subject: song.title);
+  void _shareSong(Song song, Rect? origin) {
+    SharingService().shareSong(
+      id: song.id,
+      title: song.title,
+      artist: song.displayArtist,
+      sharePositionOrigin: origin,
+    );
   }
 }

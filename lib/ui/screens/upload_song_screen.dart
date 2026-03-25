@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:faith_stream_music_app/utils/constants.dart' show AppSizes;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -361,7 +362,7 @@ class _UploadSongScreenState extends State<UploadSongScreen> {
         );
 
         // Navigate back
-        Navigator.of(context).pop();
+        context.pop();
       }
     } catch (e) {
       if (mounted) {

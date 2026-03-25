@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../services/album_service.dart';
 import '../../services/upload_service.dart';
 import '../../services/api_client.dart';
@@ -180,7 +181,7 @@ class _CreateAlbumScreenState extends State<CreateAlbumScreen> {
         );
 
         // Go back to dashboard
-        Navigator.of(context).pop(true);
+        context.pop(true);
       }
     } catch (e) {
       if (mounted) {

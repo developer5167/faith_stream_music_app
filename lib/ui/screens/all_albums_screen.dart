@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../models/album.dart';
 import '../../utils/constants.dart';
 import '../widgets/album_card.dart';
-import 'album_detail_screen.dart';
 
 class AllAlbumsScreen extends StatelessWidget {
   final String title;
@@ -29,14 +29,7 @@ class AllAlbumsScreen extends StatelessWidget {
                 final album = albums[index];
                 return AlbumCard(
                   album: album,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AlbumDetailScreen(album: album),
-                      ),
-                    );
-                  },
+                  onTap: () => context.push('/album/${album.id}', extra: album),
                 );
               },
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../blocs/payout/payout_bloc.dart';
 import '../../blocs/payout/payout_event.dart';
 import '../../blocs/payout/payout_state.dart';
@@ -63,7 +64,7 @@ class _BankDetailsScreenState extends State<BankDetailsScreen> {
               backgroundColor: Colors.green.shade700,
             ),
           );
-          Navigator.pop(context);
+          context.pop();
         }
         if (state is PayoutError) {
           ScaffoldMessenger.of(context).showSnackBar(

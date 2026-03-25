@@ -1,6 +1,7 @@
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../models/song.dart';
 
 enum RepeatMode { off, one, all }
@@ -38,6 +39,15 @@ class AudioPlayerService {
   }
 
   void _init() async {
+    // Request notification permission for Android 13+
+    try {
+      if (await Permission.notification.isDenied) {
+        await Permission.notification.request();
+      }
+    } catch (e) {
+      print('Error requesting notification permission: $e');
+    }
+
     // Configure audio session for background playback
     try {
       final session = await AudioSession.instance;

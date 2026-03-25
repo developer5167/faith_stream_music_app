@@ -20,11 +20,6 @@ import '../widgets/app_logo.dart';
 import '../../blocs/profile/profile_bloc.dart';
 import '../../blocs/profile/profile_state.dart';
 import 'song_detail_screen.dart';
-import 'album_detail_screen.dart';
-import 'artist_profile_screen.dart';
-import 'search_screen.dart';
-import 'all_songs_screen.dart';
-import 'all_albums_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -50,17 +45,10 @@ class HomeScreen extends StatelessWidget {
               actions: [
                 IconButton(
                   icon: Icon(Icons.search, color: theme.colorScheme.onSurface),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SearchScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                  onPressed: () => context.go('/search'),
             ),
+          ],
+        ),
             body: BlocBuilder<HomeBloc, HomeState>(
               builder: (context, state) {
                 if (state is HomeLoading) {
@@ -143,15 +131,10 @@ class HomeScreen extends StatelessWidget {
                             context,
                             'Recently Played',
                             onSeeAll: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AllSongsScreen(
-                                    title: 'Recently Played',
-                                    songs: feed.recentlyPlayed,
-                                  ),
-                                ),
-                              );
+                              context.push('/all-songs', extra: {
+                                'title': 'Recently Played',
+                                'songs': feed.recentlyPlayed,
+                              });
                             },
                           ),
                           const SizedBox(height: AppSizes.paddingSm),
@@ -172,15 +155,7 @@ class HomeScreen extends StatelessWidget {
                                   subtitle: song.displayArtist,
                                   imageUrl: song.coverImageUrl,
                                   width: 150,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            SongDetailScreen(song: song),
-                                      ),
-                                    );
-                                  },
+                                  onTap: () => context.push('/song/${song.id}', extra: song),
                                   onPlayTap: () {
                                     context.read<PlayerBloc>().add(
                                       PlayerPlaySong(
@@ -202,15 +177,10 @@ class HomeScreen extends StatelessWidget {
                             context,
                             'Trending Now',
                             onSeeAll: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AllSongsScreen(
-                                    title: 'Trending Now',
-                                    songs: feed.trendingSongs,
-                                  ),
-                                ),
-                              );
+                              context.push('/all-songs', extra: {
+                                'title': 'Trending Now',
+                                'songs': feed.trendingSongs,
+                              });
                             },
                           ),
                           const SizedBox(height: AppSizes.paddingSm),
@@ -231,15 +201,7 @@ class HomeScreen extends StatelessWidget {
                                   subtitle: song.displayArtist,
                                   imageUrl: song.coverImageUrl,
                                   width: 150,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            SongDetailScreen(song: song),
-                                      ),
-                                    );
-                                  },
+                                  onTap: () => context.push('/song/${song.id}', extra: song),
                                   onPlayTap: () {
                                     context.read<PlayerBloc>().add(
                                       PlayerPlaySong(
@@ -261,15 +223,10 @@ class HomeScreen extends StatelessWidget {
                             context,
                             'Top 10 Most Played',
                             onSeeAll: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AllSongsScreen(
-                                    title: 'Top 10 Most Played',
-                                    songs: feed.topPlayedSongs,
-                                  ),
-                                ),
-                              );
+                              context.push('/all-songs', extra: {
+                                'title': 'Top 10 Most Played',
+                                'songs': feed.topPlayedSongs,
+                              });
                             },
                           ),
                           const SizedBox(height: AppSizes.paddingSm),
@@ -320,15 +277,10 @@ class HomeScreen extends StatelessWidget {
                             context,
                             'New Releases',
                             onSeeAll: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AllAlbumsScreen(
-                                    title: 'New Releases',
-                                    albums: feed.albums,
-                                  ),
-                                ),
-                              );
+                              context.push('/all-albums', extra: {
+                                'title': 'New Releases',
+                                'albums': feed.albums,
+                              });
                             },
                           ),
                           const SizedBox(height: AppSizes.paddingSm),
@@ -349,15 +301,7 @@ class HomeScreen extends StatelessWidget {
                                   subtitle: album.displayArtist,
                                   imageUrl: album.coverImageUrl,
                                   width: 150,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            AlbumDetailScreen(album: album),
-                                      ),
-                                    );
-                                  },
+                                  onTap: () => context.push('/album/${album.id}', extra: album),
                                 ).animate().fadeIn(delay: (index * 50).ms);
                               },
                             ),
@@ -388,15 +332,7 @@ class HomeScreen extends StatelessWidget {
                                   imageUrl: artist.profilePicUrl,
                                   width: 130,
                                   isCircle: true,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ArtistProfileScreen(artist: artist),
-                                      ),
-                                    );
-                                  },
+                                  onTap: () => context.push('/artist/${artist.id}', extra: artist),
                                 ).animate().fadeIn(delay: (index * 50).ms);
                               },
                             ),
@@ -426,15 +362,7 @@ class HomeScreen extends StatelessWidget {
                                   imageUrl: artist.profilePicUrl,
                                   width: 130,
                                   isCircle: true,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ArtistProfileScreen(artist: artist),
-                                      ),
-                                    );
-                                  },
+                                  onTap: () => context.push('/artist/${artist.id}', extra: artist),
                                 ).animate().fadeIn(delay: (index * 50).ms);
                               },
                             ),
@@ -464,15 +392,7 @@ class HomeScreen extends StatelessWidget {
                                   imageUrl: artist.profilePicUrl,
                                   width: 130,
                                   isCircle: true,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ArtistProfileScreen(artist: artist),
-                                      ),
-                                    );
-                                  },
+                                  onTap: () => context.push('/artist/${artist.id}', extra: artist),
                                 ).animate().fadeIn(delay: (index * 50).ms);
                               },
                             ),

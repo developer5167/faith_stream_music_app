@@ -6,7 +6,6 @@ import '../../services/download_service.dart';
 import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_event.dart';
 import '../widgets/gradient_background.dart';
-import '../widgets/mini_player_bar.dart';
 import '../widgets/song_card.dart';
 
 class OfflineDownloadsScreen extends StatefulWidget {
@@ -72,7 +71,6 @@ class _OfflineDownloadsScreenState extends State<OfflineDownloadsScreen> {
     return GradientBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        bottomNavigationBar: const MiniPlayerBar(),
         body: RefreshIndicator(
           color: Colors.white,
           backgroundColor: Colors.black54,

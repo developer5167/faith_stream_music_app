@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../blocs/library/library_bloc.dart';
 import '../../blocs/library/library_state.dart';
 import '../../blocs/library/library_event.dart';
 import '../../utils/constants.dart';
 import '../widgets/loading_indicator.dart';
-import 'playlist_detail_screen.dart';
-import 'create_playlist_screen.dart';
 import '../../config/app_theme.dart';
 
 class PlaylistsScreen extends StatelessWidget {
@@ -49,15 +48,7 @@ class PlaylistsScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(AppSizes.paddingMd),
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const CreatePlaylistScreen(),
-                            ),
-                          );
-                        },
+                        onPressed: () => context.push('/create-playlist'),
                         icon: const Icon(Icons.add),
                         label: const Text('Create New Playlist'),
                         style: ElevatedButton.styleFrom(
@@ -92,15 +83,10 @@ class PlaylistsScreen extends StatelessWidget {
                           final playlist = state.playlists[index];
                           return _PlaylistCard(
                             playlist: playlist,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      PlaylistDetailScreen(playlist: playlist),
-                                ),
-                              );
-                            },
+                            onTap: () => context.push(
+                              '/playlist/${playlist.id}',
+                              extra: playlist,
+                            ),
                           );
                         }, childCount: state.playlists.length),
                       ),

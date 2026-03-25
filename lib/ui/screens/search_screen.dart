@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_event.dart';
 import '../../blocs/library/library_bloc.dart';
@@ -16,10 +17,8 @@ import '../../config/app_theme.dart';
 import '../widgets/song_card.dart';
 import '../widgets/album_card.dart';
 import '../widgets/artist_card.dart';
-import 'album_detail_screen.dart';
-import 'artist_profile_screen.dart';
 import '../widgets/gradient_background.dart';
-import 'suggest_song_screen.dart';
+
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -408,14 +407,7 @@ class _SearchScreenState extends State<SearchScreen>
         final album = _filteredAlbums[index];
         return AlbumCard(
           album: album,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AlbumDetailScreen(album: album),
-              ),
-            );
-          },
+          onTap: () => context.push('/album/${album.id}', extra: album),
         );
       },
     );
@@ -434,14 +426,7 @@ class _SearchScreenState extends State<SearchScreen>
         final artist = _filteredArtists[index];
         return ArtistCard(
           artist: artist,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ArtistProfileScreen(artist: artist),
-              ),
-            );
-          },
+          onTap: () => context.push('/artist/${artist.id}', extra: artist),
         );
       },
     );
@@ -469,14 +454,7 @@ class _SearchScreenState extends State<SearchScreen>
             const SizedBox(height: 24),
             OutlinedButton.icon(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SuggestSongScreen(
-                      initialSongName: _searchController.text,
-                    ),
-                  ),
-                );
+                context.push('/suggest-song', extra: _searchController.text);
               },
               icon: const Icon(Icons.add_comment_rounded),
               label: const Text('Suggest us a song'),

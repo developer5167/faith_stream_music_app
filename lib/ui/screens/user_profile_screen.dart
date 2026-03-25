@@ -8,10 +8,6 @@ import '../../blocs/profile/profile_state.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../utils/constants.dart';
-import 'edit_profile_screen.dart';
-import 'artist_registration_screen.dart';
-import 'artist_dashboard_screen.dart';
-import 'subscription_screen.dart';
 import '../../repositories/user_repository.dart';
 import '../widgets/gradient_background.dart';
 
@@ -129,12 +125,7 @@ class UserProfileScreen extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.edit),
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EditProfileScreen(user: user),
-                        ),
-                      );
+                      context.push('/edit-profile', extra: user);
                     },
                   ),
                 ],
@@ -375,10 +366,7 @@ class UserProfileScreen extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const SubscriptionScreen()),
-          );
+          context.push('/premium');
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -464,12 +452,7 @@ class UserProfileScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ArtistDashboardScreen(),
-              ),
-            );
+            context.push('/artist-dashboard');
           },
           borderRadius: BorderRadius.circular(12),
           child: Padding(
@@ -548,12 +531,7 @@ class UserProfileScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ArtistRegistrationScreen(),
-              ),
-            );
+            context.push('/artist-registration');
           },
           borderRadius: BorderRadius.circular(12),
           child: Padding(

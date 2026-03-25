@@ -12,10 +12,6 @@ import '../../config/app_theme.dart';
 import '../../services/download_service.dart';
 import '../widgets/loading_indicator.dart';
 import '../widgets/error_display.dart';
-import 'favorites_screen.dart';
-import 'playlists_screen.dart';
-import 'favorite_artists_screen.dart';
-import 'favorite_albums_screen.dart';
 import '../widgets/gradient_background.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -194,14 +190,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     iconColor: Colors.pinkAccent,
                     title: 'Favorite Songs',
                     count: libraryState.favorites.length,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FavoritesScreen(),
-                        ),
-                      );
-                    },
+                    onTap: () => context.push('/favorites'),
                   ),
                   _buildCategoryItem(
                     context,
@@ -209,14 +198,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     iconColor: Colors.orangeAccent,
                     title: 'Albums',
                     count: libraryState.favoriteAlbums.length,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FavoriteAlbumsScreen(),
-                        ),
-                      );
-                    },
+                    onTap: () => context.push('/favorite-albums'),
                   ),
                   _buildCategoryItem(
                     context,
@@ -224,14 +206,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     iconColor: Colors.blueAccent,
                     title: 'Artists',
                     count: libraryState.favoriteArtists.length,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FavoriteArtistsScreen(),
-                        ),
-                      );
-                    },
+                    onTap: () => context.push('/favorite-artists'),
                   ),
                   _buildCategoryItem(
                     context,
@@ -239,14 +214,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     iconColor: Colors.greenAccent,
                     title: 'Playlists',
                     count: libraryState.playlists.length,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PlaylistsScreen(),
-                        ),
-                      );
-                    },
+                    onTap: () => context.push('/playlists'),
                   ),
 
                   // ── Offline Downloads (premium only) ────────────────

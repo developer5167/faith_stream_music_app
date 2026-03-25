@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../blocs/payout/payout_bloc.dart';
@@ -10,7 +11,6 @@ import '../../services/api_client.dart';
 import '../../services/payout_service.dart';
 import '../../services/storage_service.dart';
 import '../../utils/constants.dart';
-import 'bank_details_screen.dart';
 
 class EarningsScreen extends StatelessWidget {
   const EarningsScreen({super.key});
@@ -269,14 +269,12 @@ class _EarningsView extends StatelessWidget {
             icon: Icons.account_balance,
             label: hasBankDetails ? 'View Bank Details' : 'Add Bank/UPI',
             color: const Color(0xFF4F46E5),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => BlocProvider.value(
-                  value: context.read<PayoutBloc>(),
-                  child: BankDetailsScreen(existingDetails: state.bankDetails),
-                ),
-              ),
+            onTap: () => context.push(
+              '/bank-details',
+              extra: {
+                'bloc': context.read<PayoutBloc>(),
+                'details': state.bankDetails,
+              },
             ),
           ),
         ),

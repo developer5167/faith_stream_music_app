@@ -1,6 +1,7 @@
 import 'package:faith_stream_music_app/blocs/player/player_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../models/album.dart';
 import '../../models/song.dart';
 import '../../models/artist.dart';
@@ -11,10 +12,8 @@ import '../../services/storage_service.dart';
 import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_state.dart';
 import '../../config/app_theme.dart';
-import '../widgets/mini_player_bar.dart';
 import '../screens/now_playing_screen.dart';
 import '../../services/artist_service.dart';
-import 'artist_profile_screen.dart';
 import '../widgets/song_card.dart';
 
 import '../../services/sharing_service.dart';
@@ -41,6 +40,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   void initState() {
     super.initState();
     _album = widget.album;
+    _isLoadingAlbum = _album == null && widget.albumId != null;
     _initData();
   }
 
@@ -220,7 +220,6 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      bottomNavigationBar: const MiniPlayerBar(),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -287,12 +286,9 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   InkWell(
                     onTap: () {
                       if (_albumArtist != null) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ArtistProfileScreen(artist: _albumArtist!),
-                          ),
+                        context.push(
+                          '/artist/${_albumArtist!.id}',
+                          extra: _albumArtist,
                         );
                       }
                     },

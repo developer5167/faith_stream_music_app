@@ -1,8 +1,9 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:faith_stream_music_app/blocs/auth/auth_bloc.dart';
 import 'package:faith_stream_music_app/blocs/auth/auth_state.dart';
 import 'package:faith_stream_music_app/blocs/player/player_event.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/artist.dart';
 import '../../models/song.dart';
 import '../../models/album.dart';
@@ -13,11 +14,10 @@ import '../../services/storage_service.dart';
 import '../../blocs/player/player_bloc.dart';
 import '../../blocs/player/player_state.dart';
 import '../../config/app_theme.dart';
-import '../widgets/mini_player_bar.dart';
 import '../widgets/gradient_background.dart';
 import '../widgets/song_card.dart';
 import '../widgets/premium_card.dart';
-import 'album_detail_screen.dart';
+
 
 import '../../services/sharing_service.dart';
 
@@ -44,6 +44,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
   void initState() {
     super.initState();
     _artist = widget.artist;
+    _isLoadingArtist = _artist == null && widget.artistId != null;
     _loadData();
   }
 
@@ -167,14 +168,6 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
-    final authState = context.watch<AuthBloc>().state;
-    final currentUserId = authState is AuthAuthenticated
-        ? authState.user.id
-        : null;
-    final isOwnProfile = currentUserId == _artist!.id;
-
     if (_isLoadingArtist) {
       return const Scaffold(
         backgroundColor: Colors.black,
@@ -190,10 +183,16 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
       );
     }
 
+    final theme = Theme.of(context);
+    final size = MediaQuery.of(context).size;
+    final authState = context.watch<AuthBloc>().state;
+    final currentUserId = authState is AuthAuthenticated ? authState.user.id : null;
+    final isOwnProfile = currentUserId == _artist!.id;
+
+
     return GradientBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        bottomNavigationBar: const MiniPlayerBar(),
         body: CustomScrollView(
           slivers: [
             SliverAppBar(
@@ -384,7 +383,12 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            context.push('/all-songs', extra: {
+                              'title': '${_artist!.name} - Popular Songs',
+                              'songs': _popularSongs,
+                            });
+                          },
                           child: Text(
                             'See All',
                             style: TextStyle(color: AppTheme.darkPrimary),
@@ -456,7 +460,15 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            final List<Album> albumObjects = _albums
+                                .map((json) => Album.fromJson(json))
+                                .toList();
+                            context.push('/all-albums', extra: {
+                              'title': '${_artist!.name} - Albums',
+                              'albums': albumObjects,
+                            });
+                          },
                           child: Text(
                             'See All',
                             style: TextStyle(color: AppTheme.darkPrimary),
@@ -502,15 +514,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                               subtitle: album.displayDate,
                               imageUrl: album.coverImageUrl,
                               width: 150,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        AlbumDetailScreen(album: album),
-                                  ),
-                                );
-                              },
+                               onTap: () => context.push('/album/${album.id}', extra: album),
                             );
                           },
                         ),

@@ -10,26 +10,20 @@ import '../../blocs/player/player_state.dart';
 import '../../blocs/player/player_event.dart';
 import '../../services/ads_service.dart';
 import '../../services/audio_player_service.dart';
-import '../../services/download_service.dart';
 import '../widgets/mini_player_bar.dart';
 import '../widgets/app_open_ad_dialog.dart';
-import 'home_screen.dart';
-import 'search_screen.dart';
-import 'library_screen.dart';
-import 'user_profile_screen.dart';
-import 'subscription_screen.dart';
 import 'ad_player_screen.dart';
 import '../../config/app_theme.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final Widget child;
+  const MainNavigationScreen({super.key, required this.child});
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _currentIndex = 0;
   // Cached value — only updated on definitive ProfileLoaded state.
   // Stays stable during ProfileLoading so the tab bar doesn't flicker.
   bool _showSubscriptionTab = true;
@@ -51,24 +45,29 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  void _onConnectivityChanged(List<ConnectivityResult> results) {
+  void _onConnectivityChanged(List<ConnectivityResult> results) async {
     if (!mounted) return;
-    final isOffline =
-        results.isEmpty || results.every((r) => r == ConnectivityResult.none);
-    if (isOffline) {
-      final ds = context.read<DownloadService>();
-      if (ds.downloadCount > 0) {
-        // Navigate to offline downloads
-        context.go('/offline-downloads');
-      } else {
-        // No downloads — just show a brief snackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No internet connection'),
-            duration: Duration(seconds: 3),
-            backgroundColor: Colors.black87,
-          ),
-        );
+    
+    // Cross-check with a fresh check to be sure.
+    final initialCheck = await Connectivity().checkConnectivity();
+    final isPossiblyOffline = initialCheck.isEmpty || initialCheck.every((r) => r == ConnectivityResult.none);
+    
+    if (isPossiblyOffline && mounted) {
+      // Wait 300ms and check again to avoid transient drops during navigation/radio handoff
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
+      
+      final finalCheck = await Connectivity().checkConnectivity();
+      final isStillOffline = finalCheck.isEmpty || finalCheck.every((r) => r == ConnectivityResult.none);
+      
+      if (isStillOffline) {
+        // Only navigate if we are currently on a screen that REQUIRES internet
+        final state = GoRouterState.of(context);
+        final loc = state.matchedLocation;
+        if (loc == '/home' || loc == '/search' || loc == '/premium' || loc == '/profile') {
+          debugPrint('[MainNavigationScreen] Verified internet loss. Redirecting to offline downloads.');
+          context.go('/offline-downloads');
+        }
       }
     }
   }
@@ -153,45 +152,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           if (newShow != _showSubscriptionTab) {
             setState(() {
               _showSubscriptionTab = newShow;
-              // Clamp index if the tab at current position disappears
-              final maxIndex = newShow ? 4 : 3;
-              if (_currentIndex > maxIndex) _currentIndex = maxIndex;
             });
           }
         }
       },
       builder: (context, state) {
-        final screens = [
-          const HomeScreen(),
-          const SearchScreen(),
-          const LibraryScreen(),
-          if (_showSubscriptionTab) const SubscriptionScreen(),
-          const UserProfileScreen(),
-        ];
-
-        final navItems = [
-          const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.library_music),
-            label: 'Library',
-          ),
-          if (_showSubscriptionTab)
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.workspace_premium),
-              label: 'Premium',
-            ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ];
-
-        // Safety clamp in case state is read before listener fires
-        final safeIndex = _currentIndex.clamp(0, screens.length - 1);
+        // Map paths to tab indices
+        final String location = GoRouterState.of(context).matchedLocation;
+        int currentIndex = 0;
+        if (location.startsWith('/search')) currentIndex = 1;
+        else if (location.startsWith('/library')) currentIndex = 2;
+        else if (_showSubscriptionTab && location.startsWith('/premium')) currentIndex = 3;
+        else if (location.startsWith('/profile')) currentIndex = _showSubscriptionTab ? 4 : 3;
+        else if (location.startsWith('/song') || location.startsWith('/album') || location.startsWith('/artist')) {
+           // Detail screens preserve the "current" tab they were opened from, 
+           // but for deep links, we might just stay on Home (0).
+        }
 
         return MultiBlocListener(
           listeners: [
@@ -233,9 +209,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                             onPressed: () {
                               Navigator.pop(context);
                               if (_showSubscriptionTab) {
-                                setState(() {
-                                  _currentIndex = 3; // Navigate to Premium tab
-                                });
+                                context.go('/premium');
                               }
                             },
                             child: const Text('GO PREMIUM'),
@@ -254,20 +228,34 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ],
           child: Scaffold(
             backgroundColor: Colors.transparent,
-            body: screens[safeIndex],
+            body: widget.child,
             bottomNavigationBar: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const MiniPlayerBar(),
                 BottomNavigationBar(
-                  currentIndex: safeIndex,
+                  currentIndex: currentIndex,
                   onTap: (index) {
-                    setState(() {
-                      _currentIndex = index;
-                    });
+                    switch (index) {
+                      case 0: context.go('/home'); break;
+                      case 1: context.go('/search'); break;
+                      case 2: context.go('/library'); break;
+                      case 3: 
+                        if (_showSubscriptionTab) context.go('/premium');
+                        else context.go('/profile'); 
+                        break;
+                      case 4: context.go('/profile'); break;
+                    }
                   },
                   type: BottomNavigationBarType.fixed,
-                  items: navItems,
+                  items: [
+                    const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+                    const BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+                    const BottomNavigationBarItem(icon: Icon(Icons.library_music), label: 'Library'),
+                    if (_showSubscriptionTab)
+                      const BottomNavigationBarItem(icon: Icon(Icons.workspace_premium), label: 'Premium'),
+                    const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+                  ],
                 ),
               ],
             ),

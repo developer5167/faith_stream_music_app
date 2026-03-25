@@ -17,23 +17,18 @@ class SubscriptionScreen extends StatefulWidget {
   State<SubscriptionScreen> createState() => _SubscriptionScreenState();
 }
 
-class _SubscriptionScreenState extends State<SubscriptionScreen>
-    with WidgetsBindingObserver {
+class _SubscriptionScreenState extends State<SubscriptionScreen> {
   bool _isLoading = false;
 
   // Android-only: Razorpay native SDK
   Razorpay? _razorpay;
   String? _pendingOrderId;
 
-  // iOS-only: track when user leaves to browser
-  bool _hasOpenedBrowser = false;
-
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
 
     // Only initialise Razorpay SDK on Android
     if (Platform.isAndroid) {
@@ -46,25 +41,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _razorpay?.clear();
     super.dispose();
-  }
-
-  /// iOS: when user returns from Safari after payment, reload subscription
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (Platform.isIOS &&
-        state == AppLifecycleState.resumed &&
-        _hasOpenedBrowser) {
-      _hasOpenedBrowser = false;
-      if (mounted) {
-        // Small delay lets the webhook hit the server first
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) context.read<ProfileBloc>().add(ProfileLoad());
-        });
-      }
-    }
   }
 
   // ── Android: Razorpay SDK callbacks ──────────────────────────────────────
@@ -145,6 +123,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           'description': '1 Month Ad-Free Subscription',
           'prefill': {'contact': '', 'email': ''},
           'theme': {'color': '#6A0DAD'},
+          // 'checkout_config_id': 'config_SVPtkJbUplR7sZ',
         });
         // isLoading reset in callbacks
       } else {
@@ -163,25 +142,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _isLoading = true);
     try {
-      final repo = context.read<UserRepository>();
-      final result = await repo
-          .createSubscription(); // reuses the /create-link endpoint
-
-      if (result.success && result.data != null) {
-        final paymentUrl = result.data!['payment_url'] as String?;
-        if (paymentUrl != null && paymentUrl.isNotEmpty) {
-          final uri = Uri.parse(paymentUrl);
-          if (await canLaunchUrl(uri)) {
-            _hasOpenedBrowser = true;
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          } else {
-            messenger.showSnackBar(
-              const SnackBar(content: Text('Could not open payment page')),
-            );
-          }
-        }
+      final uri = Uri.parse('https://faithstream.sotersystems.in');
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        messenger.showSnackBar(SnackBar(content: Text(result.message)));
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Could not open marketing site')),
+        );
       }
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -310,7 +277,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                       // Premium plan
                       _PlanCard(
                         name: 'Premium',
-                        price: '₹99',
+                        // TODO: Change back to '₹99' for actual production
+                        price: '₹1',
                         period: '/month',
                         features: const [
                           _Feature('Ad-free listening', true),
@@ -325,12 +293,37 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                       ),
 
                       const SizedBox(height: 24),
+                      if (Platform.isIOS) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () => context.read<ProfileBloc>().add(ProfileLoad()),
+                              icon: const Icon(Icons.refresh, size: 18),
+                              label: const Text('Already subscribed? Check Status'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white70,
+                                side: const BorderSide(color: Colors.white24),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: Text(
-                          'Payment processed securely via Razorpay. '
-                          'Your browser will open to complete the payment. '
-                          'Subscription activates instantly after payment.',
+                          Platform.isIOS 
+                            ? 'Subscriptions are managed via our official website. '
+                              'Once you complete your purchase, return here and tap "Check Status".'
+                            : 'Payment processed securely via Razorpay. '
+                              'Your browser will open to complete the payment. '
+                              'Subscription activates instantly after payment.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.5),
@@ -655,7 +648,7 @@ class _PlanCard extends StatelessWidget {
                           ),
                         )
                       : Text(
-                          Platform.isIOS ? 'Get Started' : 'Subscribe Now',
+                          Platform.isIOS ? 'Visit Website' : 'Subscribe Now',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

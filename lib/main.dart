@@ -98,7 +98,7 @@ void main() async {
     // Check connectivity for offline launch routing
     final bool isOffline = connectivityResult == ConnectivityResult.none;
     final bool hasDownloads = downloadService.downloadCount > 0;
-    final String initialRoute = (isOffline && hasDownloads)
+    final String initialRoute = isOffline
         ? '/offline-downloads'
         : '/splash';
     debugPrint(

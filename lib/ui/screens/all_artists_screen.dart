@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../models/artist.dart';
 import '../../utils/constants.dart';
 import '../widgets/artist_card.dart';
-import 'artist_profile_screen.dart';
 
 class AllArtistsScreen extends StatelessWidget {
   final String title;
@@ -33,15 +33,7 @@ class AllArtistsScreen extends StatelessWidget {
                 final artist = artists[index];
                 return ArtistCard(
                   artist: artist,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ArtistProfileScreen(artist: artist),
-                      ),
-                    );
-                  },
+                  onTap: () => context.push('/artist/${artist.id}', extra: artist),
                 );
               },
             ),
