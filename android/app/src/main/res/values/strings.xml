@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Audio Service background description shown in Android battery/permission settings -->
+    <string name="audio_service_description">FaithStream uses a background audio service to continue playing worship music when the app is minimized or the screen is locked. This is required for a seamless music listening experience.</string>
+
+    <string name="app_name">FaithStream</string>
+</resources>

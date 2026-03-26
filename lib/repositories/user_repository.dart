@@ -268,4 +268,21 @@ class UserRepository {
       );
     }
   }
+
+  // Delete account — anonymizes all personal data on the backend
+  Future<ApiResponse<void>> deleteAccount() async {
+    try {
+      final response = await _apiClient.delete('/users/profile');
+      final data = response.data;
+      return ApiResponse(
+        success: data['success'] == true,
+        message: data['message'] ?? 'Account deleted',
+      );
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Error deleting account: $e',
+      );
+    }
+  }
 }

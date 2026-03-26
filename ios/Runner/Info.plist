@@ -74,6 +74,8 @@
 		<true/>
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>FaithStream needs access to your local network to connect to the development server.</string>
+	<string>FaithStream uses your local network to stream music from nearby sources for a faster, smoother playback experience.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>FaithStream sends you notifications about new releases, subscription updates, and important account activity. You can customize notification preferences in Settings.</string>
 </dict>
 </plist>

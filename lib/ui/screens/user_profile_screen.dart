@@ -267,6 +267,21 @@ class UserProfileScreen extends StatelessWidget {
                         title: 'Help & Support',
                         onTap: () => context.push('/support'),
                       ),
+                      _buildActionCard(
+                        context,
+                        icon: Icons.gavel_outlined,
+                        title: 'Report Copyright Infringement',
+                        onTap: () async {
+                          final url = Uri.parse(
+                            'https://faithstream.sotersystems.in/legal/copyright.html',
+                          );
+                          try {
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url, mode: LaunchMode.externalApplication);
+                            }
+                          } catch (_) {}
+                        },
+                      ),
 
                       const SizedBox(height: AppSizes.paddingLg),
 
@@ -287,6 +302,55 @@ class UserProfileScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
+                        ),
+                      ),
+
+                      const SizedBox(height: AppSizes.paddingLg),
+
+                      // Danger Zone — Account Deletion (App Store required)
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.red.withOpacity(0.3)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.all(AppSizes.paddingMd),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Danger Zone',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () => _showDeleteAccountConfirmation(context),
+                                icon: const Icon(Icons.delete_forever, color: Colors.red, size: 20),
+                                label: const Text('Delete My Account'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                  side: const BorderSide(color: Colors.red),
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Permanently removes your account and all personal data. This cannot be undone.',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.4),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
 
@@ -569,6 +633,90 @@ class UserProfileScreen extends StatelessWidget {
         ),
       );
     }
+  }
+
+  void _showDeleteAccountConfirmation(BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1a1a2e),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Delete Account', style: TextStyle(color: Colors.red)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'This will permanently delete your account and anonymize all your personal data. Your uploaded songs and artist content will remain on the platform.',
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Type DELETE to confirm:',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                hintText: 'DELETE',
+                hintStyle: TextStyle(color: Colors.white30),
+                border: OutlineInputBorder(),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.red),
+                ),
+              ),
+              style: const TextStyle(color: Colors.white, letterSpacing: 2),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (controller.text.trim() != 'DELETE') {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please type DELETE to confirm.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+              Navigator.pop(dialogContext);
+              final repo = context.read<UserRepository>();
+              final result = await repo.deleteAccount();
+              if (context.mounted) {
+                if (result.success) {
+                  context.read<AuthBloc>().add(const AuthLogoutRequested());
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed: ${result.message}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete Account'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showLogoutConfirmation(BuildContext context) {
