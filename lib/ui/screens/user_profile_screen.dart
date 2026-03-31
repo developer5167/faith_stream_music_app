@@ -329,7 +329,13 @@ class UserProfileScreen extends StatelessWidget {
                             SizedBox(
                               width: double.infinity,
                               child: OutlinedButton.icon(
-                                onPressed: () => _showDeleteAccountConfirmation(context),
+                                onPressed: () {
+                                  if (user.isArtist) {
+                                    _showArtistDeleteAccountConfirmation(context);
+                                  } else {
+                                    _showDeleteAccountConfirmation(context);
+                                  }
+                                },
                                 icon: const Icon(Icons.delete_forever, color: Colors.red, size: 20),
                                 label: const Text('Delete My Account'),
                                 style: OutlinedButton.styleFrom(
@@ -713,6 +719,66 @@ class UserProfileScreen extends StatelessWidget {
               foregroundColor: Colors.white,
             ),
             child: const Text('Delete Account'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showArtistDeleteAccountConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1a1a2e),
+        title: const Row(
+          children: [
+            Icon(Icons.gavel_rounded, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Artist Formal Deletion', style: TextStyle(color: Colors.orange, fontSize: 18)),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'As an Approved Artist, your account contains intellectual property (songs/albums) and generates royalties. Therefore, your account deletion must be processed manually by our Support Team.',
+              style: TextStyle(color: Colors.white, fontSize: 13),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Important Financial Notice:',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+            SizedBox(height: 4),
+            Text(
+              '• Please withdraw any available funds via the dashboard prior to deletion.\n'
+              '• Any funds remaining below the payout threshold will be forfeited.\n'
+              '• If you delete your account but choose to leave your music on FaithStream, you explicitly waive your right to all future royalties, which will be retained by the platform.',
+              style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'To proceed, please tap \"Contact Support\" and submit a formal catalog takedown & account closure request.',
+              style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext); // Close dialog
+              context.push('/support'); // Navigate to support screen
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Contact Support'),
           ),
         ],
       ),
