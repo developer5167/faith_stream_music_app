@@ -112,19 +112,25 @@ class AudioPlayerService {
 
         final String? processedUrl = s.audioProcessedUrl;
         final String? rawUrl = s.audioUrl;
-        
+
         String finalUrl = '';
         if (processedUrl != null && processedUrl.isNotEmpty) {
           if (processedUrl.startsWith('http')) {
             finalUrl = processedUrl;
           } else {
             // It's a key. Try to construct it using the same domain as the original URL if possible
-            if (rawUrl != null && rawUrl.contains('amazonaws.com') && rawUrl.contains('.s3.')) {
-              final String bucketBase = rawUrl.substring(0, rawUrl.indexOf('amazonaws.com/') + 14);
+            if (rawUrl != null &&
+                rawUrl.contains('amazonaws.com') &&
+                rawUrl.contains('.s3.')) {
+              final String bucketBase = rawUrl.substring(
+                0,
+                rawUrl.indexOf('amazonaws.com/') + 14,
+              );
               finalUrl = '$bucketBase$processedUrl';
             } else {
               // Fallback to the production bucket identified in logs
-              finalUrl = 'https://faithstream-songs-production.s3.ap-south-1.amazonaws.com/$processedUrl';
+              finalUrl =
+                  'https://faithstream-songs-production.s3.ap-south-1.amazonaws.com/$processedUrl';
             }
           }
         } else {
@@ -227,19 +233,25 @@ class AudioPlayerService {
     if (_player.audioSource is ConcatenatingAudioSource) {
       final String? processedUrl = song.audioProcessedUrl;
       final String? rawUrl = song.audioUrl;
-      
+
       String finalUrl = '';
       if (processedUrl != null && processedUrl.isNotEmpty) {
         if (processedUrl.startsWith('http')) {
           finalUrl = processedUrl;
         } else {
           // It's a key. Try to construct it using the same domain as the original URL if possible
-          if (rawUrl != null && rawUrl.contains('amazonaws.com') && rawUrl.contains('.s3.')) {
-            final String bucketBase = rawUrl.substring(0, rawUrl.indexOf('amazonaws.com/') + 14);
+          if (rawUrl != null &&
+              rawUrl.contains('amazonaws.com') &&
+              rawUrl.contains('.s3.')) {
+            final String bucketBase = rawUrl.substring(
+              0,
+              rawUrl.indexOf('amazonaws.com/') + 14,
+            );
             finalUrl = '$bucketBase$processedUrl';
           } else {
             // Fallback to the production bucket identified in logs
-            finalUrl = 'https://faithstream-songs-production.s3.ap-south-1.amazonaws.com/$processedUrl';
+            finalUrl =
+                'https://faithstream-songs-production.s3.ap-south-1.amazonaws.com/$processedUrl';
           }
         }
       } else {

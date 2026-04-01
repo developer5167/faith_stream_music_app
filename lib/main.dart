@@ -98,9 +98,7 @@ void main() async {
     // Check connectivity for offline launch routing
     final bool isOffline = connectivityResult == ConnectivityResult.none;
     final bool hasDownloads = downloadService.downloadCount > 0;
-    final String initialRoute = isOffline
-        ? '/offline-downloads'
-        : '/splash';
+    final String initialRoute = isOffline ? '/offline-downloads' : '/splash';
     debugPrint(
       '✅ Connectivity checked: offline=$isOffline, hasDownloads=$hasDownloads, route=$initialRoute',
     );
@@ -205,8 +203,12 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<AudioPlayerService>.value(value: audioPlayerService),
         RepositoryProvider<SearchService>.value(value: searchService),
         RepositoryProvider<AdsService>.value(value: adsService),
-        RepositoryProvider<SongSuggestionService>.value(value: songSuggestionService),
-        RepositoryProvider<NotificationRepository>.value(value: notificationRepository),
+        RepositoryProvider<SongSuggestionService>.value(
+          value: songSuggestionService,
+        ),
+        RepositoryProvider<NotificationRepository>.value(
+          value: notificationRepository,
+        ),
         RepositoryProvider<DownloadService>.value(value: downloadService),
       ],
       child: MultiBlocProvider(
@@ -253,7 +255,9 @@ class MyApp extends StatelessWidget {
                   context.read<HomeBloc>().add(const HomeLoadRequested());
                   context.read<LibraryBloc>().add(LibraryLoadAll());
                   context.read<ProfileBloc>().add(ProfileLoad());
-                  context.read<NotificationBloc>().add(const NotificationLoad(refresh: true));
+                  context.read<NotificationBloc>().add(
+                    const NotificationLoad(refresh: true),
+                  );
                 } else if (state is AuthUnauthenticated) {
                   // Reset all blocs to initial states on logout
                   context.read<HomeBloc>().add(const HomeReset());

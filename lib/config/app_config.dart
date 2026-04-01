@@ -1,7 +1,7 @@
 class AppConfig {
   // API Configuration
   // static const String baseUrl = 'http://KCSs-MacBook-Pro.local:9000/api';
-  // static const String baseUrl = 'http://192.168.15.175:9000/api';
+  // static const String baseUrl = 'http://192.168.15.165:9000/api';
   static const String baseUrl =
       'https://api.faithstream.sotersystems.in/api'; // live
 

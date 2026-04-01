@@ -139,7 +139,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: AppSizes.paddingSm),
                           SizedBox(
-                            height: 230,
+                            height: 205,
                             child: ListView.separated(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: AppSizes.paddingMd,
@@ -147,14 +147,14 @@ class HomeScreen extends StatelessWidget {
                               scrollDirection: Axis.horizontal,
                               itemCount: feed.recentlyPlayed.length,
                               separatorBuilder: (context, index) =>
-                                  const SizedBox(width: AppSizes.paddingMd),
+                                  const SizedBox(width: AppSizes.paddingSm),
                               itemBuilder: (context, index) {
                                 final song = feed.recentlyPlayed[index];
                                 return PremiumCard(
                                   title: song.title,
                                   subtitle: song.displayArtist,
                                   imageUrl: song.coverImageUrl,
-                                  width: 150,
+                                  width: 135,
                                   onTap: () => context.push('/song/${song.id}', extra: song),
                                   onPlayTap: () {
                                     context.read<PlayerBloc>().add(
@@ -185,7 +185,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: AppSizes.paddingSm),
                           SizedBox(
-                            height: 230,
+                            height: 205,
                             child: ListView.separated(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: AppSizes.paddingMd,
@@ -193,14 +193,14 @@ class HomeScreen extends StatelessWidget {
                               scrollDirection: Axis.horizontal,
                               itemCount: feed.trendingSongs.length,
                               separatorBuilder: (context, index) =>
-                                  const SizedBox(width: AppSizes.paddingMd),
+                                  const SizedBox(width: AppSizes.paddingSm),
                               itemBuilder: (context, index) {
                                 final song = feed.trendingSongs[index];
                                 return PremiumCard(
                                   title: song.title,
                                   subtitle: song.displayArtist,
                                   imageUrl: song.coverImageUrl,
-                                  width: 150,
+                                  width: 135,
                                   onTap: () => context.push('/song/${song.id}', extra: song),
                                   onPlayTap: () {
                                     context.read<PlayerBloc>().add(
@@ -231,7 +231,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: AppSizes.paddingSm),
                           SizedBox(
-                            height: 230,
+                            height: 205,
                             child: ListView.separated(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: AppSizes.paddingMd,
@@ -239,14 +239,14 @@ class HomeScreen extends StatelessWidget {
                               scrollDirection: Axis.horizontal,
                               itemCount: feed.topPlayedSongs.length,
                               separatorBuilder: (context, index) =>
-                                  const SizedBox(width: AppSizes.paddingMd),
+                                  const SizedBox(width: AppSizes.paddingSm),
                               itemBuilder: (context, index) {
                                 final song = feed.topPlayedSongs[index];
                                 return PremiumCard(
                                   title: song.title,
                                   subtitle: song.displayArtist,
                                   imageUrl: song.coverImageUrl,
-                                  width: 150,
+                                  width: 135,
                                   onTap: () {
                                     Navigator.push(
                                       context,
@@ -285,7 +285,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: AppSizes.paddingSm),
                           SizedBox(
-                            height: 230,
+                            height: 205,
                             child: ListView.separated(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: AppSizes.paddingMd,
@@ -293,14 +293,14 @@ class HomeScreen extends StatelessWidget {
                               scrollDirection: Axis.horizontal,
                               itemCount: feed.albums.length,
                               separatorBuilder: (context, index) =>
-                                  const SizedBox(width: AppSizes.paddingMd),
+                                  const SizedBox(width: AppSizes.paddingSm),
                               itemBuilder: (context, index) {
                                 final album = feed.albums[index];
                                 return PremiumCard(
                                   title: album.title,
                                   subtitle: album.displayArtist,
                                   imageUrl: album.coverImageUrl,
-                                  width: 150,
+                                  width: 110,
                                   onTap: () => context.push('/album/${album.id}', extra: album),
                                 ).animate().fadeIn(delay: (index * 50).ms);
                               },

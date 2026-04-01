@@ -141,7 +141,7 @@ class _CreateAlbumScreenState extends State<CreateAlbumScreen> {
       // STEP 2: Upload cover if selected
       if (_selectedCoverImage != null && mounted) {
         // Update dialog message
-        Navigator.of(context).pop();
+        Navigator.of(context, rootNavigator: true).pop();
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -170,7 +170,7 @@ class _CreateAlbumScreenState extends State<CreateAlbumScreen> {
       }
 
       if (mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
+        Navigator.of(context, rootNavigator: true).pop(); // Close loading dialog
 
         // Show success
         ScaffoldMessenger.of(context).showSnackBar(

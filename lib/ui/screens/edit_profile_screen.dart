@@ -146,15 +146,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     uploadType: UploadService.userProfile,
                                   );
 
-                              if (publicUrl != null) {
+                              if (publicUrl != null && mounted) {
                                 setState(() {
                                   _profilePicUrlController.text = publicUrl;
                                 });
+                                // Auto-save so profile pic persists immediately
+                                context.read<ProfileBloc>().add(
+                                  ProfileUpdate(
+                                    name: _nameController.text.trim(),
+                                    phone: _phoneController.text.trim().isEmpty
+                                        ? null
+                                        : _phoneController.text.trim(),
+                                    bio: _bioController.text.trim().isEmpty
+                                        ? null
+                                        : _bioController.text.trim(),
+                                    profilePicUrl: publicUrl,
+                                  ),
+                                );
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
-                                        'Profile picture uploaded!',
+                                        'Profile picture updated!',
                                       ),
                                       backgroundColor: Colors.green,
                                     ),

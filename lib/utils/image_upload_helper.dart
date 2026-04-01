@@ -79,7 +79,7 @@ class ImageUploadHelper {
 
       // Close loading
       if (context.mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context, rootNavigator: true).pop();
       }
 
       return publicUrl;
