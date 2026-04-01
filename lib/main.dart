@@ -84,7 +84,7 @@ void main() async {
     final streamRepository = StreamRepository(apiClient);
     final libraryRepository = LibraryRepository(apiClient);
     final userRepository = UserRepository(apiClient);
-    final audioPlayerService = AudioPlayerService();
+    final audioPlayerService = AudioPlayerService(streamRepository);
     final searchService = SearchService(apiClient);
     final adsService = AdsService(apiClient);
     final songSuggestionService = SongSuggestionService(apiClient);

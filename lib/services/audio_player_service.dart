@@ -3,10 +3,12 @@ import 'package:audio_session/audio_session.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/song.dart';
+import '../repositories/stream_repository.dart';
 
 enum RepeatMode { off, one, all }
 
 class AudioPlayerService {
+  final StreamRepository _streamRepository;
   final AudioPlayer _player = AudioPlayer();
   List<Song> _playlist = [];
   int _currentIndex = 0;
@@ -34,7 +36,7 @@ class AudioPlayerService {
   Stream<bool> get playingStream => _player.playingStream;
   Stream<int?> get currentIndexStream => _player.currentIndexStream;
 
-  AudioPlayerService() {
+  AudioPlayerService(this._streamRepository) {
     _init();
   }
 
@@ -94,7 +96,7 @@ class AudioPlayerService {
 
     try {
       // Create a playlist of audio sources for lock screen skip controls
-      final List<AudioSource> audioSources = _playlist.map((s) {
+      final List<AudioSource> audioSources = await Future.wait(_playlist.map((s) async {
         // Offline downloaded song check
         if (s.audioUrl != null && s.audioUrl!.startsWith('file://')) {
           return AudioSource.uri(
@@ -103,38 +105,21 @@ class AudioPlayerService {
               id: s.id,
               title: s.title,
               artist: s.displayArtist,
-              artUri: s.coverImageUrl != null
-                  ? Uri.parse(s.coverImageUrl!)
-                  : null,
+              artUri: s.coverImageUrl != null ? Uri.parse(s.coverImageUrl!) : null,
             ),
           );
         }
 
-        final String? processedUrl = s.audioProcessedUrl;
-        final String? rawUrl = s.audioUrl;
-
         String finalUrl = '';
-        if (processedUrl != null && processedUrl.isNotEmpty) {
-          if (processedUrl.startsWith('http')) {
-            finalUrl = processedUrl;
-          } else {
-            // It's a key. Try to construct it using the same domain as the original URL if possible
-            if (rawUrl != null &&
-                rawUrl.contains('amazonaws.com') &&
-                rawUrl.contains('.s3.')) {
-              final String bucketBase = rawUrl.substring(
-                0,
-                rawUrl.indexOf('amazonaws.com/') + 14,
-              );
-              finalUrl = '$bucketBase$processedUrl';
-            } else {
-              // Fallback to the production bucket identified in logs
-              finalUrl =
-                  'https://faithstream-songs-production.s3.ap-south-1.amazonaws.com/$processedUrl';
-            }
+        try {
+          final res = await _streamRepository.getStreamUrl(s.id);
+          if (res.success && res.data != null) {
+            finalUrl = res.data!;
           }
-        } else {
-          finalUrl = rawUrl ?? '';
+        } catch (_) {}
+        
+        if (finalUrl.isEmpty) {
+           finalUrl = s.audioUrl ?? '';
         }
 
         return AudioSource.uri(
@@ -143,12 +128,10 @@ class AudioPlayerService {
             id: s.id,
             title: s.title,
             artist: s.displayArtist,
-            artUri: s.coverImageUrl != null
-                ? Uri.parse(s.coverImageUrl!)
-                : null,
+            artUri: s.coverImageUrl != null ? Uri.parse(s.coverImageUrl!) : null,
           ),
         );
-      }).toList();
+      }));
 
       // Use ConcatenatingAudioSource for queue support
       final playlist = ConcatenatingAudioSource(children: audioSources);
@@ -231,31 +214,16 @@ class AudioPlayerService {
 
     // Add to audio source if it's the correct type
     if (_player.audioSource is ConcatenatingAudioSource) {
-      final String? processedUrl = song.audioProcessedUrl;
-      final String? rawUrl = song.audioUrl;
-
       String finalUrl = '';
-      if (processedUrl != null && processedUrl.isNotEmpty) {
-        if (processedUrl.startsWith('http')) {
-          finalUrl = processedUrl;
-        } else {
-          // It's a key. Try to construct it using the same domain as the original URL if possible
-          if (rawUrl != null &&
-              rawUrl.contains('amazonaws.com') &&
-              rawUrl.contains('.s3.')) {
-            final String bucketBase = rawUrl.substring(
-              0,
-              rawUrl.indexOf('amazonaws.com/') + 14,
-            );
-            finalUrl = '$bucketBase$processedUrl';
-          } else {
-            // Fallback to the production bucket identified in logs
-            finalUrl =
-                'https://faithstream-songs-production.s3.ap-south-1.amazonaws.com/$processedUrl';
-          }
-        }
-      } else {
-        finalUrl = rawUrl ?? '';
+      try {
+         final res = await _streamRepository.getStreamUrl(song.id);
+         if (res.success && res.data != null) {
+            finalUrl = res.data!;
+         }
+      } catch (_) {}
+
+      if (finalUrl.isEmpty) {
+         finalUrl = song.audioUrl ?? '';
       }
 
       final source = AudioSource.uri(
@@ -264,9 +232,7 @@ class AudioPlayerService {
           id: song.id,
           title: song.title,
           artist: song.displayArtist,
-          artUri: song.coverImageUrl != null
-              ? Uri.parse(song.coverImageUrl!)
-              : null,
+          artUri: song.coverImageUrl != null ? Uri.parse(song.coverImageUrl!) : null,
         ),
       );
 
