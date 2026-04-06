@@ -121,7 +121,7 @@ class _SplashScreenState extends State<SplashScreen>
     }
   }
 
-  void _navigateToLogin() async {
+  Future<void> _navigateToLogin() async {
     if (!_hasNavigated && mounted) {
       _hasNavigated = true;
       await _ensureMinimumSplashDuration();
@@ -137,7 +137,7 @@ class _SplashScreenState extends State<SplashScreen>
     }
   }
 
-  void _navigateToHome() async {
+  Future<void> _navigateToHome() async {
     if (!_hasNavigated && mounted) {
       _hasNavigated = true;
       await _ensureMinimumSplashDuration();
@@ -159,10 +159,11 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is AuthAuthenticated) {
           if (state.bootstrapData != null) {
             final bootstrap = state.bootstrapData!;
+
             final homeFeed = HomeFeed(
               recentlyPlayed: bootstrap.recentlyPlayed,
               topPlayedSongs: bootstrap.topPlayed,

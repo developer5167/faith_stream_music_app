@@ -14,6 +14,10 @@ import '../widgets/mini_player_bar.dart';
 import '../widgets/app_open_ad_dialog.dart';
 import 'ad_player_screen.dart';
 import '../../config/app_theme.dart';
+import '../../utils/version_helper.dart';
+import '../../blocs/auth/auth_bloc.dart';
+import '../../blocs/auth/auth_state.dart';
+import '../widgets/update_dialog.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final Widget child;
@@ -31,6 +35,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   StreamSubscription? _indexSubscription;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   bool _isShowingAd = false;
+  bool _hasCheckedVersion = false;
 
   @override
   void initState() {
@@ -38,6 +43,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     // Show the interstitial app-open ad once per session after the UI is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _maybeShowAppOpenAd();
+      _checkVersionUpdate();
     });
     // Global connectivity monitor – if internet drops, go to offline screen
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
@@ -81,6 +87,31 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         profileState.subscription!.isActive;
     if (isPremium) return; // premium users never see ads
     await AppOpenAdDialog.showIfAvailable(context);
+  }
+
+  Future<void> _checkVersionUpdate() async {
+    if (_hasCheckedVersion || !mounted) return;
+    
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated && authState.bootstrapData?.appConfig != null) {
+      _hasCheckedVersion = true;
+      // Short delay to ensure home screen is 'peacefully settled'
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (!mounted) return;
+      
+      try {
+        final update = await VersionHelper(
+          authState.bootstrapData!.appConfig!,
+        ).getAvailableUpdate();
+        
+        if (update != null && mounted) {
+          debugPrint('📡 [VersionCheck] Update found: ${update.versionName}');
+          UpdateDialog.show(context, update);
+        }
+      } catch (e) {
+        debugPrint('❌ [VersionCheck] Error: $e');
+      }
+    }
   }
 
   Future<void> _checkAndPlayVideoAd() async {
@@ -223,6 +254,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     ).showSnackBar(SnackBar(content: Text(state.message)));
                   }
                 }
+              },
+            ),
+            BlocListener<AuthBloc, AuthState>(
+              listenWhen: (previous, current) =>
+                  !_hasCheckedVersion && current is AuthAuthenticated,
+              listener: (context, state) async {
+                _checkVersionUpdate();
               },
             ),
           ],

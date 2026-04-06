@@ -115,6 +115,7 @@ class AuthRepository {
       final response = await _apiClient.get('/app/bootstrap');
 
       if (response.statusCode == 200) {
+        debugPrint('📡 RAW BOOTSTRAP DATA: ${response.data['data']}');
         final bootstrapData = BootstrapResponse.fromJson(response.data['data']);
         return ApiResponse.success(
           data: bootstrapData,

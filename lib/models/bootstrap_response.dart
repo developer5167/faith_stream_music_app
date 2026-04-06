@@ -3,6 +3,7 @@ import 'user.dart';
 import 'song.dart';
 import 'album.dart';
 import 'ad_model.dart';
+import 'app_config.dart';
 
 class BootstrapResponse extends Equatable {
   final User? user;
@@ -12,6 +13,7 @@ class BootstrapResponse extends Equatable {
   final List<Song> discoverWeekly;
   final List<Album> newAlbums;
   final List<AdModel> ads;
+  final AppConfig? appConfig;
 
   const BootstrapResponse({
     this.user,
@@ -21,6 +23,7 @@ class BootstrapResponse extends Equatable {
     required this.discoverWeekly,
     required this.newAlbums,
     required this.ads,
+    this.appConfig,
   });
 
   factory BootstrapResponse.fromJson(Map<String, dynamic> json) {
@@ -76,6 +79,7 @@ class BootstrapResponse extends Equatable {
       discoverWeekly: discoverWeekly,
       newAlbums: newAlbums,
       ads: ads,
+      appConfig: json['appConfig'] != null ? AppConfig.fromJson(json['appConfig']) : null,
     );
   }
 
@@ -88,5 +92,6 @@ class BootstrapResponse extends Equatable {
     discoverWeekly,
     newAlbums,
     ads,
+    appConfig,
   ];
 }

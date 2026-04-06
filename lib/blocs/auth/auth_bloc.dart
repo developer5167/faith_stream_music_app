@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../repositories/auth_repository.dart';
 import '../../services/storage_service.dart';
 import '../../services/notification_service.dart';
+import '../../models/bootstrap_response.dart';
 import 'auth_event.dart';
 
 import 'auth_state.dart';
@@ -52,7 +53,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           final bootstrap = response.data!;
           // 1. Sync User Profile
           await _storageService.saveUser(bootstrap.user!);
-          emit(AuthAuthenticated(user: bootstrap.user!, token: token));
+          emit(AuthAuthenticated(
+            user: bootstrap.user!,
+            token: token,
+            bootstrapData: bootstrap,
+          ));
 
           // 2. Pre-Populate Home Feed
           // We fire the event to the HomeBloc with the pre-assembled feed data
@@ -216,8 +221,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (token != null) {
         final response = await _authRepository.getMe();
         if (response.success && response.data != null) {
-          await _storageService.saveUser(response.data!);
-          emit(AuthAuthenticated(user: response.data!, token: token));
+          final currentUser = response.data!;
+          await _storageService.saveUser(currentUser);
+          
+          BootstrapResponse? existingBootstrap;
+          if (state is AuthAuthenticated) {
+            existingBootstrap = (state as AuthAuthenticated).bootstrapData;
+          }
+
+          emit(AuthAuthenticated(
+            user: currentUser,
+            token: token,
+            bootstrapData: existingBootstrap,
+          ));
         }
       }
     } catch (e) {

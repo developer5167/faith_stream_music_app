@@ -60,6 +60,22 @@ class NotificationService {
       );
       // TODO: Handle routing to specific screens based on message.data['type']
     });
+
+    // Auto-subscribe to platform-specific update topics
+    _subscribeToPlatformUpdateTopic();
+  }
+
+  Future<void> _subscribeToPlatformUpdateTopic() async {
+    try {
+      final String topic = defaultTargetPlatform == TargetPlatform.android
+          ? 'android_app_update'
+          : 'ios_app_update';
+
+      debugPrint('Subscribing to app update topic: $topic');
+      await _messaging.subscribeToTopic(topic);
+    } catch (e) {
+      debugPrint('Failed to subscribe to update topic: $e');
+    }
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {

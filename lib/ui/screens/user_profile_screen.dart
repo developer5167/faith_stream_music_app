@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../blocs/profile/profile_bloc.dart';
 import '../../blocs/profile/profile_event.dart';
 import '../../blocs/profile/profile_state.dart';
@@ -358,6 +359,28 @@ class UserProfileScreen extends StatelessWidget {
                             ),
                           ],
                         ),
+                      ),
+
+                      const SizedBox(height: AppSizes.paddingLg),
+
+                      // App Version
+                      FutureBuilder<PackageInfo>(
+                        future: PackageInfo.fromPlatform(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            return Center(
+                              child: Text(
+                                'Version ${snapshot.data!.version} (${snapshot.data!.buildNumber})',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.3),
+                                  fontSize: 12,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            );
+                          }
+                          return const SizedBox();
+                        },
                       ),
 
                       const SizedBox(height: AppSizes.paddingXl),
