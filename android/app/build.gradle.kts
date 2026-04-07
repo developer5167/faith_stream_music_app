@@ -1,3 +1,14 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -19,6 +30,21 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    signingConfigs {
+
+        // 🔹 Debug (default)
+        getByName("debug") {
+            // Flutter already handles debug signing automatically
+        }
+
+        // 🔹 Release (your key.jks)
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+        }
+
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
@@ -34,13 +60,21 @@ android {
         versionName = flutter.versionName
     }
 
-    buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+        buildTypes {
+
+        // 🔹 Debug build
+        getByName("debug") {
             signingConfig = signingConfigs.getByName("debug")
         }
+
+        // 🔹 Release build
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
     }
+}
 }
 
 flutter {

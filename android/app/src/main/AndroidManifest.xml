@@ -14,7 +14,7 @@
     <uses-feature android:name="android.hardware.camera.front" android:required="false" />
     
     <application
-        android:label="faith_stream_music_app"
+        android:label="FaithStream"
         android:icon="@mipmap/launcher_icon"
         android:allowBackup="false"
         android:fullBackupContent="false"

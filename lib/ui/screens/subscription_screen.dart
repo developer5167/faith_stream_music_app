@@ -277,8 +277,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                       // Premium plan
                       _PlanCard(
                         name: 'Premium',
-                        // TODO: Change back to '₹99' for actual production
-                        price: '₹1',
+                        price: '₹99',
                         period: '/month',
                         features: const [
                           _Feature('Ad-free listening', true),
@@ -299,13 +298,19 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                           child: SizedBox(
                             width: double.infinity,
                             child: OutlinedButton.icon(
-                              onPressed: () => context.read<ProfileBloc>().add(ProfileLoad()),
+                              onPressed: () => context.read<ProfileBloc>().add(
+                                ProfileLoad(),
+                              ),
                               icon: const Icon(Icons.refresh, size: 18),
-                              label: const Text('Already subscribed? Check Status'),
+                              label: const Text(
+                                'Already subscribed? Check Status',
+                              ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.white70,
                                 side: const BorderSide(color: Colors.white24),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -318,12 +323,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: Text(
-                          Platform.isIOS 
-                            ? 'Subscriptions are managed via our official website. '
-                              'Once you complete your purchase, return here and tap "Check Status".'
-                            : 'Payment processed securely via Razorpay. '
-                              'Your browser will open to complete the payment. '
-                              'Subscription activates instantly after payment.',
+                          Platform.isIOS
+                              ? 'Subscriptions are managed via our official website. '
+                                    'Once you complete your purchase, return here and tap "Check Status".'
+                              : 'Payment processed securely via Razorpay. '
+                                    'Your browser will open to complete the payment. '
+                                    'Subscription activates instantly after payment.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.5),

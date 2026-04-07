@@ -83,8 +83,10 @@ class UserProfileScreen extends StatelessWidget {
                 pinned: true,
                 backgroundColor: Colors.transparent,
                 flexibleSpace: FlexibleSpaceBar(
+                  centerTitle: true,
                   title: Row(
                     mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(user.name),
                       if (state.subscription?.isActive ?? false) ...[
@@ -159,55 +161,6 @@ class UserProfileScreen extends StatelessWidget {
                           value: user.bio!,
                         ),
 
-                      const SizedBox(height: AppSizes.paddingLg),
-
-                      // Test Push Notification Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          icon: const Icon(
-                            Icons.notifications_active,
-                            color: Colors.blue,
-                          ),
-                          label: const Text('Test Push Notification'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.blue,
-                            side: const BorderSide(color: Colors.blue),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          onPressed: () async {
-                            try {
-                              final repo = context.read<UserRepository>();
-                              final result = await repo.testPushNotification();
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      result.success
-                                          ? 'Test notification sent from backend 🚀'
-                                          : 'Backend error: ${result.message}',
-                                    ),
-                                    backgroundColor: result.success
-                                        ? Colors.green
-                                        : Colors.red,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Failed to send test: $e'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                        ),
-                      ),
-
-                      const SizedBox(height: AppSizes.paddingLg),
 
                       // Subscription status section
                       _buildSubscriptionCard(context, state.subscription),
