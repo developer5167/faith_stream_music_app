@@ -20,7 +20,7 @@ plugins {
 }
 
 android {
-    namespace = "com.faithstream.music"
+    namespace = "com.sotersystems.faithstream"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -51,7 +51,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.faithstream.music"
+        applicationId = "com.sotersystems.faithstream"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

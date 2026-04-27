@@ -1,4 +1,4 @@
-package com.faithstream.music
+package com.sotersystems.faithstream
 
 import com.ryanheise.audioservice.AudioServiceActivity
 
